@@ -35,13 +35,7 @@ const createMailchimpConnection = async () => {
   mailchimp = new Mailchimp(process.env.MAILCHIMP_API);
 }
 const getMostRecentNewsletter = async (req, res) => {
-<<<<<<< HEAD
-  
   try {
-    await createMailchimpConnection();
-=======
-  try {
->>>>>>> ad4a8e45e266b1c7e1c6620aa842818479379218
     let response = await repository.getAgendaWhereisMostRecentAndFinal();
     const { agenda_uuid } = response[0] || {};
 
@@ -84,10 +78,6 @@ const getMostRecentNewsletter = async (req, res) => {
 
 const createCampagne = async (req, res) => {
   try {
-<<<<<<< HEAD
-    await createMailchimpConnection();
-=======
->>>>>>> ad4a8e45e266b1c7e1c6620aa842818479379218
     const agendaId = req.query.agendaId;
     if (!agendaId) {
       throw new Error('Request parameter agendaId can not be null');
