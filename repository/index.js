@@ -36,12 +36,14 @@ const getNewsLetterByAgendaId = async (agendaId) => {
         PREFIX dbpedia: <http://dbpedia.org/ontology/>
         PREFIX dct: <http://purl.org/dc/terms/>
         PREFIX prov: <http://www.w3.org/ns/prov#>
-        
-        SELECT ?uuid ?title ?richtext ?text ?subtitle ?publication_date ?remark ?created ?modified ?proposal ?newsletterRemark WHERE {
+        PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
+
+        SELECT DISTINCT ?uuid ?title ?richtext ?text ?subtitle ?publication_date ?remark ?created ?modified ?proposal  WHERE {
             GRAPH <http://mu.semte.ch/graphs/organizations/kanselarij> {
                <http://kanselarij.vo.data.gift/id/agendas/${agendaId}> dct:hasPart ?agendaitem . 
                ?subcase besluitvorming:isGeagendeerdVia ?agendaitem .
                ?subcase prov:generated  ?newsletter . 
+               ?newsletter ext:afgewerkt "true"^^xsd:boolean . 
                OPTIONAL { ?agendaitem ext:wordtGetoondAlsMededeling ?remark . }
                OPTIONAL { ?agendaitem besluitvorming:aanmaakdatum ?created . }
                OPTIONAL { ?agendaitem ext:modified ?modified . }
@@ -51,7 +53,7 @@ const getNewsLetterByAgendaId = async (agendaId) => {
                OPTIONAL { ?newsletter ext:voorstelVan ?proposal . }
                OPTIONAL { ?newsletter dbpedia:subtitle ?subtitle . }
                OPTIONAL { ?newsletter dct:title ?title . }
-               OPTIONAL { ?newsletter dct:issued ?publication_date . }
+               OPTIONAL { ?newsletter dct:issued ?publication_date . } 
              }
         }`;
   let data = await mu.query(query);

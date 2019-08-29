@@ -13,12 +13,16 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const Mailchimp = require('mailchimp-api-v3');
+<<<<<<< HEAD
 let mailchimp;
 try {
   mailchimp = new Mailchimp(process.env.MAILCHIMP_API);
 } catch {
   console.error('could not find mailchimp API key');
 }
+=======
+const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
+>>>>>>> 9629af9e4a876a8a385ad8068c38989a141f1378
 const moment = require('moment');
 const fromName = 'Kaleidos';
 const replyTo = 'joachim.zeelmaekers@craftworkz.be';
@@ -49,21 +53,23 @@ const getMostRecentNewsletter = async (req, res) => {
         throw new Error('no newsletters present');
       }
 
-      newsletter = newsletter.map((newsletter_item) => {
-        let item = {};
-        item.id = newsletter_item.uuid;
-        item.webtitle = newsletter_item.title;
-        item.description = newsletter_item.richtext;
-        item.body = newsletter_item.text;
-        item.publication_date = newsletter_item.created;
-        item.modification_date = newsletter_item.modified;
-        item.type = 'agenda_item';
-        if (item.remark) {
-          item.agenda_item_type = 'Opmerking';
-        } else {
-          item.agenda_item_type = 'Beslissing';
+      newsletter = newsletter.filter((newsletter_item) => {
+        if (newsletter_item.finished) {
+          let item = {};
+          item.id = newsletter_item.uuid;
+          item.webtitle = newsletter_item.title;
+          item.description = newsletter_item.richtext;
+          item.body = newsletter_item.text;
+          item.publication_date = newsletter_item.created;
+          item.modification_date = newsletter_item.modified;
+          item.type = 'agenda_item';
+          if (item.remark) {
+            item.agenda_item_type = 'Opmerking';
+          } else {
+            item.agenda_item_type = 'Beslissing';
+          }
+          return item;
         }
-        return item;
       });
 
       res.send({
@@ -85,7 +91,7 @@ const createCampagne = async (req, res) => {
       throw new Error('Request parameter agendaId can not be null');
     }
 
-    let newsletter = await repository.getNewsLetterByAgendaId(agendaId);
+    let newsletter = (await repository.getNewsLetterByAgendaId(agendaId))
     if (!newsletter) {
       throw new Error('no newsletters present');
     }
