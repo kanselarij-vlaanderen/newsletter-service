@@ -14,6 +14,11 @@ dotenv.config();
 
 const Mailchimp = require('mailchimp-api-v3');
 let mailchimp;
+try {
+  mailchimp = new Mailchimp(process.env.MAILCHIMP_API);
+} catch {
+  console.error('could not find mailchimp API key');
+}
 const moment = require('moment');
 const fromName = 'Kaleidos';
 const replyTo = 'joachim.zeelmaekers@craftworkz.be';
@@ -31,9 +36,6 @@ app.get('/', (req, res) => {
   return getMostRecentNewsletter(req, res);
 });
 
-const createMailchimpConnection = async () => {
-  mailchimp = new Mailchimp(process.env.MAILCHIMP_API);
-}
 const getMostRecentNewsletter = async (req, res) => {
   try {
     let response = await repository.getAgendaWhereisMostRecentAndFinal();
