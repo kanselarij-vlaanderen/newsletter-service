@@ -13,16 +13,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const Mailchimp = require('mailchimp-api-v3');
-<<<<<<< HEAD
-let mailchimp;
-try {
-  mailchimp = new Mailchimp(process.env.MAILCHIMP_API);
-} catch {
-  console.error('could not find mailchimp API key');
-}
-=======
 const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
->>>>>>> 9629af9e4a876a8a385ad8068c38989a141f1378
 const moment = require('moment');
 const fromName = 'Kaleidos';
 const replyTo = 'joachim.zeelmaekers@craftworkz.be';
