@@ -1,6 +1,5 @@
 export const createNewsLetter = (news_items_HTML, planned_start) => {
-
-	return `
+  return `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 	<head>
@@ -278,7 +277,7 @@ export const createNewsLetter = (news_items_HTML, planned_start) => {
 	              <!-- end infoblock -->
 	              <!-- textblock with introtext -->
 	
-	          ${news_items_HTML.join("")}
+	          ${news_items_HTML.join('')}
 	
 	        </table>
 	      </div> <!-- END std_content00 editabe div -->
@@ -336,6 +335,5 @@ export const createNewsLetter = (news_items_HTML, planned_start) => {
 	<!-- end wrapper table -->
 	</body>
 </html>
-`
-
-}
+`;
+};
