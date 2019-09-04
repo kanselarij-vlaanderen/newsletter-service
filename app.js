@@ -83,9 +83,10 @@ const createCampagne = async (req, res) => {
     }
 
     let newsletter = (await repository.getNewsLetterByAgendaId(agendaId))
-    if (!newsletter) {
+    if (!newsletter || !newsletter[0]) {
       throw new Error('no newsletters present');
     }
+
 
     const planned_start = moment(newsletter[0].planned_start).format('dddd DD-MM-YYYY');
     const news_items_HTML = await newsletter.map((item) => getNewsItem(item));
