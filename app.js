@@ -1,160 +1,28 @@
 import mu from 'mu';
-import { ok } from 'assert';
+import BelgaService from  './repository/BelgaFTPService.js';
 
 const app = mu.app;
-const bodyParser = require('body-parser');
-const repository = require('./repository');
-const cors = require('cors');
-
-const { createNewsLetter } = require('./html-renderer/NewsLetter');
-const { getNewsItem } = require('./html-renderer/NewsItem');
-
-const dotenv = require('dotenv');
-dotenv.config();
 
 const Mailchimp = require('mailchimp-api-v3');
 const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
-const moment = require('moment');
-const fromName = 'Kaleidos';
-const replyTo = 'joachim.zeelmaekers@craftworkz.be';
 
-moment.locale('nl');
+const bodyParser = require('body-parser');
+const mailchimpService = require('./repository/MailchimpService.js');
+const repository = require('./repository/index.js');
+const cors = require('cors');
+const dotenv = require('dotenv');
 
+dotenv.config();
 app.use(bodyParser.json({ type: 'application/*+json' }));
 app.use(cors());
 
 app.post('/createCampaign', (req, res) => {
-  return createCampagne(req, res);
+  return mailchimpService.createCampaign(req, res);
 });
 
 app.get('/', (req, res) => {
-  return getMostRecentNewsletter(req, res);
+  return repository.getMostRecentNewsletter(req, res);
 });
-
-const getMostRecentNewsletter = async (req, res) => {
-  try {
-    let response = await repository.getAgendaWhereisMostRecentAndFinal();
-    const { agenda_uuid } = response[0] || {};
-
-    if (!agenda_uuid) {
-      res.send({ status: ok, statusCode: 500, newsletter: [] });
-    } else {
-      let newsletter = await repository.getNewsLetterByAgendaId(agenda_uuid);
-      if (!newsletter) {
-        throw new Error('no newsletters present');
-      }
-
-      newsletter = newsletter.filter((newsletter_item) => {
-        if (newsletter_item.finished) {
-          let item = {};
-          item.id = newsletter_item.uuid;
-          item.webtitle = newsletter_item.title;
-          item.description = newsletter_item.richtext;
-          item.body = newsletter_item.text;
-          item.publication_date = newsletter_item.created;
-          item.modification_date = newsletter_item.modified;
-          item.type = 'agenda_item';
-          if (item.remark) {
-            item.agenda_item_type = 'Opmerking';
-          } else {
-            item.agenda_item_type = 'Beslissing';
-          }
-          return item;
-        }
-      });
-
-      res.send({
-        total: newsletter.length,
-        size: newsletter.length,
-        items: newsletter,
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    res.send({ status: ok, statusCode: 500, body: { error } });
-  }
-};
-
-const createCampagne = async (req, res) => {
-  try {
-    const agendaId = req.query.agendaId;
-    if (!agendaId) {
-      throw new Error('Request parameter agendaId can not be null');
-    }
-
-    let newsletter = (await repository.getNewsLetterByAgendaId(agendaId))
-    if (!newsletter || !newsletter[0]) {
-      throw new Error('no newsletters present');
-    }
-
-
-    const planned_start = moment(newsletter[0].planned_start).format('dddd DD-MM-YYYY');
-    const news_items_HTML = await newsletter.map((item) => getNewsItem(item));
-    let html = await createNewsLetter(news_items_HTML, planned_start);
-
-    const template = {
-      name: `Nieuwsbrief ${planned_start}`,
-      html,
-    };
-
-    const created_template = await mailchimp.post({
-      path: '/templates',
-      body: template,
-    });
-
-    const { id } = created_template;
-    const campaign = {
-      type: 'regular',
-      recipients: {
-        list_id: '5480352579',
-      },
-      settings: {
-        subject_line: `Nieuwsbrief ${planned_start}`,
-        preview_text: '',
-        title: `Nieuwsbrief ${planned_start}`,
-        from_name: fromName,
-        reply_to: replyTo,
-        inline_css: true,
-        template_id: id,
-      },
-    };
-
-    const createdCampagne = await mailchimp.post({
-      path: '/campaigns',
-      body: campaign,
-    });
-
-    const { web_id, archive_url } = createdCampagne;
-
-    res.send({
-      status: ok,
-      statusCode: 200,
-      body: {
-        campaign_id: createdCampagne.id,
-        campaign_web_id: web_id,
-        archive_url,
-      },
-    });
-  } catch (error) {
-    console.error(error);
-    res.send({ status: ok, statusCode: 500, body: { error } });
-  }
-};
-
-app.delete('/deleteCampaign/:id', async (req, res) => {
-  const campaign_id = req.params.id;
-  if (!campaign_id) {
-    throw new Error('Request parameter campaign_id can not be null');
-  }
-  const deleted = await deleteCampaign(campaign_id);
-  res.send({ deleted });
-});
-
-const deleteCampaign = (id) => {
-  return mailchimp.delete({
-    path: `/campaigns/${id}`,
-  });
-};
 
 app.post('/sendCampaign/:id', async (req, res) => {
   const campaign_id = req.params.id;
@@ -163,4 +31,24 @@ app.post('/sendCampaign/:id', async (req, res) => {
   });
 
   res.send({ sendCampaign });
+});
+
+app.delete('/deleteCampaign/:id', async (req, res) => {
+  const campaign_id = req.params.id;
+  if (!campaign_id) {
+    throw new Error('Request parameter campaign_id can not be null');
+  }
+  const deleted = await mailchimpService.deleteCampaign(campaign_id);
+  res.send({ deleted });
+});
+
+
+app.get('/xml-newsletter/:agenda_id', async(req, res) => {
+  const service = new BelgaService();
+  let agendaId = req.params.agenda_id;
+  if(!agendaId) {
+    throw new Error('No agenda_id provided.');
+  }
+  const generatedXMLPath = await service.generateXML(agendaId);
+  res.download(generatedXMLPath); // Set disposition and send it.
 });

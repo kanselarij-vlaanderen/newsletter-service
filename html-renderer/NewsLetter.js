@@ -1,4 +1,4 @@
-export const createNewsLetter = (news_items_HTML, planned_start) => {
+export const createNewsLetter = (news_items_HTML, planned_start, data_decisions, data_docs) => {
   return `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -197,7 +197,7 @@ export const createNewsLetter = (news_items_HTML, planned_start) => {
 	                          </font>
 	                          <br>
 	                          <font style="font-family:Calibri, Arial, sans-serif;font-size:18px;line-height:18px;color:#333332;">
-	                            Vrijdag 22 april 2016
+	                            ${data_decisions}
 	                          </font>
 	                        </td>
 	                      </tr>
@@ -239,7 +239,7 @@ export const createNewsLetter = (news_items_HTML, planned_start) => {
 	                <tr>
 	                  <td width="100%" colspan="2">
 	                    <h2 class="section-title" style="color:#333332;font-family:Calibri, Arial, sans-serif;font-weight:600;font-size:22px;text-transform:uppercase;margin:0;">
-	                      Beslissingen van de Vlaamse Regering - Ministerraad van ${planned_start}
+	                      Beslissingen van de Vlaamse Regering - Ministerraad van ${planned_start} 
 	                    </h2>
 	                  </td>
 	                </tr>
@@ -264,7 +264,7 @@ export const createNewsLetter = (news_items_HTML, planned_start) => {
 	                        </td>
 	                        <td valign="top" style="padding:15px;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;color:#666666;">
 	                          <font>
-	                            De documenten van deze ministerraad zullen beschikbaar zijn vanaf maandag 31 augustus om 14u
+	                            De documenten van deze ministerraad zullen beschikbaar zijn vanaf ${data_docs} om 14u
 	                            <br>
 	                            De documenten worden beschikbaar gesteld op <a href="http://www.vlaanderen.be/nl/vlaamse-regering/beslissingenvlaamseregering">http://www.vlaanderen.be/nl/vlaamse-regering/beslissingenvlaamseregering</a>
 	                          </font>
@@ -278,7 +278,7 @@ export const createNewsLetter = (news_items_HTML, planned_start) => {
 	              <!-- textblock with introtext -->
 	
 	          ${news_items_HTML.join('')}
-	
+
 	        </table>
 	      </div> <!-- END std_content00 editabe div -->
 	      <!-- footer -->
