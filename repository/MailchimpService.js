@@ -21,7 +21,7 @@ const createCampaign = async (req, res) => {
     }
 
     const { formattedStart, formattedDocumentDate, formattedPublicationDate } = await repository.getAgendaNewsletterInformation(agendaId);
-    
+
     let newsletter = await repository.getNewsLetterByAgendaId(agendaId);
     if (!newsletter || !newsletter[0]) {
       throw new Error('No newsletters present!');
@@ -36,7 +36,7 @@ const createCampaign = async (req, res) => {
     );
 
     const template = {
-      name: `Nieuwsbrief ${planned_start}`,
+      name: `Nieuwsbrief ${formattedStart}`,
       html,
     };
 
@@ -52,9 +52,9 @@ const createCampaign = async (req, res) => {
         list_id: '5480352579',
       },
       settings: {
-        subject_line: `Nieuwsbrief ${planned_start}`,
+        subject_line: `Nieuwsbrief ${formattedStart}`,
         preview_text: '',
-        title: `Nieuwsbrief ${planned_start}`,
+        title: `Nieuwsbrief ${formattedStart}`,
         from_name: fromName,
         reply_to: replyTo,
         inline_css: true,

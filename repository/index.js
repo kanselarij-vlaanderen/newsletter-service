@@ -2,7 +2,9 @@ import mu from 'mu';
 import { ok } from 'assert';
 const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
 import moment from 'moment';
+
 moment.locale('nl');
+console.log();
 
 const getAgendaWhereisMostRecentAndFinal = async () => {
   const query = `
@@ -59,14 +61,16 @@ const getAgendaInformation = async (agendaId) => {
 
 const getAgendaNewsletterInformation = async (agendaId) => {
   let agendaInformation = await getAgendaInformation(agendaId);
-  if(!agendaInformation || !agendaInformation[0]) {
+  if (!agendaInformation || !agendaInformation[0]) {
     return {};
   }
   const { planned_start, publication_date, data_docs } = agendaInformation[0];
-  const formattedStart = `${moment(planned_start || '').format('dddd DD-MM-YYYY')}
-    ${moment(planned_start || '').format('HH:mm')}`;
-  const formattedDocumentDate = moment(data_docs || '').format('dddd DD-MM-YYYY');
-  const formattedPublicationDate = moment(publication_date || '').format('dddd DD-MM-YYYY');
+
+  const formattedStart = `${moment(
+    new Date(planned_start).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
+  ).format('dddd DD-MM-YYYY HH:mm')}`;
+  const formattedDocumentDate = moment(new Date(data_docs).toLocaleString('nl', { timeZone: 'Europe/Berlin' })).format('dddd DD-MM-YYYY');
+  const formattedPublicationDate = moment(new Date(publication_date).toLocaleString('nl', { timeZone: 'Europe/Berlin' })).format('dddd DD-MM-YYYY');
 
   return { formattedStart, formattedDocumentDate, formattedPublicationDate };
 };
