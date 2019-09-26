@@ -190,14 +190,12 @@ export const createNewsLetter = (news_items_HTML, planned_start, data_decisions,
 	                      <tr>
 	                        <td style="border-left:4px solid #ffe615;padding-left:15px;">
 	                          <font style="font-family:Calibri, Arial, sans-serif;font-weight:600;font-size:22px;line-height:22px;color:#333332;text-transform:uppercase;">
-	
-	                            Wekelijkse nieuwsbrief van de Vlaamse overheid
-	
+														BESLISSINGEN VAN DE VLAAMSE REGERING
 	                            <!-- END header_title editabe div -->
 	                          </font>
 	                          <br>
 	                          <font style="font-family:Calibri, Arial, sans-serif;font-size:18px;line-height:18px;color:#333332;">
-	                            ${data_decisions}
+														Ministerraad via elektronische procedure van ${planned_start}
 	                          </font>
 	                        </td>
 	                      </tr>
@@ -233,21 +231,6 @@ export const createNewsLetter = (news_items_HTML, planned_start, data_decisions,
 	              <table mc:repeatable="content" mc:variant="Sectie Titel" width="100%" cellpadding="0" cellspacing="0" border="0">
 	                <tr>
 	                  <td height="25" style="height:25px;line-height:0;">
-	
-	                  </td>
-	                </tr>
-	                <tr>
-	                  <td width="100%" colspan="2">
-	                    <h2 class="section-title" style="color:#333332;font-family:Calibri, Arial, sans-serif;font-weight:600;font-size:22px;text-transform:uppercase;margin:0;">
-	                      Beslissingen van de Vlaamse Regering - Ministerraad van ${planned_start} 
-	                    </h2>
-	                  </td>
-	                </tr>
-	                <tr>
-	                  <td width="130" style="border-bottom:3px solid #333332;line-height:0;">
-	
-	                  </td>
-	                  <td class="section-title-border" width="410" style="border-bottom:3px solid #cbd2da;line-height:0;">
 	
 	                  </td>
 	                </tr>
