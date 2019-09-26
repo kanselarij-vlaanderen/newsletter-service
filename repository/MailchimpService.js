@@ -5,13 +5,12 @@ const repository = require('./index.js');
 const moment = require('moment');
 const Mailchimp = require('mailchimp-api-v3');
 const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
-
 import { ok } from 'assert';
 
 moment.locale('nl');
 
 const fromName = 'Kaleidos';
-const replyTo = 'info@kaleidos.be';
+const replyTo = 'joachim.zeelmaekers@craftworkz.be';
 
 const createCampaign = async (req, res) => {
   try {
@@ -20,14 +19,28 @@ const createCampaign = async (req, res) => {
       throw new Error('Request parameter agendaId can not be null');
     }
 
-    const { formattedStart, formattedDocumentDate, formattedPublicationDate } = await repository.getAgendaNewsletterInformation(agendaId);
+    const {
+      formattedStart,
+      formattedDocumentDate,
+      formattedPublicationDate,
+    } = await repository.getAgendaNewsletterInformation(agendaId);
 
     let newsletter = await repository.getNewsLetterByAgendaId(agendaId);
     if (!newsletter || !newsletter[0]) {
       throw new Error('No newsletters present!');
     }
+    let count = 0;
 
-    const news_items_HTML = await newsletter.map((item) => getNewsItem(item));
+    const news_items_HTML = await newsletter.map((item) => {
+      let segmentConstraint = { begin: '', end: '' };
+      if (item && item.themes) {
+        segmentConstraint = {
+          begin: createBeginSegment(item.themes),
+          end: createEndSegment(),
+        };
+      }
+      return getNewsItem(item, segmentConstraint);
+    });
     let html = await createNewsLetter(
       news_items_HTML,
       formattedStart,
@@ -88,6 +101,14 @@ const deleteCampaign = (id) => {
   return mailchimp.delete({
     path: `/campaigns/${id}`,
   });
+};
+
+const createBeginSegment = (themesString, segmentPrefix = "Thema's") => {
+  return `*|INTERESTED:${segmentPrefix}:${themesString}|*`;
+};
+
+const createEndSegment = () => {
+  return `*|END:INTERESTED|*`;
 };
 
 export { deleteCampaign, createCampaign };

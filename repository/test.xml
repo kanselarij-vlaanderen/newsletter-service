@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><NewsML xmlns:xsi="http://www.w3.org/2001/XLSSchema-instance" xsi:noNamespaceSchemaLocation="NewsMLv1.1.xsd" Version="1.1"><NewsEnvelope><TransmissionID Repeat="0">2000000128634</TransmissionID><SentFrom><Party FormalName="Vo"><Property FormalName="webserviceurl" Value="webserviceurl.vlaanderen.be"></Property><Property FormalName="notify" Value="webserviceurl.vlaanderen.be"></Property></Party></SentFrom><SentTo><Party FormalName="BELGA"><Property FormalName="webserviceurl" Value="webserviceurl.belga.be"></Property></Party></SentTo><DateAndTime>20190410T162800+0200</DateAndTime></NewsEnvelope><NewsItem><Identification><NewsIdentifier><ProviderId>nieuws.vlaanderen.be</ProviderId><DateId>20170512</DateId><NewsItemId>2000000128634</NewsItemId><RevisionId PreviousRevision="0" Update="N">1</RevisionId><PublicIdentifier>urn:newsml:nieuws.vlaanderen.be:20170512:2000000128634:11N</PublicIdentifier></NewsIdentifier></Identification><NewsManagement><NewsItemType FormalName="news" Scheme="IptcNewsItemType"/><FirstCreated>20170510T135609+0200</FirstCreated><ThisRevisionCreated>20190410T162759+0200</ThisRevisionCreated><Status FormalName="Usable" Scheme="IptcStatus"/></NewsManagement><NewsComponent><NewsLines><Headline><![CDATA[Title ]]></Headline><SubHeadLine><DateLine>Subtitle</DateLine></SubHeadLine></NewsLines><DescriptiveMetadata><Language FormalName="nl"/><Genre FormalName="nieuws.vlaanderen.be" Scheme="IptcGenre"/></DescriptiveMetadata><NewsComponent><Comment>2000000128634</Comment><Role FormalName="Main" Scheme="IptcRole"/><ContentItem><Comment>2000000128634</Comment><DataContent><![CDATA[Voorstel tekst van het punt Korte titel van het punt <br/>                                                                                     Dag&nbsp;Johan&nbsp;<strong></strong><ol><li><strong>De Mailchimp integratie werkt</strong> </li><li><!-- components -->Ik heb hier een <em></em><u><em></em></u><strong><em><u>voorbeeld</u></em></strong><u><em></em></u><em></em> van een beslissing in het kort-bestek verstuurd via <strong>Mailchimp</strong>..
+Hierover meer tijdens de <em>stand-up!</em>
+</li><li>Zelfs de opmaak van de editor zit erin!</li></ol><ul><li>Je kan dit binnenkort zelf testen</li><li>lol</li><li>klol</li><li></li></ul> <!-- components -->
+<!---->
+
+&nbsp;
+
+<!-- components -->
+<!---->
+
+&nbsp;
+
+<!-- components -->
+<!---->
+
+&nbsp;
+
+<!-- components -->
+<!---->
+
+&nbsp;
+
+<!-- components -->
+<!----><br/>test-voorsteltest dossier <br/>                             <!---->
+
+&nbsp;
+
+<!-- components -->
+<!---->
+
+ test-beslissing
+
+<!-- components -->
+<!---->]]></DataContent></ContentItem></NewsComponent></NewsComponent></NewsItem></NewsML>

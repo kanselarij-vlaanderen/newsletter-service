@@ -78,15 +78,15 @@ const createNewsletterString = (data) => {
   data.map((newsletterItem) => {
 		if (newsletterItem.remark) {
 			announcements.push(
-				`${newsletterItem.proposal || ''}${newsletterItem.title || ''} <br/> ${stripHTML(
+				`${newsletterItem.proposal || ''}${newsletterItem.title || ''} <br/> ${
 					newsletterItem.richtext
-				)}`
+				}`
 			);
 		} else {
 			agendaitems.push(
-				`${newsletterItem.proposal || ''}${newsletterItem.title || ''} <br/> ${stripHTML(
+				`${newsletterItem.proposal || ''}${newsletterItem.title || ''} <br/> ${
 					newsletterItem.richtext || ''
-				)}`
+				}`
 			);
 		}
 	});

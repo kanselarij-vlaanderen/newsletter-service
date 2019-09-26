@@ -4,7 +4,6 @@ const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
 import moment from 'moment';
 
 moment.locale('nl');
-console.log();
 
 const getAgendaWhereisMostRecentAndFinal = async () => {
   const query = `
@@ -69,8 +68,12 @@ const getAgendaNewsletterInformation = async (agendaId) => {
   const formattedStart = `${moment(
     new Date(planned_start).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
   ).format('dddd DD-MM-YYYY HH:mm')}`;
-  const formattedDocumentDate = moment(new Date(data_docs).toLocaleString('nl', { timeZone: 'Europe/Berlin' })).format('dddd DD-MM-YYYY');
-  const formattedPublicationDate = moment(new Date(publication_date).toLocaleString('nl', { timeZone: 'Europe/Berlin' })).format('dddd DD-MM-YYYY');
+  const formattedDocumentDate = moment(
+    new Date(data_docs).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
+  ).format('dddd DD-MM-YYYY');
+  const formattedPublicationDate = moment(
+    new Date(publication_date).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
+  ).format('dddd DD-MM-YYYY');
 
   return { formattedStart, formattedDocumentDate, formattedPublicationDate };
 };
@@ -87,24 +90,26 @@ const getNewsLetterByAgendaId = async (agendaId) => {
         PREFIX prov: <http://www.w3.org/ns/prov#>
         PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
 
-        SELECT DISTINCT ?uuid ?title ?richtext ?text ?subtitle ?remark ?proposal WHERE {
+        SELECT DISTINCT ?title ?richtext ?text ?subtitle ?remark ?proposal (GROUP_CONCAT(?label;separator=",") AS ?themes) WHERE {
             GRAPH <${targetGraph}> {
               ?agenda a besluitvorming:Agenda .
               ?agenda mu:uuid "${agendaId}" .
               ?agenda dct:hasPart ?agendaitem . 
               ?subcase besluitvorming:isGeagendeerdVia ?agendaitem .
               ?subcase prov:generated  ?newsletter . 
+              ?agendaitem ext:wordtGetoondAlsMededeling ?remark .
               ?newsletter ext:afgewerkt "true"^^xsd:boolean . 
               OPTIONAL { ?agendaitem ext:prioriteit ?priority . }
-              OPTIONAL { ?agendaitem ext:wordtGetoondAlsMededeling ?remark . }
-              OPTIONAL { ?newsletter mu:uuid ?uuid . }
               OPTIONAL { ?newsletter besluitvorming:inhoud ?text . }
               OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
               OPTIONAL { ?newsletter ext:voorstelVan ?proposal . }
               OPTIONAL { ?newsletter dbpedia:subtitle ?subtitle . }
               OPTIONAL { ?newsletter dct:title ?title . }
              }
-        }`;
+            OPTIONAL { ?agendaitem ext:agendapuntSubject ?themeURI . 
+                       ?themeURI   skos:prefLabel        ?label . }
+        } GROUP BY ?title ?richtext ?text ?subtitle ?remark ?proposal ?priority
+        ORDER BY ?priority`;
   let data = await mu.query(query);
   return parseSparqlResults(data);
 };
@@ -112,7 +117,6 @@ const getNewsLetterByAgendaId = async (agendaId) => {
 const getMostRecentNewsletter = async (req, res) => {
   try {
     const response = await getAgendaWhereisMostRecentAndFinal();
-    console.log(response);
     const { agenda_uuid } = response[0] || { agenda_uuid: null };
 
     if (!agenda_uuid) {
