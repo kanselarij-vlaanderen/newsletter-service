@@ -195,7 +195,7 @@ export const createNewsLetter = (news_items_HTML, planned_start, data_decisions,
 	                          </font>
 	                          <br>
 	                          <font style="font-family:Calibri, Arial, sans-serif;font-size:18px;line-height:18px;color:#333332;">
-														Ministerraad via elektronische procedure van ${planned_start}
+														Ministerraad van ${planned_start}
 	                          </font>
 	                        </td>
 	                      </tr>
