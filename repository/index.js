@@ -98,7 +98,7 @@ const getNewsLetterByAgendaId = async (agendaId) => {
               ?subcase besluitvorming:isGeagendeerdVia ?agendaitem .
               ?subcase prov:generated  ?newsletter . 
               ?agendaitem ext:wordtGetoondAlsMededeling ?remark .
-              ?newsletter ext:afgewerkt "true"^^xsd:boolean . 
+              ?newsletter ext:inNieuwsbrief "true"^^xsd:boolean . 
               OPTIONAL { ?agendaitem ext:prioriteit ?priority . }
               OPTIONAL { ?newsletter besluitvorming:inhoud ?text . }
               OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
