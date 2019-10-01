@@ -29,8 +29,6 @@ const createCampaign = async (req, res) => {
     if (!newsletter || !newsletter[0]) {
       throw new Error('No newsletters present!');
     }
-    let count = 0;
-
     const news_items_HTML = await newsletter.map((item) => {
       let segmentConstraint = { begin: '', end: '' };
       if (item && item.themes) {
@@ -44,8 +42,7 @@ const createCampaign = async (req, res) => {
     let html = await createNewsLetter(
       news_items_HTML,
       formattedStart,
-      formattedDocumentDate,
-      formattedPublicationDate
+      formattedDocumentDate
     );
 
     const template = {
