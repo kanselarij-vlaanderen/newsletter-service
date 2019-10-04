@@ -67,13 +67,13 @@ const getAgendaNewsletterInformation = async (agendaId) => {
 
   const formattedStart = `${moment(
     new Date(planned_start).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
-  ).format('dddd DD-MM-YYYY HH:mm')}`;
+  ).format('DD MMMM  YYYY')}`;
   const formattedDocumentDate = moment(
     new Date(data_docs).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
-  ).format('dddd DD-MM-YYYY');
+  ).format('DD MMMM YYYY [om] HH:mm');
   const formattedPublicationDate = moment(
     new Date(publication_date).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
-  ).format('dddd DD-MM-YYYY');
+  ).format('MMMM Do YYYY');
 
   return { formattedStart, formattedDocumentDate, formattedPublicationDate };
 };

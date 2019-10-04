@@ -1,4 +1,4 @@
-export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) => {
+export const createNewsLetter = (news_items_HTML, publication_date, planned_start, data_docs) => {
   return `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -164,7 +164,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) =>
 	        </tr>
 	        <tr>
 	          <td colspan="2" style="border-bottom:3px solid #ffe615;line-height:0;">
-	
+				
 	          </td>
 	        </tr>
 	        <tr>
@@ -176,50 +176,52 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) =>
 	      <div mc:edit="header_content">
 	        <!-- header basic -->
 	        <table mc:repeatable="header" width="650" cellpadding="0" cellspacing="0" border="0" align="center" class="full-table" style="width:650px;">
-					<tr>
-					<td height="10" style="height: 10px;line-height: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
-						&nbsp;
-					</td>
-				</tr>
 	          <tr>
-							<td valign="middle" style="background:#FFFFFF;">
-							<table cellpadding="0" cellspacing="0" border="0" align="left" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
-					<tr>
-						<td class="header-text" style="padding: 30px 15px 30px 40px;background-color: #FFFFFF;mso-table-lspace: 0;mso-table-rspace: 0;">
-							<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
-								<tr>
-									<td style="border-left: 4px solid #ffe615;padding-left: 15px;mso-table-lspace: 0;mso-table-rspace: 0;">
-										<font style="font-family: Calibri, Arial, sans-serif; font-weight: 600; font-size: 22px; line-height: 22px; color: #333332; text-transform: uppercase;">Beslissingen van de Vlaamse Regering</font>
-										<br>
-										<font style="font-family: Calibri, Arial, sans-serif; font-size: 18px; line-height: 18px; color: #333332;">
-											Ministerraad van ${planned_start}
-										</font>
-									</td>
-								</tr>
-							</table>
-						</td>
-					</tr>
-				</table>
+	            <td height="10" style="height:10px;line-height:0;">
+	
 	            </td>
-	            <td style="background: #FFFFFF;mso-table-lspace: 0;mso-table-rspace: 0;">
-				<table cellpadding="0" cellspacing="0" border="0" align="right" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
-					<tr>
-						<td class="no-mobile" style="background-color: #FFFFFF;text-align: right;mso-table-lspace: 0;mso-table-rspace: 0;">
-							
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-		<tr>
-			<td colspan="2" height="10" style="height: 10px;line-height: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
-				&nbsp;
-			</td>
+	          </tr>
+	          <tr>
+	            <td valign="middle" style="background:#FFFFFF;">
+	              <table cellpadding="0" cellspacing="0" border="0" align="left">
+	                <tr>
+	                  <td class="header-text" style="padding:30px 15px 30px 40px;background-color:#FFFFFF;">
+	                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+	                      <tr>
+	                        <td style="border-left:4px solid #ffe615;padding-left:15px;">
+	                          <font style="font-family:Calibri, Arial, sans-serif;font-weight:600;font-size:22px;line-height:22px;color:#333332;text-transform:uppercase;">
+														WEKELIJKSE NIEUWSBRIEF VAN DE VLAAMSE OVERHEID
+	                            <!-- END header_title editabe div -->
+	                          </font>
+	                          <br>
+	                          <font style="font-family:Calibri, Arial, sans-serif;font-size:18px;line-height:18px;color:#333332;">
+															${publication_date}
+	                          </font>
+	                        </td>
+	                      </tr>
+	                    </table>
+	                  </td>
+	                </tr>
+	              </table>
+	            </td>
+	            <td style="background:#FFFFFF;">
+	              <table cellpadding="0" cellspacing="0" border="0" align="right">
+	                <tr>
+	                  <td class="no-mobile" style="background-color:#FFFFFF;text-align:right;">
+	                    <img src="https://gallery.mailchimp.com/79d9da50466bd74e2bcf97d45/images/b7aa1a40-d195-4321-843d-513d9216ea7f.png" alt="">
+	                  </td>
+	                </tr>
+	              </table>
+	            </td>
+	          </tr>
+	          <tr>
+	            <td colspan="2" height="10" style="height:10px;line-height:0;">
+	
+	            </td>
 	          </tr>
 	        </table>
 	        <!-- end header basic -->
-				</div> <!-- END header_content editabe div -->
-				*|INTERESTED:Aard:Ik ontvang enkel beslissingen,Ik ontvang zowel persberichten als beslissingen|*
+	      </div> <!-- END header_content editabe div -->
 	      <div mc:edit="std_content00">
 	        <!-- content -->
 	        <table width="650" cellpadding="0" cellspacing="0" border="0" align="center" class="full-table" bgcolor="#FFFFFF" style="width:650px;">
@@ -229,16 +231,17 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) =>
 	              <table mc:repeatable="content" mc:variant="Sectie Titel" width="100%" cellpadding="0" cellspacing="0" border="0">
 	                <tr>
 	                  <td height="25" style="height:25px;line-height:0;">
-	
+										<h2 class="section-title" style="color:#333332;font-family:Calibri, Arial, sans-serif;font-weight:600;font-size:22px;text-transform:uppercase;margin:0;">
+										Beslissingen van de Vlaamse Regering - Ministerraad van ${planned_start}
+									</h2>
 	                  </td>
 	                </tr>
-								</table>
-								<br/>
+	              </table>
 	              <!-- end section title -->
 	              <!-- infoblock -->
 	              <table mc:repeatable="content" mc:variant="Infoblok" width="100%" cellpadding="0" cellspacing="0" border="0">
 	                <tr>
-	                  <td style="padding:5px 0 10px 0;">
+	                  <td style="padding:30px 0 10px 0;">
 	                    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#fff9e7" style="border:1px solid #e8ebee;">
 	                      <tr>
 	                        <td valign="top" width="1" style="padding:15px 0 15px 15px;">
@@ -246,7 +249,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) =>
 	                        </td>
 	                        <td valign="top" style="padding:15px;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;color:#666666;">
 	                          <font>
-	                            De documenten van deze ministerraad zullen beschikbaar zijn vanaf ${data_docs}
+	                            De documenten van deze ministerraad zullen beschikbaar zijn vanaf ${data_docs} om 14u
 	                            <br>
 	                            De documenten worden beschikbaar gesteld op <a href="http://www.vlaanderen.be/nl/vlaamse-regering/beslissingenvlaamseregering">http://www.vlaanderen.be/nl/vlaamse-regering/beslissingenvlaamseregering</a>
 	                          </font>
@@ -258,13 +261,12 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) =>
 	              </table>
 	              <!-- end infoblock -->
 	              <!-- textblock with introtext -->
-						
-						${decisionNewsItems.join('')}
-						*|END:INTERESTED|*
 
+	          ${news_items_HTML.join('')}
+
+	        </table>
 	      </div> <!-- END std_content00 editabe div -->
-				<!-- footer -->
-
+	      <!-- footer -->
 	      <table mc:repeatable="footer" mc:variant="Footer: Basic" width="650" cellpadding="0" cellspacing="0" border="0" align="center" class="full-table" bgcolor="#FFFFFF" style="width:650px;">
 	        <tr>
 	          <td class="footer-container" style="border-top:1px solid #cbd2da;padding:20px 55px;">
@@ -312,7 +314,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) =>
 	    </td>
 	  </tr>
 	  <tr>
-		*|REWARDS|*
+	    *|REWARDS|*
 	  </tr>
 	</table>
 	<!-- end wrapper table -->
