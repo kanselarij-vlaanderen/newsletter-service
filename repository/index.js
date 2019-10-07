@@ -89,17 +89,21 @@ const getNewsLetterByAgendaId = async (agendaId) => {
         PREFIX dct: <http://purl.org/dc/terms/>
         PREFIX prov: <http://www.w3.org/ns/prov#>
         PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
+        PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
 
-        SELECT DISTINCT ?title ?richtext ?text ?subtitle ?remark ?proposal (GROUP_CONCAT(?label;separator=",") AS ?themes) WHERE {
+        SELECT DISTINCT ?title ?richtext ?text ?subtitle ?remark ?proposal (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter WHERE {
             GRAPH <${targetGraph}> {
               ?agenda a besluitvorming:Agenda .
               ?agenda mu:uuid "${agendaId}" .
               ?agenda dct:hasPart ?agendaitem . 
               ?subcase besluitvorming:isGeagendeerdVia ?agendaitem .
-              ?subcase prov:generated  ?newsletter . 
-              ?agendaitem ext:wordtGetoondAlsMededeling ?remark .
+              ?subcase prov:generated ?newsletter . 
+              ?agendaitem ext:wordtGetoondAlsMededeling "false"^^xsd:boolean .
               ?newsletter ext:inNieuwsbrief "true"^^xsd:boolean . 
               OPTIONAL { ?agendaitem ext:prioriteit ?priority . }
+              OPTIONAL { ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
+              ?mandatee dct:title ?mandateeTitle .
+              ?mandatee mandaat:rangorde ?mandateePriority }
               OPTIONAL { ?newsletter besluitvorming:inhoud ?text . }
               OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
               OPTIONAL { ?newsletter ext:voorstelVan ?proposal . }
@@ -108,7 +112,7 @@ const getNewsLetterByAgendaId = async (agendaId) => {
              }
             OPTIONAL { ?agendaitem ext:agendapuntSubject ?themeURI . 
                        ?themeURI   skos:prefLabel        ?label . }
-        } GROUP BY ?title ?richtext ?text ?subtitle ?remark ?proposal ?priority
+        } GROUP BY ?title ?richtext ?text ?subtitle ?remark ?proposal ?priority ?mandateeTitle ?mandateePriority ?newsletter
         ORDER BY ?priority`;
   let data = await mu.query(query);
   return parseSparqlResults(data);

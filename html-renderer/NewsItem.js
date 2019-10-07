@@ -1,6 +1,7 @@
-export const getNewsItem = ({ title, proposal, richtext}, segmentConstraint) => {
+export const getNewsItem = ({ title, proposal, richtext, groupPriority}, segmentConstraint) => {
+  
+  // <!--${segmentConstraint.begin}-->
   return `
-  ${segmentConstraint.begin}
     <table mc:repeatable="content" mc:variant="Tekstblok met introtekst" width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td height="30" style="height:30px;line-height:0;">
@@ -20,6 +21,7 @@ export const getNewsItem = ({ title, proposal, richtext}, segmentConstraint) => 
         </td>
       </tr>
     </table>
-    ${segmentConstraint.end}
   `
+  //     <!--${segmentConstraint.end}>-->
+
 };
