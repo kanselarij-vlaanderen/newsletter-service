@@ -9,8 +9,9 @@ import { ok } from 'assert';
 
 moment.locale('nl');
 
-const fromName = 'Kaleidos';
-const replyTo = 'joachim.zeelmaekers@craftworkz.be';
+const fromName = process.env.MAILCHIMP_FROM_NAME || 'Kaleidos';
+const replyTo = process.env.MAILCHIMP_REPLY_TO || '';
+const list_id = process.env.MAILCHIMP_LIST_ID || 5480352579;
 
 const createCampaign = async (req, res) => {
   try {
@@ -59,11 +60,11 @@ const createCampaign = async (req, res) => {
     const campaign = {
       type: 'regular',
       recipients: {
-        list_id: '5480352579',
+        list_id: list_id,
       },
       settings: {
         subject_line: `Nieuwsbrief ${formattedStart}`,
-        preview_text: '',
+        preview_text: `Nieuwsbrief ${formattedStart}`,
         title: `Nieuwsbrief ${formattedStart}`,
         from_name: fromName,
         reply_to: replyTo,

@@ -8,15 +8,15 @@ export const getNewsItem = ({ title, proposal, richtext}, segmentConstraint) => 
       </tr>
       <tr>
         <td style="padding:5px 0 15px 0;">
-          <font style="color:#333332;font-family:Calibri, Arial, sans-serif;font-size:26px;font-weight:600;line-height:26px;">${title}</font>
+          <font style="color:#333332;font-family:Calibri, Arial, sans-serif;font-size:26px;font-weight:600;line-height:26px;">${title || ''}</font>
           <p class="intro-text" style="color:#666666;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;margin-top:5px;margin-bottom:0;">
-            ${proposal}
+            ${proposal || ''}
           </p>
         </td>
       </tr>
       <tr>
         <td style="color:#666666;font-family:Calibri, Arial, sans-serif;font-size:17px;line-height:26px;">
-          ${richtext}
+          ${richtext || ''}
         </td>
       </tr>
     </table>
