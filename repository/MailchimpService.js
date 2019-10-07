@@ -32,7 +32,7 @@ const createCampaign = async (req, res) => {
     }
 
     const reducedNewsletters = reduceNewslettersToMandateesByPriority(newsletter);
-    // console.log(reducedNewsletters.length)
+
     const news_items_HTML = reducedNewsletters.map((item) => {
       let segmentConstraint = { begin: '', end: '' };
       if (item && item.themes) {
@@ -101,7 +101,7 @@ const deleteCampaign = (id) => {
 };
 
 const createBeginSegment = (themesString, segmentPrefix = "Thema's") => {
-  return `*|INTERESTED:${segmentPrefix}:${themesString}|*`;
+  return `*|INTERESTED:${segmentPrefix}:${[...new Set(themesString.split(","))].join(',')}|*`;
 };
 
 const createEndSegment = () => {

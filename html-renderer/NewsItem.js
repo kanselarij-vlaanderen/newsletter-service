@@ -1,7 +1,8 @@
-export const getNewsItem = ({ title, proposal, richtext, groupPriority}, segmentConstraint) => {
-  
-  // <!--${segmentConstraint.begin}-->
+export const getNewsItem = ({ title, proposal, richtext, newsletter}, segmentConstraint) => {
+  console.log(`CREATING NEWSITEM URI: ${newsletter}`)
+  console.log(`USING SEGMENT: ${segmentConstraint.begin} CONTENT ${segmentConstraint.end}`)
   return `
+    ${segmentConstraint.begin}
     <table mc:repeatable="content" mc:variant="Tekstblok met introtekst" width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td height="30" style="height:30px;line-height:0;">
@@ -21,7 +22,6 @@ export const getNewsItem = ({ title, proposal, richtext, groupPriority}, segment
         </td>
       </tr>
     </table>
+    ${segmentConstraint.end}
   `
-  //     <!--${segmentConstraint.end}>-->
-
 };
