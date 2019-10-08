@@ -24,13 +24,16 @@ app.get('/', (req, res) => {
   return repository.getMostRecentNewsletter(req, res);
 });
 
-app.post('/sendCampaign/:id', async (req, res) => {
+app.post('/sendCampaign/:id', async (req, res, next) => {
   const campaign_id = req.params.id;
-  const sendCampaign = await mailchimp.post({
-    path: `/campaigns/${campaign_id}/actions/send`,
-  });
-
-  res.send({ sendCampaign });
+  try {
+    const sendCampaign = await mailchimp.post({
+      path: `/campaigns/${campaign_id}/actions/send`,
+    });
+    res.send({ sendCampaign });
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.delete('/deleteCampaign/:id', async (req, res) => {

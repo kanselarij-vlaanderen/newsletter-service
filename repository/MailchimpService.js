@@ -47,7 +47,7 @@ const createCampaign = async (req, res) => {
     let html = await createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate);
 
     const template = {
-      name: `Nieuwsbrief ${formattedStart}`,
+      name: `Beslissingen van ${formattedStart}`,
       html,
     };
 
@@ -63,9 +63,9 @@ const createCampaign = async (req, res) => {
         list_id: list_id,
       },
       settings: {
-        subject_line: `Nieuwsbrief ${formattedStart}`,
-        preview_text: `Nieuwsbrief ${formattedStart}`,
-        title: `Nieuwsbrief ${formattedStart}`,
+        subject_line: `Beslissingen van ${formattedStart}`,
+        preview_text: `Beslissingen van ${formattedStart}`,
+        title: `Beslissingen van ${formattedStart}`,
         from_name: fromName,
         reply_to: replyTo,
         inline_css: true,
@@ -79,7 +79,7 @@ const createCampaign = async (req, res) => {
     });
 
     const { web_id, archive_url } = createdCampagne;
-
+    console.log(`Successfully created mailchimp-campaign with id:${createdCampagne}`);
     res.send({
       status: ok,
       statusCode: 200,
@@ -90,8 +90,8 @@ const createCampaign = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
-    res.send({ status: ok, statusCode: 500, body: { error } });
+    console.log(`CREATE_CAMPAIGN_ERROR:`, error);
+    res.status(500).send(error);
   }
 };
 
@@ -101,9 +101,9 @@ const deleteCampaign = (id) => {
   });
 };
 
-/** This function creates the beginning of a merge-tag-block. 
+/** This function creates the beginning of a merge-tag-block.
  * https://mailchimp.com/help/use-conditional-merge-tag-blocks/#Use_Groups_with_Conditional_Merge_Tag_Blocks
-*/
+ */
 const createBeginSegment = (themesString, segmentPrefix = "Thema's") => {
   return `*|INTERESTED:${segmentPrefix}:${[...new Set(themesString.split(','))].join(',')}|*`;
 };
