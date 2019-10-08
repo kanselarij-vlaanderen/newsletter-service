@@ -101,7 +101,7 @@ const deleteCampaign = (id) => {
 };
 
 const createBeginSegment = (themesString, segmentPrefix = "Thema's") => {
-  return `*|INTERESTED:${segmentPrefix}:${[...new Set(themesString.split(","))].join(',')}|*`;
+  return `*|INTERESTED:${segmentPrefix}:${[...new Set(themesString.split(','))].join(',')}|*`;
 };
 
 const createEndSegment = () => {
@@ -119,8 +119,8 @@ const createEndSegment = () => {
  * This is different from the normal priority of the agendaitems in the agenda.
  */
 const reduceNewslettersToMandateesByPriority = (newsletter) => {
-  return newsletter
-    .reduce((uniqueNewsletters, newsItem) => {
+  return setCalculatedPrioritiesOfNewsletter(
+    newsletter.reduce((uniqueNewsletters, newsItem) => {
       const foundItem = findExistingItem(uniqueNewsletters, newsItem);
       if (foundItem) {
         const indexOf = uniqueNewsletters.indexOf(foundItem);
@@ -138,6 +138,11 @@ const reduceNewslettersToMandateesByPriority = (newsletter) => {
       }
       return uniqueNewsletters;
     }, [])
+  );
+};
+
+const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
+  uniqueNewsletters
     .map((newsItemWithMandatees) => {
       const sortedMandatees = newsItemWithMandatees.mandatees.sort(
         (a, b) => a.priority - b.priority
@@ -164,6 +169,7 @@ const reduceNewslettersToMandateesByPriority = (newsletter) => {
       return newsItemWithMandatees;
     })
     .sort((a, b) => a.groupPriority - b.groupPriority);
+  return uniqueNewsletters;
 };
 
 const findExistingItem = (list, item) => {

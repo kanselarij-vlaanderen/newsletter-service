@@ -111,7 +111,7 @@ const getNewsLetterByAgendaId = async (agendaId) => {
               OPTIONAL { ?newsletter dct:title ?title . }
              }
             OPTIONAL { ?agendaitem ext:agendapuntSubject ?themeURI . 
-                       ?themeURI   skos:prefLabel        ?label . }
+                       ?themeURI   ext:mailchimpId        ?label . }
         } GROUP BY ?title ?richtext ?text ?subtitle ?remark ?proposal ?priority ?mandateeTitle ?mandateePriority ?newsletter
         ORDER BY ?priority`;
   let data = await mu.query(query);
