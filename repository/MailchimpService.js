@@ -35,6 +35,7 @@ const createCampaign = async (req, res) => {
 
     const news_items_HTML = reducedNewsletters.map((item) => {
       let segmentConstraint = { begin: '', end: '' };
+
       if (item && item.themes) {
         segmentConstraint = {
           begin: createBeginSegment(item.themes),
@@ -100,6 +101,9 @@ const deleteCampaign = (id) => {
   });
 };
 
+/** This function creates the beginning of a merge-tag-block. 
+ * https://mailchimp.com/help/use-conditional-merge-tag-blocks/#Use_Groups_with_Conditional_Merge_Tag_Blocks
+*/
 const createBeginSegment = (themesString, segmentPrefix = "Thema's") => {
   return `*|INTERESTED:${segmentPrefix}:${[...new Set(themesString.split(','))].join(',')}|*`;
 };
