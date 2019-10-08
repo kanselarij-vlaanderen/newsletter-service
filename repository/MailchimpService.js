@@ -9,9 +9,16 @@ import { ok } from 'assert';
 
 moment.locale('nl');
 
-const fromName = process.env.MAILCHIMP_FROM_NAME || 'Kaleidos';
-const replyTo = process.env.MAILCHIMP_REPLY_TO || '';
-const list_id = process.env.MAILCHIMP_LIST_ID || 5480352579;
+const DECISION_STRINGS = [
+  'Ik ontvang enkel beslissingen',
+  'Ik ontvang zowel persberichten als beslissingen',
+];
+
+const FROM_NAME = process.env.MAILCHIMP_FROM_NAME || 'Kaleidos';
+const REPLY_TO = process.env.MAILCHIMP_REPLY_TO || '';
+const LIST_ID = process.env.MAILCHIMP_LIST_ID || 5480352579;
+const INTEREST_CATEGORY_ID = process.env.MAILCHIMP_INTEREST_CATEGORY_ID || 'fe04dcefd7';
+const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_INTEREST_CATEGORY_ID || '4757bb85ec';
 
 const createCampaign = async (req, res) => {
   try {
@@ -32,18 +39,21 @@ const createCampaign = async (req, res) => {
     }
 
     const reducedNewsletters = reduceNewslettersToMandateesByPriority(newsletter);
-
+    let allThemesOfNewsletter = [];
     const news_items_HTML = reducedNewsletters.map((item) => {
       let segmentConstraint = { begin: '', end: '' };
-
       if (item && item.themes) {
+        let uniqueThemes = [...new Set(item.themes.split(','))];
+        allThemesOfNewsletter.push(...uniqueThemes);
+
         segmentConstraint = {
-          begin: createBeginSegment(item.themes),
+          begin: createBeginSegment(uniqueThemes.join(',')),
           end: createEndSegment(),
         };
       }
       return getNewsItem(item, segmentConstraint);
     });
+
     let html = await createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate);
 
     const template = {
@@ -56,22 +66,11 @@ const createCampaign = async (req, res) => {
       body: template,
     });
 
-    const { id } = created_template;
-    const campaign = {
-      type: 'regular',
-      recipients: {
-        list_id: list_id,
-      },
-      settings: {
-        subject_line: `Beslissingen van ${formattedStart}`,
-        preview_text: `Beslissingen van ${formattedStart}`,
-        title: `Beslissingen van ${formattedStart}`,
-        from_name: fromName,
-        reply_to: replyTo,
-        inline_css: true,
-        template_id: id,
-      },
-    };
+    const campaign = await createNewCampaignObject(
+      created_template,
+      formattedStart,
+      allThemesOfNewsletter
+    );
 
     const createdCampagne = await mailchimp.post({
       path: '/campaigns',
@@ -105,7 +104,7 @@ const deleteCampaign = (id) => {
  * https://mailchimp.com/help/use-conditional-merge-tag-blocks/#Use_Groups_with_Conditional_Merge_Tag_Blocks
  */
 const createBeginSegment = (themesString, segmentPrefix = "Thema's") => {
-  return `*|INTERESTED:${segmentPrefix}:${[...new Set(themesString.split(','))].join(',')}|*`;
+  return `*|INTERESTED:${segmentPrefix}:${themesString}|*`;
 };
 
 const createEndSegment = () => {
@@ -180,3 +179,78 @@ const findExistingItem = (list, item) => {
   return list.find((listItem) => listItem.newsletter === item.newsletter);
 };
 export { deleteCampaign, createCampaign };
+
+const createThemesCondition = async (allThemesOfNewsletter) => {
+  const allUniqueThemesOfNewsletter = [...new Set(allThemesOfNewsletter)];
+  const interests = await fetchInterestsByIdFromLists(INTEREST_CATEGORY_ID);
+  const interestMapping = interests.filter((theme) => {
+    if (allUniqueThemesOfNewsletter.includes(theme.name)) {
+      return theme;
+    }
+  });
+  return {
+    condition_type: 'Interests',
+    field: `interests-${INTEREST_CATEGORY_ID}`,
+    op: 'interestcontains',
+    value: interestMapping.map((item) => item.id),
+  };
+};
+
+const createKindCondition = async () => {
+  const interestedKinds = await fetchInterestsByIdFromLists(KIND_CATEGORY_ID);
+  const interestKindMapping = interestedKinds.filter((interest) => {
+    if (DECISION_STRINGS.includes(interest.name)) {
+      return interest;
+    }
+  });
+  return {
+    condition_type: 'Interests',
+    field: `interests-${KIND_CATEGORY_ID}`,
+    op: 'interestcontains',
+    value: interestKindMapping.map((item) => item.id),
+  };
+};
+
+const createNewCampaignObject = async (created_template, formattedStart, allThemesOfNewsletter) => {
+  const { id } = created_template;
+  const themeCondition = await createThemesCondition(allThemesOfNewsletter);
+  const kindCondition = await createKindCondition();
+  console.log('CONDITIONS_USED:', JSON.stringify([themeCondition, kindCondition]));
+  const campaign = {
+    type: 'regular',
+    recipients: {
+      list_id: LIST_ID,
+      segment_opts: {
+        match: 'all',
+        conditions: [themeCondition, kindCondition],
+      },
+    },
+    settings: {
+      subject_line: `Beslissingen van ${formattedStart}`,
+      preview_text: `Beslissingen van ${formattedStart}`,
+      title: `Beslissingen van ${formattedStart}`,
+      from_name: FROM_NAME,
+      reply_to: REPLY_TO,
+      inline_css: true,
+      template_id: id,
+    },
+  };
+
+  console.log('CREATING CAMPAIGN OBJECT', JSON.stringify(campaign));
+
+  return campaign;
+};
+
+/**
+ * This function fetches all interests from the mailchimp API
+ * By defined LIST_ID and INTEREST_CATEGORY_ID we create a possibility to
+ * use the same code for all environments based on these defined env-variables.
+ * Returns [{id: string, name: string}]
+ * optional parameter ?count:integer default:100
+ */
+const fetchInterestsByIdFromLists = async (category_id, count = 100) => {
+  const interests = await mailchimp.get({
+    path: `lists/${LIST_ID}/interest-categories/${category_id}/interests?count=${count}`,
+  });
+  return interests.interests;
+};
