@@ -1,24 +1,23 @@
 const { createNewsLetter } = require('../html-renderer/NewsLetter');
 const { getNewsItem } = require('../html-renderer/NewsItem');
+import { ok } from 'assert';
 
 const repository = require('./index.js');
 const moment = require('moment');
 const Mailchimp = require('mailchimp-api-v3');
+
 const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
-import { ok } from 'assert';
-
-moment.locale('nl');
-
+const FROM_NAME = process.env.MAILCHIMP_FROM_NAME || 'Kaleidos';
+const REPLY_TO = process.env.MAILCHIMP_REPLY_TO || '';
+const LIST_ID = process.env.MAILCHIMP_LIST_ID || 5480352579;
+const INTEREST_CATEGORY_ID = process.env.MAILCHIMP_INTEREST_CATEGORY_ID || 'fe04dcefd7';
+const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID || '4757bb85ec';
 const DECISION_STRINGS = [
   'Ik ontvang enkel beslissingen',
   'Ik ontvang zowel persberichten als beslissingen',
 ];
 
-const FROM_NAME = process.env.MAILCHIMP_FROM_NAME || 'Kaleidos';
-const REPLY_TO = process.env.MAILCHIMP_REPLY_TO || '';
-const LIST_ID = process.env.MAILCHIMP_LIST_ID || 5480352579;
-const INTEREST_CATEGORY_ID = process.env.MAILCHIMP_INTEREST_CATEGORY_ID || 'fe04dcefd7';
-const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_INTEREST_CATEGORY_ID || '4757bb85ec';
+moment.locale('nl');
 
 const createCampaign = async (req, res) => {
   try {
@@ -78,7 +77,7 @@ const createCampaign = async (req, res) => {
     });
 
     const { web_id, archive_url } = createdCampagne;
-    console.log(`Successfully created mailchimp-campaign with id:${createdCampagne}`);
+    console.log(`Successfully created mailchimp-campaign with id:${web_id}`);
     res.send({
       status: ok,
       statusCode: 200,
@@ -237,7 +236,6 @@ const createNewCampaignObject = async (created_template, formattedStart, allThem
   };
 
   console.log('CREATING CAMPAIGN OBJECT', JSON.stringify(campaign));
-
   return campaign;
 };
 
@@ -250,7 +248,7 @@ const createNewCampaignObject = async (created_template, formattedStart, allThem
  */
 const fetchInterestsByIdFromLists = async (category_id, count = 100) => {
   const interests = await mailchimp.get({
-    path: `lists/${LIST_ID}/interest-categories/${category_id}/interests?count=${count}`,
+    path: `lists/${LIST_ID}/interest-categories/${category_id}/interests?count=${count}`
   });
   return interests.interests;
 };
