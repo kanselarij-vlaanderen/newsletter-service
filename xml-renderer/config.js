@@ -8,7 +8,7 @@ const belga_url = 'webserviceurl.belga.be';
 const title = "Title ";
 const subtitle = "Subtitle";
 
-const createXMLConfig = (htmlContent) => {
+const createXMLConfig = (htmlContent, sentAt, identicationDate) => {
   return [
     {
       NewsML: [
@@ -87,7 +87,7 @@ const createXMLConfig = (htmlContent) => {
                 },
               ],
             },
-            { DateAndTime: '20190410T162800+0200' },
+            { DateAndTime: sentAt },
           ],
         },
         {
@@ -99,7 +99,7 @@ const createXMLConfig = (htmlContent) => {
                     {
                       ProviderId: 'nieuws.vlaanderen.be',
                     },
-                    { DateId: '20170512' },
+                    { DateId: identicationDate },
                     { NewsItemId: '2000000128634' },
                     {
                       RevisionId: [
@@ -114,7 +114,7 @@ const createXMLConfig = (htmlContent) => {
                     },
                     {
                       PublicIdentifier:
-                        'urn:newsml:nieuws.vlaanderen.be:20170512:2000000128634:11N',
+                        `urn:newsml:nieuws.vlaanderen.be:${identicationDate}:2000000128634:11N`,
                     },
                   ],
                 },
@@ -131,10 +131,10 @@ const createXMLConfig = (htmlContent) => {
                   },
                 },
                 {
-                  FirstCreated: '20170510T135609+0200',
+                  FirstCreated: sentAt,
                 },
                 {
-                  ThisRevisionCreated: '20190410T162759+0200',
+                  ThisRevisionCreated: sentAt,
                 },
                 {
                   Status: {

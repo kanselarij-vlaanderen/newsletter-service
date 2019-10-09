@@ -58,6 +58,16 @@ const getAgendaInformation = async (agendaId) => {
   return parseSparqlResults(data);
 };
 
+/**
+ *  Fetches all date information from an agenda.
+ *  @param agendaId:string
+ *  @returns an object: {
+ *  formattedStart,           --> Formatted start date of a meeting | DD MMMM  YYYY
+ *  formattedDocumentDate,    --> Formatted document release date   | DD MMMM YYYY [om] HH:mm
+ *  formattedPublicationDate, --> Formatted publication date        | MMMM Do YYYY
+ *  publication_date          --> non-formatted (raw) publication date 
+ *  }
+ */
 const getAgendaNewsletterInformation = async (agendaId) => {
   let agendaInformation = await getAgendaInformation(agendaId);
   if (!agendaInformation || !agendaInformation[0]) {
@@ -75,7 +85,7 @@ const getAgendaNewsletterInformation = async (agendaId) => {
     new Date(publication_date).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
   ).format('MMMM Do YYYY');
 
-  return { formattedStart, formattedDocumentDate, formattedPublicationDate };
+  return { formattedStart, formattedDocumentDate, formattedPublicationDate, publication_date };
 };
 
 const getNewsLetterByAgendaId = async (agendaId) => {
