@@ -101,7 +101,7 @@ const getNewsLetterByAgendaId = async (agendaId) => {
         PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
         PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
 
-        SELECT DISTINCT ?title ?richtext ?text ?subtitle ?remark ?proposal (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter WHERE {
+        SELECT DISTINCT ?title ?richtext ?remark ?proposal (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter WHERE {
             GRAPH <${targetGraph}> {
               ?agenda a besluitvorming:Agenda .
               ?agenda mu:uuid "${agendaId}" .
@@ -110,20 +110,16 @@ const getNewsLetterByAgendaId = async (agendaId) => {
               ?subcase prov:generated ?newsletter . 
               ?agendaitem ext:wordtGetoondAlsMededeling "false"^^xsd:boolean .
               ?newsletter ext:inNieuwsbrief "true"^^xsd:boolean . 
-              OPTIONAL { ?agendaitem ext:prioriteit ?priority . }
               OPTIONAL { ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
               ?mandatee dct:title ?mandateeTitle .
               ?mandatee mandaat:rangorde ?mandateePriority }
-              OPTIONAL { ?newsletter besluitvorming:inhoud ?text . }
               OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
               OPTIONAL { ?newsletter ext:voorstelVan ?proposal . }
-              OPTIONAL { ?newsletter dbpedia:subtitle ?subtitle . }
               OPTIONAL { ?newsletter dct:title ?title . }
              }
             OPTIONAL { ?agendaitem ext:agendapuntSubject ?themeURI . 
                        ?themeURI   ext:mailchimpId        ?label . }
-        } GROUP BY ?title ?richtext ?text ?subtitle ?remark ?proposal ?priority ?mandateeTitle ?mandateePriority ?newsletter
-        ORDER BY ?priority`;
+        } GROUP BY ?title ?richtext ?remark ?proposal ?priority ?mandateeTitle ?mandateePriority ?newsletter`;
   let data = await mu.query(query);
   return parseSparqlResults(data);
 };
