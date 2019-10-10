@@ -1,9 +1,9 @@
 /**
- * Creates a mailchimp html-template for the mailchimp service 
+ * Creates a mailchimp html-template for the mailchimp service
  * based on a list of newsitems (./NewsItem.js).
- * @param [NewsItem] decisionNewsItems 
- * @param datestring planned_start 
- * @param datestring data_docs 
+ * @param [NewsItem] decisionNewsItems
+ * @param datestring planned_start
+ * @param datestring data_docs
  */
 export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) => {
   return `
@@ -194,6 +194,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) =>
 					<tr>
 						<td class="header-text" style="padding: 30px 15px 30px 40px;background-color: #FFFFFF;mso-table-lspace: 0;mso-table-rspace: 0;">
 							<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
+							*|INTERESTED:Frequentie:Ik ontvang nieuwsbrief op moment van publicatie|*
 								<tr>
 									<td style="border-left: 4px solid #ffe615;padding-left: 15px;mso-table-lspace: 0;mso-table-rspace: 0;">
 										<font style="font-family: Calibri, Arial, sans-serif; font-weight: 600; font-size: 22px; line-height: 22px; color: #333332; text-transform: uppercase;">Beslissingen van de Vlaamse Regering</font>
@@ -202,6 +203,19 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) =>
 											Ministerraad van ${planned_start}
 										</font>
 									</td>
+				*|END:INTERESTED|*
+				*|INTERESTED:Frequentie:Ik ontvang nieuwsbrief wekelijks|*
+									<td style="border-left:4px solid #ffe615;padding-left:15px;">
+	                          <font style="font-family:Calibri, Arial, sans-serif;font-weight:600;font-size:22px;line-height:22px;color:#333332;text-transform:uppercase;">
+														WEKELIJKSE NIEUWSBRIEF VAN DE VLAAMSE OVERHEID
+	                            <!-- END header_title editabe div -->
+	                          </font>
+	                          <br>
+	                          <font style="font-family:Calibri, Arial, sans-serif;font-size:18px;line-height:18px;color:#333332;">
+															${planned_start}
+	                          </font>
+													</td>
+							*|END:INTERESTED|*
 								</tr>
 							</table>
 						</td>
@@ -228,18 +242,35 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) =>
 				</div> <!-- END header_content editabe div -->
 				*|INTERESTED:Aard:Ik ontvang enkel beslissingen,Ik ontvang zowel persberichten als beslissingen|*
 	      <div mc:edit="std_content00">
-	        <!-- content -->
-	        <table width="650" cellpadding="0" cellspacing="0" border="0" align="center" class="full-table" bgcolor="#FFFFFF" style="width:650px;">
-	          <tr>
-	            <td class="content-container" style="padding:20px 55px 40px 55px;">
-	              <!-- section title -->
-	              <table mc:repeatable="content" mc:variant="Sectie Titel" width="100%" cellpadding="0" cellspacing="0" border="0">
-	                <tr>
-	                  <td height="25" style="height:25px;line-height:0;">
-	
-	                  </td>
-	                </tr>
-								</table>
+					<!-- content -->
+					<table width="650" cellpadding="0" cellspacing="0" border="0" align="center" class="full-table" bgcolor="#FFFFFF" style="width:650px;">
+					<tr>
+						<td class="content-container" style="padding:20px 55px 40px 55px;">
+	        <!-- section title -->
+                    <table mc:repeatable="content" mc:variant="Sectie Titel" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td height="25" style="height:25px;line-height:0;">
+                           
+                        </td>
+											</tr>
+											*|INTERESTED:Frequentie:Ik ontvang nieuwsbrief wekelijks|*
+                      <tr>
+                        <td width="100%" colspan="2">
+                          <h2 class="section-title" style="color:#333332;font-family:Calibri, Arial, sans-serif;font-weight:600;font-size:22px;text-transform:uppercase;margin:0;">
+                            Beslissingen van de Vlaamse Regering - Ministerraad van ${planned_start}
+                          </h2>
+                        </td>
+											</tr>
+                      <tr>
+                        <td width="130" style="border-bottom:3px solid #333332;line-height:0;">
+                           
+                        </td>
+                        <td class="section-title-border" width="410" style="border-bottom:3px solid #cbd2da;line-height:0;">
+                           
+												</td>
+												*|END:INTERESTED|*
+                      </tr>
+										</table>
 								<br/>
 	              <!-- end section title -->
 	              <!-- infoblock -->

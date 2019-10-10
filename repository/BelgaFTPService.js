@@ -4,6 +4,7 @@ const xml = require('xml');
 // const config = require('./config');
 const repository = require('./index.js');
 const xmlConfig = require('../xml-renderer/config.js');
+const helper = require('../repository/helpers');
 
 const user = 'vlatest';
 const password = 'alvalv';
@@ -11,8 +12,7 @@ const host = 'ftp.belga.be';
 const port = 21; // this is the default port for FTP
 import moment from 'moment';
 let client;
-console.log()
-
+console.log();
 
 export default class BelgaService {
   constructor() {
@@ -48,17 +48,23 @@ export default class BelgaService {
   deNormelizeId() {}
 
   async generateXML(agendaId) {
-    const { formattedStart,
-      publication_date, agendaURI } = await repository.getAgendaNewsletterInformation(agendaId);
+    const {
+      formattedStart,
+      publication_date,
+      agendaURI,
+    } = await repository.getAgendaNewsletterInformation(agendaId);
     const data = await repository.getNewsLetterByAgendaId(agendaURI);
     const content = await createNewsletterString(data);
-   
-    const sentAt = moment.utc().utcOffset("+02:00").format('YYYYMMDDTHHmmssZZ');
+
+    const sentAt = moment
+      .utc()
+      .utcOffset('+02:00')
+      .format('YYYYMMDDTHHmmssZZ');
     const identicationDate = moment(publication_date).format('YYYYMMDD');
-    const XMLCONFIG = xmlConfig.createXMLConfig(content,sentAt, identicationDate);
+    const XMLCONFIG = xmlConfig.createXMLConfig(content, sentAt, identicationDate);
     const xmlString = xml(XMLCONFIG, { declaration: true });
     const path = `${__dirname}/../generated-xmls/Beslissingen_van_de_ministerraad_van_${formattedStart}.xml`;
-    
+
     const output = fs.createWriteStream(path);
     output.write(xmlString);
     return new Promise((resolve, reject) => {
@@ -75,23 +81,25 @@ export default class BelgaService {
   }
 }
 
+/**
+ * Returns a joined list of all items formatted in a readable string
+ * @param {title: string, proposal: string, richtext:string} data -> list of items
+ */
 const createNewsletterString = (data) => {
   let agendaitems = [];
-  let announcements = [];
+  const reducedNewsletters = helper.reduceNewslettersToMandateesByPriority(data);
 
-  data.map((newsletterItem) => {
-    if (newsletterItem.remark) {
-      announcements.push(
-        `${newsletterItem.proposal || ''}${newsletterItem.title || ''} <br/> ${
-          newsletterItem.richtext
-        }`
-      );
-    } else {
-      agendaitems.push(
-        `${newsletterItem.proposal || ''}${newsletterItem.title ||
-          ''} <br/> ${newsletterItem.richtext || ''}`
-      );
-    }
+  reducedNewsletters.map((newsletterItem) => {
+    agendaitems.push(
+      `
+      ${newsletterItem.title || ''}
+      ${newsletterItem.proposal || ''}
+      ${newsletterItem.richtext || ''}
+      `.replace(/^\s+|\s+$/gm, '')
+    );
   });
-  return agendaitems.join('<br/>') + announcements.join('<br/>');
+  return agendaitems
+    .join(`\n`)
+    .replace(/(?=<!--)([\s\S]*?)-->/gm, '')
+    .replace(/\n&nbsp;*/gm, '');
 };
