@@ -109,7 +109,8 @@ const getNewsLetterByAgendaId = async (agendaId) => {
               ?subcase besluitvorming:isGeagendeerdVia ?agendaitem .
               ?subcase prov:generated ?newsletter . 
               ?agendaitem ext:wordtGetoondAlsMededeling "false"^^xsd:boolean .
-              ?newsletter ext:inNieuwsbrief "true"^^xsd:boolean . 
+              ?agendaitem ext:prioriteit ?priority . 
+              ?newsletter ext:inNieuwsbrief "true"^^xsd:boolean .
               OPTIONAL { ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
               ?mandatee dct:title ?mandateeTitle .
               ?mandatee mandaat:rangorde ?mandateePriority }
@@ -119,7 +120,8 @@ const getNewsLetterByAgendaId = async (agendaId) => {
              }
             OPTIONAL { ?agendaitem ext:agendapuntSubject ?themeURI . 
                        ?themeURI   ext:mailchimpId        ?label . }
-        } GROUP BY ?title ?richtext ?remark ?proposal ?priority ?mandateeTitle ?mandateePriority ?newsletter`;
+        } GROUP BY ?title ?richtext ?remark ?proposal ?priority ?mandateeTitle ?mandateePriority ?newsletter
+        ORDER BY ?priority`;
   let data = await mu.query(query);
   return parseSparqlResults(data);
 };
