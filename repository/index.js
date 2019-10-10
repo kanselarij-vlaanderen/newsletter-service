@@ -43,7 +43,7 @@ const getAgendaInformation = async (agendaId) => {
         PREFIX prov: <http://www.w3.org/ns/prov#>
         PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
 
-        SELECT DISTINCT ?planned_start ?data_docs ?publication_date WHERE {
+        SELECT DISTINCT ?agenda ?planned_start ?data_docs ?publication_date WHERE {
             GRAPH <${targetGraph}> {
               ?agenda a besluitvorming:Agenda .
               ?agenda mu:uuid "${agendaId}" .
@@ -65,7 +65,8 @@ const getAgendaInformation = async (agendaId) => {
  *  formattedStart,           --> Formatted start date of a meeting | DD MMMM  YYYY
  *  formattedDocumentDate,    --> Formatted document release date   | DD MMMM YYYY [om] HH:mm
  *  formattedPublicationDate, --> Formatted publication date        | MMMM Do YYYY
- *  publication_date          --> non-formatted (raw) publication date 
+ *  publication_date          --> non-formatted (raw) publication date
+ *  agendaURI                 --> URI of the agenda (use this instead of id to speed up queries)
  *  }
  */
 const getAgendaNewsletterInformation = async (agendaId) => {
@@ -73,7 +74,7 @@ const getAgendaNewsletterInformation = async (agendaId) => {
   if (!agendaInformation || !agendaInformation[0]) {
     return {};
   }
-  const { planned_start, publication_date, data_docs } = agendaInformation[0];
+  const { planned_start, publication_date, data_docs, agenda } = agendaInformation[0];
 
   const formattedStart = `${moment(
     new Date(planned_start).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
@@ -84,11 +85,11 @@ const getAgendaNewsletterInformation = async (agendaId) => {
   const formattedPublicationDate = moment(
     new Date(publication_date).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
   ).format('MMMM Do YYYY');
-
-  return { formattedStart, formattedDocumentDate, formattedPublicationDate, publication_date };
+    console.log('FETCHED DATA FROM AGENDA WITH URI: ', agenda);
+  return { formattedStart, formattedDocumentDate, formattedPublicationDate, publication_date, agendaURI: agenda };
 };
 
-const getNewsLetterByAgendaId = async (agendaId) => {
+const getNewsLetterByAgendaId = async (agendaURI) => {
   const query = `
         PREFIX dct: <http://purl.org/dc/terms/>
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
@@ -103,13 +104,10 @@ const getNewsLetterByAgendaId = async (agendaId) => {
 
         SELECT DISTINCT ?title ?richtext ?remark ?proposal (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter WHERE {
             GRAPH <${targetGraph}> {
-              ?agenda a besluitvorming:Agenda .
-              ?agenda mu:uuid "${agendaId}" .
-              ?agenda dct:hasPart ?agendaitem . 
+              <${agendaURI}> dct:hasPart ?agendaitem . 
               ?subcase besluitvorming:isGeagendeerdVia ?agendaitem .
               ?subcase prov:generated ?newsletter . 
               ?agendaitem ext:wordtGetoondAlsMededeling "false"^^xsd:boolean .
-              ?agendaitem ext:prioriteit ?priority . 
               ?newsletter ext:inNieuwsbrief "true"^^xsd:boolean .
               OPTIONAL { ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
               ?mandatee dct:title ?mandateeTitle .
@@ -120,8 +118,7 @@ const getNewsLetterByAgendaId = async (agendaId) => {
              }
             OPTIONAL { ?agendaitem ext:agendapuntSubject ?themeURI . 
                        ?themeURI   ext:mailchimpId        ?label . }
-        } GROUP BY ?title ?richtext ?remark ?proposal ?priority ?mandateeTitle ?mandateePriority ?newsletter
-        ORDER BY ?priority`;
+        } GROUP BY ?title ?richtext ?remark ?proposal ?mandateeTitle ?mandateePriority ?newsletter`;
   let data = await mu.query(query);
   return parseSparqlResults(data);
 };
@@ -130,11 +127,13 @@ const getMostRecentNewsletter = async (req, res) => {
   try {
     const response = await getAgendaWhereisMostRecentAndFinal();
     const { agenda_uuid } = response[0] || { agenda_uuid: null };
-
     if (!agenda_uuid) {
       res.send({ status: ok, statusCode: 404, message: 'Newsletter not found.' });
     } else {
-      let newsletter = await getNewsLetterByAgendaId(agenda_uuid);
+      const {
+        agendaURI
+      } = await repository.getAgendaNewsletterInformation(agenda_uuid);
+      let newsletter = await getNewsLetterByAgendaId(agendaURI);
       if (!newsletter) {
         throw new Error('no newsletters present');
       }

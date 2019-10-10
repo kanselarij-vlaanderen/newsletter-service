@@ -48,10 +48,11 @@ export default class BelgaService {
   deNormelizeId() {}
 
   async generateXML(agendaId) {
-    const data = await repository.getNewsLetterByAgendaId(agendaId);
-    const content = await createNewsletterString(data);
     const { formattedStart,
-      publication_date } = await repository.getAgendaNewsletterInformation(agendaId);
+      publication_date, agendaURI } = await repository.getAgendaNewsletterInformation(agendaId);
+    const data = await repository.getNewsLetterByAgendaId(agendaURI);
+    const content = await createNewsletterString(data);
+   
     const sentAt = moment.utc().utcOffset("+02:00").format('YYYYMMDDTHHmmssZZ');
     const identicationDate = moment(publication_date).format('YYYYMMDD');
     const XMLCONFIG = xmlConfig.createXMLConfig(content,sentAt, identicationDate);

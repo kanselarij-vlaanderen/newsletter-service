@@ -30,9 +30,10 @@ const createCampaign = async (req, res) => {
       formattedStart,
       formattedDocumentDate,
       formattedPublicationDate,
+      agendaURI
     } = await repository.getAgendaNewsletterInformation(agendaId);
 
-    let newsletter = await repository.getNewsLetterByAgendaId(agendaId);
+    let newsletter = await repository.getNewsLetterByAgendaId(agendaURI);
     if (!newsletter || !newsletter[0]) {
       throw new Error('No newsletters present!');
     }
@@ -50,6 +51,7 @@ const createCampaign = async (req, res) => {
           end: createEndSegment(),
         };
       }
+      console.log("PRIORITY:", item.groupPriority)
       return getNewsItem(item, segmentConstraint);
     });
 
@@ -154,7 +156,7 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
 
       // catch with 2147000, because Math-min of an empty array is -Infinity and if there is no priority it should be last.
       const minPrio = Math.min(...priorities) || 2147000;
-
+      
       priorities.shift();
       let calculatedPrio = minPrio;
 
@@ -166,12 +168,11 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
 
       // assign new properties used for sorting.
       newsItemWithMandatees.groupName = groupName;
-      newsItemWithMandatees.groupPriority = calculatedPrio;
+      newsItemWithMandatees.groupPriority = parseFloat(calculatedPrio);
 
       return newsItemWithMandatees;
     })
-    .sort((a, b) => a.groupPriority - b.groupPriority);
-  return uniqueNewsletters;
+  return uniqueNewsletters.sort((a, b) => a.groupPriority - b.groupPriority);
 };
 
 const findExistingItem = (list, item) => {
@@ -235,7 +236,7 @@ const createNewCampaignObject = async (created_template, formattedStart, allThem
     },
   };
 
-  console.log('CREATING CAMPAIGN OBJECT', JSON.stringify(campaign));
+  console.log('CREATING CAMPAIGN WITH CONFIG', JSON.stringify(campaign));
   return campaign;
 };
 
