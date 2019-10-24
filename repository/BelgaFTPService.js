@@ -12,7 +12,6 @@ const host = 'ftp.belga.be';
 const port = 21; // this is the default port for FTP
 import moment from 'moment';
 let client;
-console.log();
 
 export default class BelgaService {
   constructor() {
@@ -60,8 +59,11 @@ export default class BelgaService {
       .utc()
       .utcOffset('+02:00')
       .format('YYYYMMDDTHHmmssZZ');
+
+    const escapedContent = escapeHtml(`<![CDATA[ Body content: ${content} ]]>`);
+
     const identicationDate = moment(publication_date).format('YYYYMMDD');
-    const XMLCONFIG = xmlConfig.createXMLConfig(content, sentAt, identicationDate);
+    const XMLCONFIG = xmlConfig.createXMLConfig(escapedContent, sentAt, identicationDate);
     const xmlString = xml(XMLCONFIG, { declaration: true });
     const path = `${__dirname}/../generated-xmls/Beslissingen_van_de_ministerraad_van_${formattedStart}.xml`;
 
@@ -91,15 +93,23 @@ const createNewsletterString = (data) => {
 
   reducedNewsletters.map((newsletterItem) => {
     agendaitems.push(
-      `
+      `<p>
       ${newsletterItem.title || ''}
       ${newsletterItem.proposal || ''}
       ${newsletterItem.richtext || ''}
-      `.replace(/^\s+|\s+$/gm, '')
+      </p>`
+      .replace(/^\s+|\s+$/gm, '')
+      .replace(/(?=<!--)([\s\S]*?)-->/gm, '')
+      .replace(/\n&nbsp;*/gm, '')
+      .trim()
     );
   });
   return agendaitems
-    .join(`\n`)
-    .replace(/(?=<!--)([\s\S]*?)-->/gm, '')
-    .replace(/\n&nbsp;*/gm, '');
+    .join(``)
 };
+
+function escapeHtml(unsafe) {
+  return unsafe
+       .replace(/"/g, "&quot;")
+       .replace(/'/g, "&#039;");
+}

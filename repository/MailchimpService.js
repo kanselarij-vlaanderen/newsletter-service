@@ -7,12 +7,31 @@ const moment = require('moment');
 const Mailchimp = require('mailchimp-api-v3');
 const helper = require('../repository/helpers');
 
-const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
-const FROM_NAME = process.env.MAILCHIMP_FROM_NAME || 'Kaleidos';
-const REPLY_TO = process.env.MAILCHIMP_REPLY_TO || '';
-const LIST_ID = process.env.MAILCHIMP_LIST_ID || 5480352579;
-const INTEREST_CATEGORY_ID = process.env.MAILCHIMP_INTEREST_CATEGORY_ID || 'fe04dcefd7';
-const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID || '4757bb85ec';
+const requiredEnvironmentVariables = [
+  'MAILCHIMP_API',
+  'MAILCHIMP_FROM_NAME',
+  'MAILCHIMP_REPLY_TO',
+  'MAILCHIMP_LIST_ID',
+  'MAILCHIMP_INTEREST_CATEGORY_ID',
+  'MAILCHIMP_KIND_CATEGORY_ID'
+];
+
+requiredEnvironmentVariables.forEach(key => {
+  if (!process.env[key]) {
+    console.log("---------------------------------------------------------------");
+    console.log(`[ERROR]:Environment variable ${key} must be configured`);
+    console.log("---------------------------------------------------------------");
+    process.exit(1);
+  }
+});
+
+const mailchimp = new Mailchimp(process.env.MAILCHIMP_API);
+const FROM_NAME = process.env.MAILCHIMP_FROM_NAME;
+const REPLY_TO = process.env.MAILCHIMP_REPLY_TO;
+const LIST_ID = process.env.MAILCHIMP_LIST_ID;
+const INTEREST_CATEGORY_ID = process.env.MAILCHIMP_INTEREST_CATEGORY_ID;
+const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID;
+
 const DECISION_STRINGS = [
   'Ik ontvang enkel beslissingen',
   'Ik ontvang zowel persberichten als beslissingen',

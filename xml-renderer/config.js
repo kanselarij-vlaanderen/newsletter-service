@@ -8,7 +8,15 @@ const belga_url = 'webserviceurl.belga.be';
 const title = "Title ";
 const subtitle = "Subtitle";
 
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 const createXMLConfig = (htmlContent, sentAt, identicationDate) => {
+  const randomUuid = uuidv4();
   return [
     {
       NewsML: [
@@ -28,7 +36,7 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate) => {
                     Repeat: '0',
                   },
                 },
-                '2000000128634',
+                randomUuid,
               ],
             },
             {
@@ -100,7 +108,7 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate) => {
                       ProviderId: 'nieuws.vlaanderen.be',
                     },
                     { DateId: identicationDate },
-                    { NewsItemId: '2000000128634' },
+                    { NewsItemId: randomUuid },
                     {
                       RevisionId: [
                         {
@@ -114,7 +122,7 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate) => {
                     },
                     {
                       PublicIdentifier:
-                        `urn:newsml:nieuws.vlaanderen.be:${identicationDate}:2000000128634:11N`,
+                        `urn:newsml:nieuws.vlaanderen.be:${identicationDate}:${randomUuid}:11N`,
                     },
                   ],
                 },
@@ -151,7 +159,7 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate) => {
                 {
                   NewsLines: [
                     {
-                      Headline: {
+                      HeadLine: {
                         _cdata: `${title}`,
                       },
                     },
@@ -186,7 +194,7 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate) => {
                 {
                   NewsComponent: [
                     {
-                      Comment: '2000000128634',
+                      Comment: randomUuid,
                     },
                     {
                       Role: {
@@ -198,12 +206,8 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate) => {
                     },
                     {
                       ContentItem: [
-                        { Comment: '2000000128634' },
-                        {
-                          DataContent: {
-														_cdata: `${htmlContent}`,
-                          },
-                        },
+                        { Comment: randomUuid },
+                        { DataContent: htmlContent},
                       ],
                     },
                   ],
