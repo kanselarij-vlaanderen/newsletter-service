@@ -27,9 +27,11 @@ app.get('/', (req, res) => {
 app.post('/sendCampaign/:id', async (req, res, next) => {
   const campaign_id = req.params.id;
   try {
+    console.time('SEND MAILCHIMP CAMPAIGN TIME');
     const sendCampaign = await mailchimp.post({
       path: `/campaigns/${campaign_id}/actions/send`,
     });
+    console.time('SEND MAILCHIMP CAMPAIGN TIME');
     res.send({ sendCampaign });
   } catch (error) {
     next(error);

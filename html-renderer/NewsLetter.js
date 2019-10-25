@@ -4,8 +4,9 @@
  * @param [NewsItem] decisionNewsItems
  * @param datestring planned_start
  * @param datestring data_docs
+ * @param string procedure used to add to the title of the newsletter
  */
-export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) => {
+export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure = "") => {
   return `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -257,7 +258,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs) =>
                       <tr>
                         <td width="100%" colspan="2">
                           <h2 class="section-title" style="color:#333332;font-family:Calibri, Arial, sans-serif;font-weight:600;font-size:22px;text-transform:uppercase;margin:0;">
-                            Beslissingen van de Vlaamse Regering - Ministerraad van ${planned_start}
+                            Beslissingen van de Vlaamse Regering - Ministerraad ${procedure}van ${planned_start}
                           </h2>
                         </td>
 											</tr>

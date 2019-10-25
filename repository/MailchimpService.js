@@ -49,8 +49,8 @@ const createCampaign = async (req, res) => {
     const {
       formattedStart,
       formattedDocumentDate,
-      formattedPublicationDate,
-      agendaURI
+      agendaURI,
+      procedureText
     } = await repository.getAgendaNewsletterInformation(agendaId);
 
     let newsletter = await repository.getNewsLetterByAgendaId(agendaURI);
@@ -74,29 +74,30 @@ const createCampaign = async (req, res) => {
       console.log("PRIORITY:", item.groupPriority)
       return getNewsItem(item, segmentConstraint);
     });
-
-    let html = await createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate);
+    let html = await createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate, procedureText);
 
     const template = {
       name: `Beslissingen van ${formattedStart}`,
       html,
     };
-
+    console.time('CREATE MAILCHIMP TEMPLATE TIME');
     const created_template = await mailchimp.post({
       path: '/templates',
       body: template,
     });
+    console.timeEnd('CREATE MAILCHIMP TEMPLATE TIME');
 
     const campaign = await createNewCampaignObject(
       created_template,
       formattedStart,
       allThemesOfNewsletter
     );
-
+    console.time('CREATE MAILCHIMP CAMPAIGN TIME');
     const createdCampagne = await mailchimp.post({
       path: '/campaigns',
       body: campaign,
     });
+    console.timeEnd('CREATE MAILCHIMP CAMPAIGN TIME');
 
     const { web_id, archive_url } = createdCampagne;
     console.log(`Successfully created mailchimp-campaign with id:${web_id}`);
@@ -167,8 +168,10 @@ const createKindCondition = async () => {
 
 const createNewCampaignObject = async (created_template, formattedStart, allThemesOfNewsletter) => {
   const { id } = created_template;
+  console.time('FETCH MAILCHIMP CONFIG TIME');
   const themeCondition = await createThemesCondition(allThemesOfNewsletter);
   const kindCondition = await createKindCondition();
+  console.timeEnd('FETCH MAILCHIMP CONFIG TIME');
   console.log('CONDITIONS_USED:', JSON.stringify([themeCondition, kindCondition]));
   const campaign = {
     type: 'regular',
@@ -189,7 +192,7 @@ const createNewCampaignObject = async (created_template, formattedStart, allThem
       template_id: id,
     },
   };
-
+  
   console.log('CREATING CAMPAIGN WITH CONFIG', JSON.stringify(campaign));
   return campaign;
 };

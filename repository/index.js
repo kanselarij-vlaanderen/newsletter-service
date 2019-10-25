@@ -1,9 +1,15 @@
 import mu from 'mu';
 import { ok } from 'assert';
 const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
-import moment from 'moment';
+const electronicKindURI =
+  'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/406F2ECA-524D-47DC-B889-651893135456';
 
+import moment from 'moment';
+import 'moment-timezone';
+
+console.log(moment.locale());
 moment.locale('nl');
+moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
 
 const getAgendaWhereisMostRecentAndFinal = async () => {
   const query = `
@@ -32,6 +38,7 @@ const getAgendaWhereisMostRecentAndFinal = async () => {
 };
 
 const getAgendaInformation = async (agendaId) => {
+  console.time('QUERY TIME AGENDA INFORMATION');
   const query = `
   PREFIX dct: <http://purl.org/dc/terms/>
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
@@ -43,18 +50,20 @@ const getAgendaInformation = async (agendaId) => {
         PREFIX prov: <http://www.w3.org/ns/prov#>
         PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
 
-        SELECT DISTINCT ?agenda ?planned_start ?data_docs ?publication_date WHERE {
+        SELECT DISTINCT ?agenda ?planned_start ?data_docs ?publication_date ?kind WHERE {
             GRAPH <${targetGraph}> {
               ?agenda a besluitvorming:Agenda .
               ?agenda mu:uuid "${agendaId}" .
               ?agenda besluit:isAangemaaktVoor ?meeting . 
               ?meeting besluit:geplandeStart ?planned_start .
               OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
+              OPTIONAL { ?meeting ext:aard ?kind }
               OPTIONAL { ?newsletter ext:issuedDocDate ?data_docs . }
               OPTIONAL { ?newsletter dct:issued ?publication_date . }
              }
         }`;
   let data = await mu.query(query);
+  console.timeEnd('QUERY TIME AGENDA INFORMATION');
   return parseSparqlResults(data);
 };
 
@@ -67,6 +76,7 @@ const getAgendaInformation = async (agendaId) => {
  *  formattedPublicationDate, --> Formatted publication date        | MMMM Do YYYY
  *  publication_date          --> non-formatted (raw) publication date
  *  agendaURI                 --> URI of the agenda (use this instead of id to speed up queries)
+ *  procedureText             --> Text that should be added to the title of the newsletter
  *  }
  */
 const getAgendaNewsletterInformation = async (agendaId) => {
@@ -74,22 +84,36 @@ const getAgendaNewsletterInformation = async (agendaId) => {
   if (!agendaInformation || !agendaInformation[0]) {
     return {};
   }
-  const { planned_start, publication_date, data_docs, agenda } = agendaInformation[0];
+  const { planned_start, publication_date, data_docs, agenda, kind } = agendaInformation[0];
+  const formattedStart = moment(planned_start)
+    .tz('Europe/Berlin')
+    .format('DD MMMM  YYYY');
+  const formattedDocumentDate = moment(data_docs)
+    .tz('Europe/Berlin')
+    .format('DD MMMM  YYYY [om] HH:mm');
+  const formattedPublicationDate = moment(publication_date)
+    .tz('Europe/Berlin')
+    .format('MMMM Do YYYY');
 
-  const formattedStart = `${moment(
-    new Date(planned_start).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
-  ).format('DD MMMM  YYYY')}`;
-  const formattedDocumentDate = moment(
-    new Date(data_docs).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
-  ).format('DD MMMM YYYY [om] HH:mm');
-  const formattedPublicationDate = moment(
-    new Date(publication_date).toLocaleString('nl', { timeZone: 'Europe/Berlin' })
-  ).format('MMMM Do YYYY');
-    console.log('FETCHED DATA FROM AGENDA WITH URI: ', agenda);
-  return { formattedStart, formattedDocumentDate, formattedPublicationDate, publication_date, agendaURI: agenda };
+  let procedureText = '';
+
+  if (kind === electronicKindURI) {
+    procedureText = 'via elektronische procedure ';
+    console.log('[PROCEDURE TEXT]:', procedureText);
+  }
+  console.log('FETCHED DATA FROM AGENDA WITH URI: ', agenda);
+  return {
+    formattedStart,
+    formattedDocumentDate,
+    formattedPublicationDate,
+    publication_date,
+    agendaURI: agenda,
+    procedureText,
+  };
 };
 
 const getNewsLetterByAgendaId = async (agendaURI) => {
+  console.time('QUERY TIME NEWSLETTER INFORMATION');
   const query = `
         PREFIX dct: <http://purl.org/dc/terms/>
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
@@ -120,6 +144,7 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
                        ?themeURI   ext:mailchimpId        ?label . }
         } GROUP BY ?title ?richtext ?remark ?proposal ?mandateeTitle ?mandateePriority ?newsletter`;
   let data = await mu.query(query);
+  console.timeEnd('QUERY TIME NEWSLETTER INFORMATION');
   return parseSparqlResults(data);
 };
 
@@ -130,9 +155,7 @@ const getMostRecentNewsletter = async (req, res) => {
     if (!agenda_uuid) {
       res.send({ status: ok, statusCode: 404, message: 'Newsletter not found.' });
     } else {
-      const {
-        agendaURI
-      } = await repository.getAgendaNewsletterInformation(agenda_uuid);
+      const { agendaURI } = await repository.getAgendaNewsletterInformation(agenda_uuid);
       let newsletter = await getNewsLetterByAgendaId(agendaURI);
       if (!newsletter) {
         throw new Error('no newsletters present');
