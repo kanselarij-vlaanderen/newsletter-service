@@ -38,6 +38,20 @@ app.post('/sendCampaign/:id', async (req, res, next) => {
   }
 });
 
+app.get('/fetchTestCampaign/:id', async (req, res, next) => {
+  const campaign_id = req.params.id;
+  try {
+    console.time('FETCH CAMPAIGN PREVIEW');
+    const campaignHTML = await mailchimp.get({
+      path: `/campaigns/${campaign_id}/content`
+    });
+    console.timeEnd('FETCH CAMPAIGN PREVIEW');
+    res.send({ body: campaignHTML.html });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.delete('/deleteCampaign/:id', async (req, res) => {
   const campaign_id = req.params.id;
   if (!campaign_id) {

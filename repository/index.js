@@ -7,7 +7,6 @@ const electronicKindURI =
 import moment from 'moment';
 import 'moment-timezone';
 
-console.log(moment.locale());
 moment.locale('nl');
 moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
 
@@ -126,23 +125,28 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
         PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
         PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
 
-        SELECT DISTINCT ?title ?richtext ?remark ?proposal (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter WHERE {
+        SELECT ?title ?richtext ?proposal (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio WHERE {
             GRAPH <${targetGraph}> {
               <${agendaURI}> dct:hasPart ?agendaitem . 
               ?subcase besluitvorming:isGeagendeerdVia ?agendaitem .
               ?subcase prov:generated ?newsletter . 
               ?agendaitem ext:wordtGetoondAlsMededeling "false"^^xsd:boolean .
+              ?agendaitem ext:prioriteit ?agendaitemPrio .
               ?newsletter ext:inNieuwsbrief "true"^^xsd:boolean .
-              OPTIONAL { ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
-              ?mandatee dct:title ?mandateeTitle .
-              ?mandatee mandaat:rangorde ?mandateePriority }
+              OPTIONAL { 
+                ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
+                ?mandatee dct:title ?mandateeTitle .
+                ?mandatee mandaat:rangorde ?mandateePriority .
+                ?mandatee ext:nickName ?mandateeName . 
+              }
               OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
               OPTIONAL { ?newsletter ext:voorstelVan ?proposal . }
               OPTIONAL { ?newsletter dct:title ?title . }
              }
             OPTIONAL { ?agendaitem ext:agendapuntSubject ?themeURI . 
                        ?themeURI   ext:mailchimpId        ?label . }
-        } GROUP BY ?title ?richtext ?remark ?proposal ?mandateeTitle ?mandateePriority ?newsletter`;
+        } GROUP BY ?title ?richtext ?proposal ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
+        ORDER BY ASC(?agendaitemPrio)`;
   let data = await mu.query(query);
   console.timeEnd('QUERY TIME NEWSLETTER INFORMATION');
   return parseSparqlResults(data);

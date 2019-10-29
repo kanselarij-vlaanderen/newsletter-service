@@ -65,7 +65,7 @@ const createCampaign = async (req, res) => {
       if (item && item.themes) {
         let uniqueThemes = [...new Set(item.themes.split(','))];
         allThemesOfNewsletter.push(...uniqueThemes);
-
+        
         segmentConstraint = {
           begin: createBeginSegment(uniqueThemes.join(',')),
           end: createEndSegment(),
