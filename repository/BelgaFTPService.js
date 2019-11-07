@@ -9,11 +9,11 @@ import moment from "moment";
 
 export default class BelgaService {
   async generateXML(agendaId) {
-    console.time('FETCH BELGA INFORMATION TIME');
+    console.time("FETCH BELGA INFORMATION TIME");
     const { formattedStart, publication_date, agendaURI } = await repository.getAgendaNewsletterInformation(agendaId);
     const data = await repository.getNewsLetterByAgendaId(agendaURI);
     const content = await createNewsletterString(data);
-    console.timeEnd('FETCH BELGA INFORMATION TIME');
+    console.timeEnd("FETCH BELGA INFORMATION TIME");
     const sentAt = moment
       .utc()
       .utcOffset("+02:00")
@@ -25,7 +25,7 @@ export default class BelgaService {
     const XMLCONFIG = xmlConfig.createXMLConfig(escapedContent, sentAt, identicationDate);
     const xmlString = xml(XMLCONFIG, { declaration: true });
     const path = `${__dirname}/../generated-xmls/Beslissingen_van_de_ministerraad_van_${formattedStart}.xml`;
-    
+
     const output = fs.createWriteStream(path);
     output.write(xmlString);
     return new Promise((resolve, reject) => {
@@ -54,7 +54,7 @@ const createNewsletterString = (data) => {
     agendaitems.push(
       `<p>
       ${newsletterItem.title || ""}
-      ${newsletterItem.proposal || ""}
+      ${newsletterItem.proposalText || ""}
       ${newsletterItem.richtext || ""}
       </p>`
         .replace(/^\s+|\s+$/gm, "")

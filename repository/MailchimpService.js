@@ -45,7 +45,6 @@ const createCampaign = async (req, res) => {
     if (!agendaId) {
       throw new Error('Request parameter agendaId can not be null');
     }
-
     const {
       formattedStart,
       formattedDocumentDate,
