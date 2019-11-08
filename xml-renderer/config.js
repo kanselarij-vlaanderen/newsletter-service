@@ -5,8 +5,6 @@ const VO = 'Vo';
 const formalName = 'webserviceurl';
 const flanders_url = 'webserviceurl.vlaanderen.be';
 const belga_url = 'webserviceurl.belga.be';
-const title = "Title ";
-const subtitle = "Subtitle";
 
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -15,7 +13,7 @@ function uuidv4() {
   });
 }
 
-const createXMLConfig = (htmlContent, sentAt, identicationDate) => {
+const createXMLConfig = (htmlContent, sentAt, identicationDate, title) => {
   const randomUuid = uuidv4();
   return [
     {
@@ -166,7 +164,7 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate) => {
                     {
                       SubHeadLine: [
                         {
-                          DateLine: `${subtitle}`,
+                          DateLine: ``,
                         },
                       ],
                     },

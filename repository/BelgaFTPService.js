@@ -11,6 +11,7 @@ export default class BelgaService {
   async generateXML(agendaId) {
     console.time('FETCH BELGA INFORMATION TIME');
     const { formattedStart, publication_date, agendaURI } = await repository.getAgendaNewsletterInformation(agendaId);
+    const title = `Beslissingen van ${formattedStart}`
     const data = await repository.getNewsLetterByAgendaId(agendaURI);
     const content = await createNewsletterString(data);
     console.timeEnd('FETCH BELGA INFORMATION TIME');
@@ -19,10 +20,10 @@ export default class BelgaService {
       .utcOffset("+02:00")
       .format("YYYYMMDDTHHmmssZZ");
 
-    const escapedContent = escapeHtml(`<![CDATA[ Body content: ${content} ]]>`);
+    const escapedContent = escapeHtml(`<![CDATA[ ${content} ]]>`);
 
     const identicationDate = moment(publication_date).format("YYYYMMDD");
-    const XMLCONFIG = xmlConfig.createXMLConfig(escapedContent, sentAt, identicationDate);
+    const XMLCONFIG = xmlConfig.createXMLConfig(escapedContent, sentAt, identicationDate, title);
     const xmlString = xml(XMLCONFIG, { declaration: true });
     const path = `${__dirname}/../generated-xmls/Beslissingen_van_de_ministerraad_van_${formattedStart}.xml`;
     
