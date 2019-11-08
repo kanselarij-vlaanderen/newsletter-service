@@ -3,7 +3,7 @@
  * @param {title: string, proposal: string, richtext: string, newsletter:uri(string)} NewsItem
  * @param {begin: string, end: string} segmentConstraint
  */
-export const getNewsItem = ({ title, proposal, richtext, newsletter }, segmentConstraint) => {
+export const getNewsItem = ({ title, proposalText, richtext, newsletter }, segmentConstraint) => {
   console.log(`CREATING NEWSITEM URI: ${newsletter}`);
   console.log(`USING SEGMENT: ${segmentConstraint.begin} CONTENT ${segmentConstraint.end}`);
   return `
@@ -18,7 +18,7 @@ export const getNewsItem = ({ title, proposal, richtext, newsletter }, segmentCo
           <font style="color:#333332;font-family:Calibri, Arial, sans-serif;font-size:26px;font-weight:600;line-height:26px;">${title ||
             ''}</font>
           <p class="intro-text" style="color:#666666;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;margin-top:5px;margin-bottom:0;">
-            ${proposal || ''}
+            ${proposalText || ''}
           </p>
         </td>
       </tr>

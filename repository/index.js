@@ -125,7 +125,7 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
         PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
         PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
 
-        SELECT ?title ?richtext ?proposal (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio WHERE {
+        SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio WHERE {
             GRAPH <${targetGraph}> {
               <${agendaURI}> dct:hasPart ?agendaitem . 
               ?subcase besluitvorming:isGeagendeerdVia ?agendaitem .
@@ -140,12 +140,11 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
                 ?mandatee ext:nickName ?mandateeName . 
               }
               OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
-              OPTIONAL { ?newsletter ext:voorstelVan ?proposal . }
               OPTIONAL { ?newsletter dct:title ?title . }
              }
             OPTIONAL { ?agendaitem ext:agendapuntSubject ?themeURI . 
                        ?themeURI   ext:mailchimpId        ?label . }
-        } GROUP BY ?title ?richtext ?proposal ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
+        } GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
         ORDER BY ASC(?agendaitemPrio)`;
   let data = await mu.query(query);
   console.timeEnd('QUERY TIME NEWSLETTER INFORMATION');
