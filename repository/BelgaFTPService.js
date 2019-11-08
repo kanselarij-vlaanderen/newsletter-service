@@ -11,7 +11,7 @@ export default class BelgaService {
   async generateXML(agendaId) {
     console.time('FETCH BELGA INFORMATION TIME');
     const { formattedStart, publication_date, agendaURI } = await repository.getAgendaNewsletterInformation(agendaId);
-    const title = `Beslissingen van ${formattedStart}`
+    const title = `Beslissingen van de ministerraad van ${formattedStart}`
     const data = await repository.getNewsLetterByAgendaId(agendaURI);
     const content = await createNewsletterString(data);
     console.timeEnd('FETCH BELGA INFORMATION TIME');
