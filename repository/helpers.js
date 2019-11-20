@@ -42,7 +42,7 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
     const groupName = [...new Set(sortedMandatees.map((item) => item.title))].join(",");
     const priorities = [...new Set(sortedMandatees.map((item) => item.priority))];
 
-    const proposalText = computeProposalTextForNewsletterItem(sortedMandatees);
+    const proposalText = computeProposalTextForNewsletterItem([...new Set(sortedMandatees)]);
 
     // catch with 2147000, because Math-min of an empty array is -Infinity and if there is no priority it should be last.
     const minPrio = Math.min(...priorities) || 2147000;
