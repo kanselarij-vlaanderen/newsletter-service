@@ -1,8 +1,5 @@
 import BelgaFTPService from '../repository/BelgaFTPService';
-
-const user = '---';
-const password = '---';
-const host = 'ftp.belga.be';
+import { user, password, host } from './env'
 let AMOUNT_OF_FILES_ON_SERVER = 0;
 
 const belgaConfig = {

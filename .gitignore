@@ -1,2 +1,3 @@
 node_modules
 generated-xmls/*.xml
+tests/env.js
