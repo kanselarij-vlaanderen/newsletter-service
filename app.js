@@ -13,6 +13,17 @@ dotenv.config();
 app.use(bodyParser.json({ type: 'application/*+json' }));
 app.use(cors());
 
+const user = process.env.BELGA_FTP_USERNAME;
+const password = process.env.BELGA_FTP_PASSWORD;
+const host = 'ftp.belga.be';
+
+const belgaConfig = {
+  user,
+  password,
+  host
+};
+const service = new BelgaService(belgaConfig);
+
 app.post('/createCampaign', (req, res) => {
   return mailchimpService.createCampaign(req, res);
 });
@@ -32,7 +43,6 @@ app.post('/sendCampaign/:id', async (req, res, next) => {
     const sendCampaign = await mailchimp.post({
       path: `/campaigns/${campaign_id}/actions/send`
     });
-    const service = new BelgaService();
     await service.generateXML(agendaId, true);
     console.time('SEND MAILCHIMP CAMPAIGN TIME');
     res.send({ sendCampaign });
@@ -65,7 +75,6 @@ app.delete('/deleteCampaign/:id', async (req, res) => {
 });
 
 app.get('/xml-newsletter/:agenda_id', async (req, res) => {
-  const service = new BelgaService();
   let agendaId = req.params.agenda_id;
   if (!agendaId) {
     throw new Error('No agenda_id provided.');
