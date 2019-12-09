@@ -31,7 +31,7 @@ export const reduceNewslettersToMandateesByPriority = (newsletter) => {
         delete newsItem.mandateePriority;
         uniqueNewsletters.push(newsItem);
       }
-      return uniqueNewsletters;
+      return uniqueNewsletters.sort((a, b) => parseInt(a.agendaitemPrio) - parseInt(b.agendaitemPrio));;
     }, [])
   );
 };
@@ -62,7 +62,7 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
     newsItemWithMandatees.proposalText = proposalText;
     return newsItemWithMandatees;
   });
-  return uniqueNewsletters.sort((a, b) => a.groupPriority - b.groupPriority).sort((a, b) => parseInt(a.agendaitemPrio) - parseInt(b.agendaitemPrio));
+  return uniqueNewsletters.sort((a, b) => a.groupPriority - b.groupPriority);
 };
 
 const findExistingItem = (list, item) => {

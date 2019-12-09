@@ -146,7 +146,7 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
             OPTIONAL { ?agendaitem ext:agendapuntSubject ?themeURI . 
                        ?themeURI   ext:mailchimpId        ?label . }
         } GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
-        ORDER BY ASC(?agendaitemPrio)`;
+        ORDER BY ASC(?mandateePriority)`;
   let data = await mu.query(query);
   console.timeEnd('QUERY TIME NEWSLETTER INFORMATION');
   return parseSparqlResults(data);
