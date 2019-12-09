@@ -62,7 +62,7 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
     newsItemWithMandatees.proposalText = proposalText;
     return newsItemWithMandatees;
   });
-  return uniqueNewsletters.sort((a, b) => a.groupPriority - b.groupPriority);
+  return uniqueNewsletters.sort((a, b) => a.groupPriority - b.groupPriority).sort((a, b) => parseInt(a.agendaitemPrio) - parseInt(b.agendaitemPrio));
 };
 
 const findExistingItem = (list, item) => {
