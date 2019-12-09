@@ -1,6 +1,6 @@
-const { createNewsLetter } = require('../html-renderer/NewsLetter');
-const { getNewsItem } = require('../html-renderer/NewsItem');
-import { ok } from 'assert';
+const {createNewsLetter} = require('../html-renderer/NewsLetter');
+const {getNewsItem} = require('../html-renderer/NewsItem');
+import {ok} from 'assert';
 
 const repository = require('./index.js');
 const moment = require('moment');
@@ -59,7 +59,7 @@ const createCampaign = async (req, res) => {
     const reducedNewsletters = helper.reduceNewslettersToMandateesByPriority(newsletter);
     let allThemesOfNewsletter = [];
     const news_items_HTML = reducedNewsletters.map((item) => {
-      let segmentConstraint = { begin: '', end: '' };
+      let segmentConstraint = {begin: '', end: ''};
       if (item && item.themes) {
         let uniqueThemes = [...new Set(item.themes.split(','))];
         allThemesOfNewsletter.push(...uniqueThemes);
@@ -93,7 +93,15 @@ const createCampaign = async (req, res) => {
     });
     console.timeEnd('CREATE MAILCHIMP CAMPAIGN TIME');
 
-    const { web_id, archive_url } = createdCampagne;
+    console.time('DELETE MAILCHIMP TEMPLATE TIME');
+    await mailchimp.delete({
+      path: `/templates/${created_template.id}`
+    }).catch((error) => {
+      console.log(`[MAILCHIMP] Failed to delete template`, error)
+    });
+    console.timeEnd('DELETE MAILCHIMP TEMPLATE TIME');
+
+    const {web_id, archive_url} = createdCampagne;
     console.log(`Successfully created mailchimp-campaign with id:${web_id}`);
     res.send({
       status: ok,
@@ -127,7 +135,7 @@ const createEndSegment = () => {
   return `*|END:INTERESTED|*`;
 };
 
-export { deleteCampaign, createCampaign };
+export {deleteCampaign, createCampaign};
 
 const createThemesCondition = async (allThemesOfNewsletter) => {
   const allUniqueThemesOfNewsletter = [...new Set(allThemesOfNewsletter)];
@@ -161,7 +169,7 @@ const createKindCondition = async () => {
 };
 
 const createNewCampaignObject = async (created_template, formattedStart, allThemesOfNewsletter) => {
-  const { id } = created_template;
+  const {id} = created_template;
   console.time('FETCH MAILCHIMP CONFIG TIME');
   const themeCondition = await createThemesCondition(allThemesOfNewsletter);
   const kindCondition = await createKindCondition();
