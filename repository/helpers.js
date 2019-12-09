@@ -62,8 +62,18 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
     newsItemWithMandatees.proposalText = proposalText;
     return newsItemWithMandatees;
   });
-  return uniqueNewsletters.sort((a, b) => a.groupPriority - b.groupPriority);
+  return sortNewsletterItems(uniqueNewsletters);
 };
+
+const sortNewsletterItems = (items) => {
+  return items.sort((a,b) => {
+    if (a.groupPriority === b.groupPriority) {
+      // Price is only important when cities are the same
+      return parseInt(a.agendaitemPrio) - parseInt(b.agendaitemPrio);
+    }
+    return a.groupPriority > b.groupPriority ? 1 : -1;
+  })
+}
 
 const findExistingItem = (list, item) => {
   return list.find((listItem) => listItem.newsletter === item.newsletter);
