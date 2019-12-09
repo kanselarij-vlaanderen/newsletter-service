@@ -1,5 +1,6 @@
 import mu from 'mu';
-import { ok } from 'assert';
+import {ok} from 'assert';
+
 const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
 const electronicKindURI =
   'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/406F2ECA-524D-47DC-B889-651893135456';
@@ -83,13 +84,13 @@ const getAgendaNewsletterInformation = async (agendaId) => {
   if (!agendaInformation || !agendaInformation[0]) {
     return {};
   }
-  const { planned_start, publication_date, data_docs, agenda, kind } = agendaInformation[0];
+  const {planned_start, publication_date, data_docs, agenda, kind} = agendaInformation[0];
   const formattedStart = moment(planned_start)
     .tz('Europe/Berlin')
-    .format('DD MMMM  YYYY');
+    .format('DD MMMM YYYY');
   const formattedDocumentDate = moment(data_docs)
     .tz('Europe/Berlin')
-    .format('DD MMMM  YYYY [om] HH:mm');
+    .format('DD MMMM YYYY [om] HH:mm');
   const formattedPublicationDate = moment(publication_date)
     .tz('Europe/Berlin')
     .format('MMMM Do YYYY');
@@ -154,11 +155,11 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
 const getMostRecentNewsletter = async (req, res) => {
   try {
     const response = await getAgendaWhereisMostRecentAndFinal();
-    const { agenda_uuid } = response[0] || { agenda_uuid: null };
+    const {agenda_uuid} = response[0] || {agenda_uuid: null};
     if (!agenda_uuid) {
-      res.send({ status: ok, statusCode: 404, message: 'Newsletter not found.' });
+      res.send({status: ok, statusCode: 404, message: 'Newsletter not found.'});
     } else {
-      const { agendaURI } = await repository.getAgendaNewsletterInformation(agenda_uuid);
+      const {agendaURI} = await repository.getAgendaNewsletterInformation(agenda_uuid);
       let newsletter = await getNewsLetterByAgendaId(agendaURI);
       if (!newsletter) {
         throw new Error('no newsletters present');
@@ -191,7 +192,7 @@ const getMostRecentNewsletter = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.send({ status: ok, statusCode: 500, body: { error } });
+    res.send({status: ok, statusCode: 500, body: {error}});
   }
 };
 
