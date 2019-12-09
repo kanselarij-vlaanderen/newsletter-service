@@ -1,6 +1,6 @@
-const { createNewsLetter } = require('../html-renderer/NewsLetter');
-const { getNewsItem } = require('../html-renderer/NewsItem');
-import { ok } from 'assert';
+const {createNewsLetter} = require('../html-renderer/NewsLetter');
+const {getNewsItem} = require('../html-renderer/NewsItem');
+import {ok} from 'assert';
 
 const repository = require('./index.js');
 const moment = require('moment');
@@ -13,14 +13,16 @@ const requiredEnvironmentVariables = [
   'MAILCHIMP_REPLY_TO',
   'MAILCHIMP_LIST_ID',
   'MAILCHIMP_INTEREST_CATEGORY_ID',
-  'MAILCHIMP_KIND_CATEGORY_ID'
+  'MAILCHIMP_KIND_CATEGORY_ID',
+  'BELGA_FTP_USERNAME',
+  'BELGA_FTP_PASSWORD'
 ];
 
-requiredEnvironmentVariables.forEach(key => {
+requiredEnvironmentVariables.forEach((key) => {
   if (!process.env[key]) {
-    console.log("---------------------------------------------------------------");
+    console.log('---------------------------------------------------------------');
     console.log(`[ERROR]:Environment variable ${key} must be configured`);
-    console.log("---------------------------------------------------------------");
+    console.log('---------------------------------------------------------------');
     process.exit(1);
   }
 });
@@ -32,10 +34,7 @@ const LIST_ID = process.env.MAILCHIMP_LIST_ID;
 const INTEREST_CATEGORY_ID = process.env.MAILCHIMP_INTEREST_CATEGORY_ID;
 const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID;
 
-const DECISION_STRINGS = [
-  'Ik ontvang enkel beslissingen',
-  'Ik ontvang zowel persberichten als beslissingen',
-];
+const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel persberichten als beslissingen'];
 
 moment.locale('nl');
 
@@ -60,45 +59,49 @@ const createCampaign = async (req, res) => {
     const reducedNewsletters = helper.reduceNewslettersToMandateesByPriority(newsletter);
     let allThemesOfNewsletter = [];
     const news_items_HTML = reducedNewsletters.map((item) => {
-      let segmentConstraint = { begin: '', end: '' };
+      let segmentConstraint = {begin: '', end: ''};
       if (item && item.themes) {
         let uniqueThemes = [...new Set(item.themes.split(','))];
         allThemesOfNewsletter.push(...uniqueThemes);
-        
+
         segmentConstraint = {
           begin: createBeginSegment(uniqueThemes.join(',')),
-          end: createEndSegment(),
+          end: createEndSegment()
         };
       }
-      console.log("PRIORITY:", item.groupPriority)
+      console.log('PRIORITY:', item.groupPriority);
       return getNewsItem(item, segmentConstraint);
     });
     let html = await createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate, procedureText);
 
     const template = {
       name: `Beslissingen van ${formattedStart}`,
-      html,
+      html
     };
     console.time('CREATE MAILCHIMP TEMPLATE TIME');
     const created_template = await mailchimp.post({
       path: '/templates',
-      body: template,
+      body: template
     });
     console.timeEnd('CREATE MAILCHIMP TEMPLATE TIME');
 
-    const campaign = await createNewCampaignObject(
-      created_template,
-      formattedStart,
-      allThemesOfNewsletter
-    );
+    const campaign = await createNewCampaignObject(created_template, formattedStart, allThemesOfNewsletter);
     console.time('CREATE MAILCHIMP CAMPAIGN TIME');
     const createdCampagne = await mailchimp.post({
       path: '/campaigns',
-      body: campaign,
+      body: campaign
     });
     console.timeEnd('CREATE MAILCHIMP CAMPAIGN TIME');
 
-    const { web_id, archive_url } = createdCampagne;
+    console.time('DELETE MAILCHIMP TEMPLATE TIME');
+    await mailchimp.delete({
+      path: `/templates/${created_template.id}`
+    }).catch((error) => {
+      console.log(`[MAILCHIMP] Failed to delete template`, error)
+    });
+    console.timeEnd('DELETE MAILCHIMP TEMPLATE TIME');
+
+    const {web_id, archive_url} = createdCampagne;
     console.log(`Successfully created mailchimp-campaign with id:${web_id}`);
     res.send({
       status: ok,
@@ -106,8 +109,8 @@ const createCampaign = async (req, res) => {
       body: {
         campaign_id: createdCampagne.id,
         campaign_web_id: web_id,
-        archive_url,
-      },
+        archive_url
+      }
     });
   } catch (error) {
     console.log(`CREATE_CAMPAIGN_ERROR:`, error);
@@ -117,7 +120,7 @@ const createCampaign = async (req, res) => {
 
 const deleteCampaign = (id) => {
   return mailchimp.delete({
-    path: `/campaigns/${id}`,
+    path: `/campaigns/${id}`
   });
 };
 
@@ -132,7 +135,7 @@ const createEndSegment = () => {
   return `*|END:INTERESTED|*`;
 };
 
-export { deleteCampaign, createCampaign };
+export {deleteCampaign, createCampaign};
 
 const createThemesCondition = async (allThemesOfNewsletter) => {
   const allUniqueThemesOfNewsletter = [...new Set(allThemesOfNewsletter)];
@@ -146,7 +149,7 @@ const createThemesCondition = async (allThemesOfNewsletter) => {
     condition_type: 'Interests',
     field: `interests-${INTEREST_CATEGORY_ID}`,
     op: 'interestcontains',
-    value: interestMapping.map((item) => item.id),
+    value: interestMapping.map((item) => item.id)
   };
 };
 
@@ -161,12 +164,12 @@ const createKindCondition = async () => {
     condition_type: 'Interests',
     field: `interests-${KIND_CATEGORY_ID}`,
     op: 'interestcontains',
-    value: interestKindMapping.map((item) => item.id),
+    value: interestKindMapping.map((item) => item.id)
   };
 };
 
 const createNewCampaignObject = async (created_template, formattedStart, allThemesOfNewsletter) => {
-  const { id } = created_template;
+  const {id} = created_template;
   console.time('FETCH MAILCHIMP CONFIG TIME');
   const themeCondition = await createThemesCondition(allThemesOfNewsletter);
   const kindCondition = await createKindCondition();
@@ -178,8 +181,8 @@ const createNewCampaignObject = async (created_template, formattedStart, allThem
       list_id: LIST_ID,
       segment_opts: {
         match: 'all',
-        conditions: [themeCondition, kindCondition],
-      },
+        conditions: [themeCondition, kindCondition]
+      }
     },
     settings: {
       subject_line: `Beslissingen van ${formattedStart}`,
@@ -188,10 +191,10 @@ const createNewCampaignObject = async (created_template, formattedStart, allThem
       from_name: FROM_NAME,
       reply_to: REPLY_TO,
       inline_css: true,
-      template_id: id,
-    },
+      template_id: id
+    }
   };
-  
+
   console.log('CREATING CAMPAIGN WITH CONFIG', JSON.stringify(campaign));
   return campaign;
 };

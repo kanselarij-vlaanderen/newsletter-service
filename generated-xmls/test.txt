@@ -1,1 +1,1 @@
-This is xml generation directory for BELGA xmls.
+This is the xml generation directory for BELGA xmls.

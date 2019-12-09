@@ -1,11 +1,8 @@
 import mu from 'mu';
-import BelgaService from  './repository/BelgaFTPService.js';
-
+import BelgaService from './repository/BelgaFTPService.js';
 const app = mu.app;
-
 const Mailchimp = require('mailchimp-api-v3');
 const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
-
 const bodyParser = require('body-parser');
 const mailchimpService = require('./repository/MailchimpService.js');
 const repository = require('./repository/index.js');
@@ -15,6 +12,17 @@ const dotenv = require('dotenv');
 dotenv.config();
 app.use(bodyParser.json({ type: 'application/*+json' }));
 app.use(cors());
+
+const user = process.env.BELGA_FTP_USERNAME;
+const password = process.env.BELGA_FTP_PASSWORD;
+const host = 'ftp.belga.be';
+
+const belgaConfig = {
+  user,
+  password,
+  host
+};
+const service = new BelgaService(belgaConfig);
 
 app.post('/createCampaign', (req, res) => {
   return mailchimpService.createCampaign(req, res);
@@ -26,11 +34,16 @@ app.get('/', (req, res) => {
 
 app.post('/sendCampaign/:id', async (req, res, next) => {
   const campaign_id = req.params.id;
+  const agendaId = req.query.agendaId;
+  if (!campaign_id || !agendaId) {
+    throw new Error('No campaign id or agenda id.');
+  }
   try {
     console.time('SEND MAILCHIMP CAMPAIGN TIME');
     const sendCampaign = await mailchimp.post({
-      path: `/campaigns/${campaign_id}/actions/send`,
+      path: `/campaigns/${campaign_id}/actions/send`
     });
+    await service.generateXML(agendaId, true);
     console.time('SEND MAILCHIMP CAMPAIGN TIME');
     res.send({ sendCampaign });
   } catch (error) {
@@ -61,11 +74,9 @@ app.delete('/deleteCampaign/:id', async (req, res) => {
   res.send({ deleted });
 });
 
-
-app.get('/xml-newsletter/:agenda_id', async(req, res) => {
-  const service = new BelgaService();
+app.get('/xml-newsletter/:agenda_id', async (req, res) => {
   let agendaId = req.params.agenda_id;
-  if(!agendaId) {
+  if (!agendaId) {
     throw new Error('No agenda_id provided.');
   }
   const generatedXMLPath = await service.generateXML(agendaId);
