@@ -68,7 +68,6 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
 const sortNewsletterItems = (items) => {
   return items.sort((a,b) => {
     if (a.groupPriority === b.groupPriority) {
-      // Price is only important when cities are the same
       return parseInt(a.agendaitemPrio) - parseInt(b.agendaitemPrio);
     }
     return a.groupPriority > b.groupPriority ? 1 : -1;
