@@ -38,6 +38,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 	    }
 	    table{
 	      border-collapse:collapse;
+	      table-layout:fixed;
 	      border-spacing:0;
 	      mso-table-lspace:0;
 	      mso-table-rspace:0;
@@ -45,6 +46,10 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 	    td{
 	      mso-table-lspace:0;
 	      mso-table-rspace:0;
+	      // FIX for the html width of the editor.
+	      overflow: hidden;
+  		  text-overflow: ellipsis;
+  		  word-break: break-word;
 	    }
 	    .link{
 	      color:#0066cc;
