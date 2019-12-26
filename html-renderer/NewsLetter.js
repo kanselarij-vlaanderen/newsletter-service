@@ -187,7 +187,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 	      <!-- end preheader -->
 	      <div mc:edit="header_content">
 	        <!-- header basic -->
-	        <table mc:repeatable="header" width="650" cellpadding="0" cellspacing="0" border="0" align="center" class="full-table" style="width:650px;">
+	        <table mc:repeatable="header" width="650" cellpadding="0" cellspacing="0" border="0" align="center" class="full-table" style="width:650px; table-layout:auto; !important">
 					<tr>
 					<td height="10" style="height: 10px;line-height: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
 						&nbsp;
@@ -198,7 +198,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 							<table cellpadding="0" cellspacing="0" border="0" align="left" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
 					<tr>
 						<td class="header-text" style="padding: 30px 15px 30px 40px;background-color: #FFFFFF;mso-table-lspace: 0;mso-table-rspace: 0; max-width:650px;">
-							<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0; table-layout:auto;">
+							<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
 							*|INTERESTED:Frequentie:Ik ontvang nieuwsbrief op moment van publicatie|*
 								<tr>
 									<td style="border-left: 4px solid #ffe615;padding-left: 15px;mso-table-lspace: 0;mso-table-rspace: 0;">
@@ -227,15 +227,6 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 					</tr>
 				</table>
 	            </td>
-	            <td style="background: #FFFFFF;mso-table-lspace: 0;mso-table-rspace: 0;">
-				<table cellpadding="0" cellspacing="0" border="0" align="right" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
-					<tr>
-						<td class="no-mobile" style="background-color: #FFFFFF;text-align: right;mso-table-lspace: 0;mso-table-rspace: 0;">
-							
-						</td>
-					</tr>
-				</table>
-			</td>
 		</tr>
 		<tr>
 			<td colspan="2" height="10" style="height: 10px;line-height: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
