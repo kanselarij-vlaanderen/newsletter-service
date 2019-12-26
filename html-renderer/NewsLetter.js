@@ -46,7 +46,6 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 	    td{
 	      mso-table-lspace:0;
 	      mso-table-rspace:0;
-	      // FIX for the html width of the editor.
 	      overflow: hidden;
   		  text-overflow: ellipsis;
   		  word-break: break-word;
@@ -198,8 +197,8 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 							<td valign="middle" style="background:#FFFFFF;">
 							<table cellpadding="0" cellspacing="0" border="0" align="left" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
 					<tr>
-						<td class="header-text" style="padding: 30px 15px 30px 40px;background-color: #FFFFFF;mso-table-lspace: 0;mso-table-rspace: 0;">
-							<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0;">
+						<td class="header-text" style="padding: 30px 15px 30px 40px;background-color: #FFFFFF;mso-table-lspace: 0;mso-table-rspace: 0; max-width:650px;">
+							<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;border-spacing: 0;mso-table-lspace: 0;mso-table-rspace: 0; table-layout:auto;">
 							*|INTERESTED:Frequentie:Ik ontvang nieuwsbrief op moment van publicatie|*
 								<tr>
 									<td style="border-left: 4px solid #ffe615;padding-left: 15px;mso-table-lspace: 0;mso-table-rspace: 0;">
