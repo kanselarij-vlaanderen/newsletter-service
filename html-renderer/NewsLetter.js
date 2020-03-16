@@ -5,6 +5,7 @@
  * @param datestring planned_start
  * @param datestring data_docs
  * @param string procedure used to add to the title of the newsletter
+ * @param string kindOfMeeting used to display the kind of meeting the newsletter
  */
 export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure = "", kindOfMeeting) => {
   const kindOfMeetingLowerCase = kindOfMeeting.toLowerCase();

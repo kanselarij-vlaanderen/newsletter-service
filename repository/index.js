@@ -79,6 +79,7 @@ const getAgendaInformation = async (agendaId) => {
  *  publication_date          --> non-formatted (raw) publication date
  *  agendaURI                 --> URI of the agenda (use this instead of id to speed up queries)
  *  procedureText             --> Text that should be added to the title of the newsletter
+ *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter 
  *  }
  */
 const getAgendaNewsletterInformation = async (agendaId) => {
