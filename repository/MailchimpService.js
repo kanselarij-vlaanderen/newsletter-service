@@ -48,7 +48,8 @@ const createCampaign = async (req, res) => {
       formattedStart,
       formattedDocumentDate,
       agendaURI,
-      procedureText
+      procedureText,
+      kindOfMeeting
     } = await repository.getAgendaNewsletterInformation(agendaId);
 
     let newsletter = await repository.getNewsLetterByAgendaId(agendaURI);
@@ -72,7 +73,7 @@ const createCampaign = async (req, res) => {
       console.log('PRIORITY:', item.groupPriority);
       return getNewsItem(item, segmentConstraint);
     });
-    let html = await createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate, procedureText);
+    let html = await createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate, procedureText, kindOfMeeting);
 
     const template = {
       name: `Beslissingen van ${formattedStart}`,

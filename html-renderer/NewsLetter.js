@@ -6,7 +6,8 @@
  * @param datestring data_docs
  * @param string procedure used to add to the title of the newsletter
  */
-export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure = "") => {
+export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure = "", kindOfMeeting) => {
+  const kindOfMeetingLowerCase = kindOfMeeting.toLowerCase();
   return `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -205,7 +206,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 										<font style="font-family: Calibri, Arial, sans-serif; font-weight: 600; font-size: 22px; line-height: 22px; color: #333332; text-transform: uppercase;">Beslissingen van de Vlaamse Regering</font>
 										<br>
 										<font style="font-family: Calibri, Arial, sans-serif; font-size: 18px; line-height: 18px; color: #333332;">
-											Ministerraad van ${planned_start}
+											${kindOfMeeting} van ${planned_start}
 										</font>
 									</td>
 				*|END:INTERESTED|*
@@ -253,7 +254,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
                       <tr>
                         <td width="100%" colspan="2">
                           <h2 class="section-title" style="color:#333332;font-family:Calibri, Arial, sans-serif;font-weight:600;font-size:22px;text-transform:uppercase;margin:0;">
-                            Beslissingen van de Vlaamse Regering - Ministerraad ${procedure}van ${planned_start}
+                            Beslissingen van de Vlaamse Regering - ${kindOfMeeting} ${procedure}van ${planned_start}
                           </h2>
                         </td>
 											</tr>
@@ -280,7 +281,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 	                        </td>
 	                        <td valign="top" style="padding:15px;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;color:#666666;">
 	                          <font>
-	                            De documenten van deze ministerraad zullen beschikbaar zijn vanaf ${data_docs}
+	                            De documenten van deze ${kindOfMeetingLowerCase} zullen beschikbaar zijn vanaf ${data_docs}
 	                            <br>
 	                            De documenten worden beschikbaar gesteld op <a href="http://www.vlaanderen.be/nl/vlaamse-regering/beslissingenvlaamseregering">http://www.vlaanderen.be/nl/vlaamse-regering/beslissingenvlaamseregering</a>
 	                          </font>
