@@ -20,12 +20,14 @@ export default class BelgaService {
     console.time('FETCH BELGA INFORMATION TIME');
     const {
       procedureText,
+      kindOfMeeting,
       formattedStart,
       publication_date,
       agendaURI
     } = await repository.getAgendaNewsletterInformation(agendaId);
 
-    const title = `Beslissingen van de ministerraad van ${formattedStart}`;
+    const kindOfmeetingLowerCase = kindOfMeeting.toLowerCase();
+    const title = `Beslissingen van de ${kindOfmeetingLowerCase} van ${formattedStart}`;
     const data = await repository.getNewsLetterByAgendaId(agendaURI);
     const content = await createNewsletterString(data);
 
@@ -40,7 +42,7 @@ export default class BelgaService {
     const XMLCONFIG = xmlConfig.createXMLConfig(escapedContent, sentAt, identicationDate, title);
 
     const xmlString = xml(XMLCONFIG, { declaration: true });
-    const name = `Beslissingen_van_de_ministerraad_${procedureText || 'van'}_${formattedStart}.xml`
+    const name = `Beslissingen_van_de_${kindOfmeetingLowerCase}_${procedureText || 'van'}_${formattedStart}.xml`
       .split(' ')
       .join('_');
     const path = `${__dirname}/../generated-xmls/${name}`;

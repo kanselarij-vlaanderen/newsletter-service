@@ -4,6 +4,8 @@ import {ok} from 'assert';
 const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
 const electronicKindURI =
   'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/406F2ECA-524D-47DC-B889-651893135456';
+const specialKindURI =
+  'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/7D8E35BE-E5D1-494F-B5F9-51B07875B96F';
 
 import moment from 'moment';
 import 'moment-timezone';
@@ -77,6 +79,7 @@ const getAgendaInformation = async (agendaId) => {
  *  publication_date          --> non-formatted (raw) publication date
  *  agendaURI                 --> URI of the agenda (use this instead of id to speed up queries)
  *  procedureText             --> Text that should be added to the title of the newsletter
+ *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter 
  *  }
  */
 const getAgendaNewsletterInformation = async (agendaId) => {
@@ -96,10 +99,15 @@ const getAgendaNewsletterInformation = async (agendaId) => {
     .format('MMMM Do YYYY');
 
   let procedureText = '';
+  let kindOfMeeting = 'Ministerraad';
 
   if (kind === electronicKindURI) {
     procedureText = 'via elektronische procedure ';
     console.log('[PROCEDURE TEXT]:', procedureText);
+  } 
+  if (kind === specialKindURI) {
+    kindOfMeeting = 'Bijzondere ministerraad';
+    console.log('[KIND OF MEETING TEXT]:', kindOfMeeting);
   }
   console.log('FETCHED DATA FROM AGENDA WITH URI: ', agenda);
   return {
@@ -109,6 +117,7 @@ const getAgendaNewsletterInformation = async (agendaId) => {
     publication_date,
     agendaURI: agenda,
     procedureText,
+    kindOfMeeting
   };
 };
 
