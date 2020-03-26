@@ -152,7 +152,7 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
               OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
               OPTIONAL { ?newsletter dct:title ?title . }
              }
-            OPTIONAL { ?newsletter ext:themesOfSubcase ?themeURI . 
+            OPTIONAL { ?newsletter ext:themesOfNewsletter ?themeURI . 
                        ?themeURI   ext:mailchimpId        ?label . }
         } GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
         ORDER BY ASC(?mandateePriority)`;
