@@ -27,11 +27,11 @@ const getAgendaWhereisMostRecentAndFinal = async () => {
         
         SELECT DISTINCT ?uuid ?date ?agenda_uuid ?agenda_date WHERE {
             GRAPH <${targetGraph}> {
-            ?meeting mu:uuid ?uuid; a besluit:Zitting .
+            ?meeting mu:uuid ?uuid; a besluit:Vergaderactiviteit .
             ?meeting ext:finaleZittingVersie "true"^^xsd:boolean .
             ?meeting besluit:geplandeStart ?date .
-            ?agenda besluit:isAangemaaktVoor ?meeting .
-            ?agenda ext:aangepastOp ?agenda_date .
+            ?agenda besluitvorming:isAgendaVoor ?meeting .
+            ?agenda dct:modified ?agenda_date .
             ?agenda mu:uuid ?agenda_uuid .
           }
         } ORDER BY DESC(?date) DESC(?agenda_date) LIMIT 1`;
@@ -56,10 +56,10 @@ const getAgendaInformation = async (agendaId) => {
             GRAPH <${targetGraph}> {
               ?agenda a besluitvorming:Agenda .
               ?agenda mu:uuid "${agendaId}" .
-              ?agenda besluit:isAangemaaktVoor ?meeting . 
+              ?agenda besluitvorming:isAgendaVoor ?meeting . 
               ?meeting besluit:geplandeStart ?planned_start .
               OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
-              OPTIONAL { ?meeting ext:aard ?kind }
+              OPTIONAL { ?meeting dct:type ?kind }
               OPTIONAL { ?newsletter ext:issuedDocDate ?data_docs . }
               OPTIONAL { ?newsletter dct:issued ?publication_date . }
              }
@@ -79,7 +79,7 @@ const getAgendaInformation = async (agendaId) => {
  *  publication_date          --> non-formatted (raw) publication date
  *  agendaURI                 --> URI of the agenda (use this instead of id to speed up queries)
  *  procedureText             --> Text that should be added to the title of the newsletter
- *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter 
+ *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter
  *  }
  */
 const getAgendaNewsletterInformation = async (agendaId) => {
@@ -104,7 +104,7 @@ const getAgendaNewsletterInformation = async (agendaId) => {
   if (kind === electronicKindURI) {
     procedureText = 'via elektronische procedure ';
     console.log('[PROCEDURE TEXT]:', procedureText);
-  } 
+  }
   if (kind === specialKindURI) {
     kindOfMeeting = 'Bijzondere ministerraad';
     console.log('[KIND OF MEETING TEXT]:', kindOfMeeting);
