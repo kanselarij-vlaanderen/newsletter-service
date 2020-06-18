@@ -138,7 +138,7 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
         SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio WHERE {
             GRAPH <${targetGraph}> {
               <${agendaURI}> dct:hasPart ?agendaitem . 
-              ?subcase besluitvorming:isGeagendeerdVia ?agendaitem .
+              ?subcase ^besluitvorming:vindtPlaatsTijdens / besluitvorming:genereertAgendapunt ?agendaitem .
               ?subcase prov:generated ?newsletter . 
               ?agendaitem ext:wordtGetoondAlsMededeling "false"^^xsd:boolean .
               ?agendaitem ext:prioriteit ?agendaitemPrio .
