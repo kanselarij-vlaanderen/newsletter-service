@@ -207,7 +207,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 										<font style="font-family: Calibri, Arial, sans-serif; font-weight: 600; font-size: 22px; line-height: 22px; color: #333332; text-transform: uppercase;">Beslissingen van de Vlaamse Regering</font>
 										<br>
 										<font style="font-family: Calibri, Arial, sans-serif; font-size: 18px; line-height: 18px; color: #333332;">
-											${kindOfMeeting} van ${planned_start}
+											${kindOfMeeting} ${procedure}van ${planned_start}
 										</font>
 									</td>
 				*|END:INTERESTED|*
