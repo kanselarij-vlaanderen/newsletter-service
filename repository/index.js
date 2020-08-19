@@ -162,7 +162,7 @@ const getMostRecentNewsletter = async (req, res) => {
     if (!agenda_uuid) {
       res.send({status: ok, statusCode: 404, message: 'Newsletter not found.'});
     } else {
-      const {agendaURI} = await repository.getAgendaNewsletterInformation(agenda_uuid);
+      const {agendaURI} = await repository.getAgendaNewsletterInformation(agenda_uuid); // TODO: this function is broken because of missing import?
       let newsletter = await getNewsLetterByAgendaId(agendaURI);
       if (!newsletter) {
         throw new Error('no newsletters present');
