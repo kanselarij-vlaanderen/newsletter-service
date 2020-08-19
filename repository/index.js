@@ -117,39 +117,43 @@ const getAgendaNewsletterInformation = async (agendaId) => {
 const getNewsLetterByAgendaId = async (agendaURI) => {
   console.time('QUERY TIME NEWSLETTER INFORMATION');
   const queryString = `
-        PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
-        PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
-        PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
-        PREFIX dct: <http://purl.org/dc/terms/>
-        PREFIX prov: <http://www.w3.org/ns/prov#>
-        PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
-        PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
+    PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
+    PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
+    PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
 
-        SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio WHERE {
-            GRAPH ${sparqlEscapeUri(targetGraph)} {
-              ${sparqlEscapeUri(agendaURI)} a besluitvorming:Agenda ;
-                dct:hasPart ?agendaitem . 
-              ?agendaitem a besluit:Agendapunt .
-                ext:wordtGetoondAlsMededeling "false"^^xsd:boolean ;
-                ext:prioriteit ?agendaitemPrio .
-              ?treatment a besluit:BehandelingVanAgendapunt ;
-                besluitvorming:heeftOnderwerp ?agendaitem ;
-                prov:generated ?newsletter .
-              ?newsletter a besluitvorming:NieuwsbriefInfo ;
-                ext:inNieuwsbrief "true"^^xsd:boolean .
-              OPTIONAL { 
-                ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
-                ?mandatee dct:title ?mandateeTitle .
-                ?mandatee mandaat:rangorde ?mandateePriority .
-                ?mandatee ext:nickName ?mandateeName . 
-              }
-              OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
-              OPTIONAL { ?newsletter dct:title ?title . }
-             }
-            OPTIONAL { ?newsletter dct:subject ?themeURI . 
-                       ?themeURI   ext:mailchimpId        ?label . }
-        } GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
-        ORDER BY ASC(?mandateePriority)`;
+    SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
+    WHERE {
+      GRAPH ${sparqlEscapeUri(targetGraph)} {
+        ${sparqlEscapeUri(agendaURI)} a besluitvorming:Agenda ;
+          dct:hasPart ?agendaitem . 
+        ?agendaitem a besluit:Agendapunt .
+          ext:wordtGetoondAlsMededeling "false"^^xsd:boolean ;
+          ext:prioriteit ?agendaitemPrio .
+        ?treatment a besluit:BehandelingVanAgendapunt ;
+          besluitvorming:heeftOnderwerp ?agendaitem ;
+          prov:generated ?newsletter .
+        ?newsletter a besluitvorming:NieuwsbriefInfo ;
+          ext:inNieuwsbrief "true"^^xsd:boolean .
+        OPTIONAL { 
+          ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
+          ?mandatee dct:title ?mandateeTitle .
+          ?mandatee mandaat:rangorde ?mandateePriority .
+          ?mandatee ext:nickName ?mandateeName . 
+        }
+        OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
+        OPTIONAL { ?newsletter dct:title ?title . }
+      }
+      OPTIONAL {
+        ?newsletter dct:subject ?themeURI . 
+        ?themeURI ext:mailchimpId ?label .
+      }
+    }
+    GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
+    ORDER BY ASC(?mandateePriority)`;
   const data = await query(queryString);
   console.timeEnd('QUERY TIME NEWSLETTER INFORMATION');
   return parseSparqlResults(data);
