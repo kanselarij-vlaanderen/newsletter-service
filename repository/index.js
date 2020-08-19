@@ -126,8 +126,8 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
         PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
 
         SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio WHERE {
-            GRAPH <${targetGraph}> {
-              <${agendaURI}> a besluitvorming:Agenda ;
+            GRAPH ${sparqlEscapeUri(targetGraph)} {
+              ${sparqlEscapeUri(agendaURI)} a besluitvorming:Agenda ;
                 dct:hasPart ?agendaitem . 
               ?agendaitem a besluit:Agendapunt .
                 ext:wordtGetoondAlsMededeling "false"^^xsd:boolean ;
