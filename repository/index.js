@@ -15,16 +15,13 @@ moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
 
 const getAgendaWhereisMostRecentAndFinal = async () => {
   const query = `
-        PREFIX dct: <http://purl.org/dc/terms/>
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
-        PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
         PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
         PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
-        PREFIX dbpedia: <http://dbpedia.org/ontology/>
-        PREFIX dct: <http://purl.org/dc/terms/>
-        PREFIX prov: <http://www.w3.org/ns/prov#>
+        PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
         PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
-        
+        PREFIX dct: <http://purl.org/dc/terms/>
+
         SELECT DISTINCT ?uuid ?date ?agenda_uuid ?agenda_date WHERE {
             GRAPH <${targetGraph}> {
             ?meeting mu:uuid ?uuid; a besluit:Vergaderactiviteit .
@@ -42,15 +39,11 @@ const getAgendaWhereisMostRecentAndFinal = async () => {
 const getAgendaInformation = async (agendaId) => {
   console.time('QUERY TIME AGENDA INFORMATION');
   const query = `
-  PREFIX dct: <http://purl.org/dc/terms/>
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
-        PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
         PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
         PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
-        PREFIX dbpedia: <http://dbpedia.org/ontology/>
+        PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
         PREFIX dct: <http://purl.org/dc/terms/>
-        PREFIX prov: <http://www.w3.org/ns/prov#>
-        PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
 
         SELECT DISTINCT ?agenda ?planned_start ?data_docs ?publication_date ?kind WHERE {
             GRAPH <${targetGraph}> {
@@ -124,12 +117,8 @@ const getAgendaNewsletterInformation = async (agendaId) => {
 const getNewsLetterByAgendaId = async (agendaURI) => {
   console.time('QUERY TIME NEWSLETTER INFORMATION');
   const query = `
-        PREFIX dct: <http://purl.org/dc/terms/>
-        PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
         PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
         PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
-        PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
-        PREFIX dbpedia: <http://dbpedia.org/ontology/>
         PREFIX dct: <http://purl.org/dc/terms/>
         PREFIX prov: <http://www.w3.org/ns/prov#>
         PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
