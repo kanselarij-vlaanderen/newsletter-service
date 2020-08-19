@@ -117,6 +117,7 @@ const getAgendaNewsletterInformation = async (agendaId) => {
 const getNewsLetterByAgendaId = async (agendaURI) => {
   console.time('QUERY TIME NEWSLETTER INFORMATION');
   const query = `
+        PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
         PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
         PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
         PREFIX dct: <http://purl.org/dc/terms/>
@@ -126,12 +127,16 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
 
         SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio WHERE {
             GRAPH <${targetGraph}> {
-              <${agendaURI}> dct:hasPart ?agendaitem . 
-              ?subcase ^besluitvorming:vindtPlaatsTijdens / besluitvorming:genereertAgendapunt ?agendaitem .
-              ?subcase prov:generated ?newsletter . 
-              ?agendaitem ext:wordtGetoondAlsMededeling "false"^^xsd:boolean .
-              ?agendaitem ext:prioriteit ?agendaitemPrio .
-              ?newsletter ext:inNieuwsbrief "true"^^xsd:boolean .
+              <${agendaURI}> a besluitvorming:Agenda ;
+                dct:hasPart ?agendaitem . 
+              ?agendaitem a besluit:Agendapunt .
+                ext:wordtGetoondAlsMededeling "false"^^xsd:boolean ;
+                ext:prioriteit ?agendaitemPrio .
+              ?treatment a besluit:BehandelingVanAgendapunt ;
+                besluitvorming:heeftOnderwerp ?agendaitem ;
+                prov:generated ?newsletter .
+              ?newsletter a besluitvorming:NieuwsbriefInfo ;
+                ext:inNieuwsbrief "true"^^xsd:boolean .
               OPTIONAL { 
                 ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
                 ?mandatee dct:title ?mandateeTitle .
