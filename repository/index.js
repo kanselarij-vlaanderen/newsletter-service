@@ -1,4 +1,4 @@
-import mu from 'mu';
+import { query, sparqlEscapeUri } from 'mu';
 import {ok} from 'assert';
 
 const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
@@ -14,7 +14,7 @@ moment.locale('nl');
 moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
 
 const getAgendaWhereisMostRecentAndFinal = async () => {
-  const query = `
+  const queryString = `
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
         PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
         PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
@@ -32,13 +32,13 @@ const getAgendaWhereisMostRecentAndFinal = async () => {
             ?agenda mu:uuid ?agenda_uuid .
           }
         } ORDER BY DESC(?date) DESC(?agenda_date) LIMIT 1`;
-  let data = await mu.query(query);
+  const data = await query(queryString);
   return parseSparqlResults(data);
 };
 
 const getAgendaInformation = async (agendaId) => {
   console.time('QUERY TIME AGENDA INFORMATION');
-  const query = `
+  const queryString = `
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
         PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
         PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
@@ -57,7 +57,7 @@ const getAgendaInformation = async (agendaId) => {
               OPTIONAL { ?newsletter dct:issued ?publication_date . }
              }
         }`;
-  let data = await mu.query(query);
+  const data = await query(queryString);
   console.timeEnd('QUERY TIME AGENDA INFORMATION');
   return parseSparqlResults(data);
 };
@@ -116,7 +116,7 @@ const getAgendaNewsletterInformation = async (agendaId) => {
 
 const getNewsLetterByAgendaId = async (agendaURI) => {
   console.time('QUERY TIME NEWSLETTER INFORMATION');
-  const query = `
+  const queryString = `
         PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
         PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
         PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
@@ -150,7 +150,7 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
                        ?themeURI   ext:mailchimpId        ?label . }
         } GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
         ORDER BY ASC(?mandateePriority)`;
-  let data = await mu.query(query);
+  const data = await query(queryString);
   console.timeEnd('QUERY TIME NEWSLETTER INFORMATION');
   return parseSparqlResults(data);
 };
