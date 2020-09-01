@@ -1,4 +1,4 @@
-import mu from 'mu';
+import { query, sparqlEscapeUri } from 'mu';
 import {ok} from 'assert';
 
 const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
@@ -14,7 +14,7 @@ moment.locale('nl');
 moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
 
 const getAgendaWhereisMostRecentAndFinal = async () => {
-  const query = `
+  const queryString = `
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
         PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
         PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
@@ -32,13 +32,13 @@ const getAgendaWhereisMostRecentAndFinal = async () => {
             ?agenda mu:uuid ?agenda_uuid .
           }
         } ORDER BY DESC(?date) DESC(?agenda_date) LIMIT 1`;
-  let data = await mu.query(query);
+  const data = await query(queryString);
   return parseSparqlResults(data);
 };
 
 const getAgendaInformation = async (agendaId) => {
   console.time('QUERY TIME AGENDA INFORMATION');
-  const query = `
+  const queryString = `
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
         PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
         PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
@@ -57,7 +57,7 @@ const getAgendaInformation = async (agendaId) => {
               OPTIONAL { ?newsletter dct:issued ?publication_date . }
              }
         }`;
-  let data = await mu.query(query);
+  const data = await query(queryString);
   console.timeEnd('QUERY TIME AGENDA INFORMATION');
   return parseSparqlResults(data);
 };
@@ -116,36 +116,45 @@ const getAgendaNewsletterInformation = async (agendaId) => {
 
 const getNewsLetterByAgendaId = async (agendaURI) => {
   console.time('QUERY TIME NEWSLETTER INFORMATION');
-  const query = `
-        PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
-        PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
-        PREFIX dct: <http://purl.org/dc/terms/>
-        PREFIX prov: <http://www.w3.org/ns/prov#>
-        PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
-        PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
+  const queryString = `
+    PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
+    PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
+    PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
 
-        SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio WHERE {
-            GRAPH <${targetGraph}> {
-              <${agendaURI}> dct:hasPart ?agendaitem . 
-              ?subcase ^besluitvorming:vindtPlaatsTijdens / besluitvorming:genereertAgendapunt ?agendaitem .
-              ?subcase prov:generated ?newsletter . 
-              ?agendaitem ext:wordtGetoondAlsMededeling "false"^^xsd:boolean .
-              ?agendaitem ext:prioriteit ?agendaitemPrio .
-              ?newsletter ext:inNieuwsbrief "true"^^xsd:boolean .
-              OPTIONAL { 
-                ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
-                ?mandatee dct:title ?mandateeTitle .
-                ?mandatee mandaat:rangorde ?mandateePriority .
-                ?mandatee ext:nickName ?mandateeName . 
-              }
-              OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
-              OPTIONAL { ?newsletter dct:title ?title . }
-             }
-            OPTIONAL { ?newsletter dct:subject ?themeURI . 
-                       ?themeURI   ext:mailchimpId        ?label . }
-        } GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
-        ORDER BY ASC(?mandateePriority)`;
-  let data = await mu.query(query);
+    SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
+    WHERE {
+      GRAPH ${sparqlEscapeUri(targetGraph)} {
+        ${sparqlEscapeUri(agendaURI)} a besluitvorming:Agenda ;
+          dct:hasPart ?agendaitem . 
+        ?agendaitem a besluit:Agendapunt .
+          ext:wordtGetoondAlsMededeling "false"^^xsd:boolean ;
+          ext:prioriteit ?agendaitemPrio .
+        ?treatment a besluit:BehandelingVanAgendapunt ;
+          besluitvorming:heeftOnderwerp ?agendaitem ;
+          prov:generated ?newsletter .
+        ?newsletter a besluitvorming:NieuwsbriefInfo ;
+          ext:inNieuwsbrief "true"^^xsd:boolean .
+        OPTIONAL { 
+          ?agendaitem besluitvorming:heeftBevoegdeVoorAgendapunt ?mandatee .
+          ?mandatee dct:title ?mandateeTitle .
+          ?mandatee mandaat:rangorde ?mandateePriority .
+          ?mandatee ext:nickName ?mandateeName . 
+        }
+        OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
+        OPTIONAL { ?newsletter dct:title ?title . }
+      }
+      OPTIONAL {
+        ?newsletter dct:subject ?themeURI . 
+        ?themeURI ext:mailchimpId ?label .
+      }
+    }
+    GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
+    ORDER BY ASC(?mandateePriority)`;
+  const data = await query(queryString);
   console.timeEnd('QUERY TIME NEWSLETTER INFORMATION');
   return parseSparqlResults(data);
 };
@@ -157,7 +166,7 @@ const getMostRecentNewsletter = async (req, res) => {
     if (!agenda_uuid) {
       res.send({status: ok, statusCode: 404, message: 'Newsletter not found.'});
     } else {
-      const {agendaURI} = await repository.getAgendaNewsletterInformation(agenda_uuid);
+      const {agendaURI} = await repository.getAgendaNewsletterInformation(agenda_uuid); // TODO: this function is broken because of missing import?
       let newsletter = await getNewsLetterByAgendaId(agendaURI);
       if (!newsletter) {
         throw new Error('no newsletters present');
