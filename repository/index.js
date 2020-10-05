@@ -130,7 +130,7 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
       GRAPH ${sparqlEscapeUri(targetGraph)} {
         ${sparqlEscapeUri(agendaURI)} a besluitvorming:Agenda ;
           dct:hasPart ?agendaitem . 
-        ?agendaitem a besluit:Agendapunt .
+        ?agendaitem a besluit:Agendapunt ;
           ext:wordtGetoondAlsMededeling "false"^^xsd:boolean ;
           ext:prioriteit ?agendaitemPrio .
         ?treatment a besluit:BehandelingVanAgendapunt ;
