@@ -15,14 +15,14 @@ export const reduceNewslettersToMandateesByPriority = (newsletter) => {
       if (foundItem) {
         const indexOf = uniqueNewsletters.indexOf(foundItem);
         uniqueNewsletters[indexOf].mandatees.push({
-          priority: parseInt(newsItem.mandateePriority),
+          priority: alphaNumericPriority(newsItem.mandateePriority),
           title: newsItem.mandateeTitle,
           nickName: newsItem.mandateeName
         });
       } else {
         newsItem.mandatees = [
           {
-            priority: parseInt(newsItem.mandateePriority),
+            priority: alphaNumericPriority(newsItem.mandateePriority),
             title: newsItem.mandateeTitle,
             nickName: newsItem.mandateeName
           }
@@ -44,21 +44,18 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
 
     const proposalText = computeProposalTextForNewsletterItem([...new Set(sortedMandatees)]);
 
-    // catch with 2147000, because Math-min of an empty array is -Infinity and if there is no priority it should be last.
-    const minPrio = Math.min(...priorities) || 2147000;
-
-    priorities.shift();
-    let calculatedPrio = minPrio;
-
+    let alphaNumericPrio;
     if (priorities.length > 0) {
-      priorities.map((priority) => {
-        calculatedPrio += priority / 100;
-      });
+      // the priorities are letters of the alphabet to do a alphanumeric sort, make 1 string of them
+      alphaNumericPrio = priorities.join();
+    } else {
+      // no mandatees means lowest priority
+      alphaNumericPrio = 'ZZZZZZZZ';
     }
 
     // assign new properties used for sorting.
     newsItemWithMandatees.groupName = groupName;
-    newsItemWithMandatees.groupPriority = parseFloat(calculatedPrio);
+    newsItemWithMandatees.groupPriority = alphaNumericPrio;
     newsItemWithMandatees.proposalText = proposalText;
     return newsItemWithMandatees;
   });
@@ -110,3 +107,13 @@ const computeProposalTextForNewsletterItem = (sortedMandatees) => {
   }
   return "";
 };
+
+const alphaNumericPriority = (mandateePriority) => {
+  const alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+  if (mandateePriority) {
+    const priority = parseInt(mandateePriority);
+    return alphabet[priority - 1];
+  }
+  return 'ZZZZZZZZ'
+
+}
