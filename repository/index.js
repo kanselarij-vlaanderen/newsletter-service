@@ -6,6 +6,8 @@ const electronicKindURI =
   'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/406F2ECA-524D-47DC-B889-651893135456';
 const specialKindURI =
   'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/7D8E35BE-E5D1-494F-B5F9-51B07875B96F';
+const vlaamseVeerkrachtURI =
+  'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/1d16cb70-0ae9-489e-bf97-c74897222e3c';
 
 import moment from 'moment';
 import 'moment-timezone';
@@ -100,6 +102,10 @@ const getAgendaNewsletterInformation = async (agendaId) => {
   }
   if (kind === specialKindURI) {
     kindOfMeeting = 'Bijzondere ministerraad';
+    console.log('[KIND OF MEETING TEXT]:', kindOfMeeting);
+  }
+  if (kind === vlaamseVeerkrachtURI) {
+    kindOfMeeting = 'Ministerraad - Plan Vlaamse Veerkracht';
     console.log('[KIND OF MEETING TEXT]:', kindOfMeeting);
   }
   console.log('FETCHED DATA FROM AGENDA WITH URI: ', agenda);
