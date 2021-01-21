@@ -8,7 +8,7 @@
  * @param string kindOfMeeting used to display the kind of meeting the newsletter
  */
 export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure = "", kindOfMeeting) => {
-  const kindOfMeetingLowerCase = kindOfMeeting.toLowerCase();
+  const kindOfMeetingLowerCase = kindOfMeeting.toLowerCase().replace('vlaamse veerkracht', 'Vlaamse Veerkracht');
   return `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>

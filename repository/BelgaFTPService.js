@@ -26,7 +26,7 @@ export default class BelgaService {
       agendaURI
     } = await repository.getAgendaNewsletterInformation(agendaId);
 
-    const kindOfmeetingLowerCase = kindOfMeeting.toLowerCase();
+    const kindOfmeetingLowerCase = kindOfMeeting.toLowerCase().replace('vlaamse veerkracht', 'Vlaamse Veerkracht');
     const title = `Beslissingen van de ${kindOfmeetingLowerCase} van ${formattedStart}`;
     const data = await repository.getNewsLetterByAgendaId(agendaURI);
     const content = await createNewsletterString(data);
