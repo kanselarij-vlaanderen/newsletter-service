@@ -95,19 +95,23 @@ const getAgendaNewsletterInformation = async (agendaId) => {
 
   let procedureText = '';
   let kindOfMeeting = 'Ministerraad';
+  let mailSubjectPrefix = 'Ministerraad';
 
   if (kind === electronicKindURI) {
     procedureText = 'via elektronische procedure ';
+    mailSubjectPrefix = `Ministerraad via elektronische procedure`;
     console.log('[PROCEDURE TEXT]:', procedureText);
   }
   if (kind === specialKindURI) {
-    kindOfMeeting = 'Bijzondere ministerraad';
-    console.log('[KIND OF MEETING TEXT]:', kindOfMeeting);
+    kindOfMeeting = 'Bijzondere ministerraad'; // should this be capitalized M ?
+    mailSubjectPrefix = `Bijzondere Ministerraad`;
   }
   if (kind === vlaamseVeerkrachtURI) {
     kindOfMeeting = 'Ministerraad - Plan Vlaamse Veerkracht';
-    console.log('[KIND OF MEETING TEXT]:', kindOfMeeting);
+    mailSubjectPrefix = `Ministerraad Vlaamse Veerkracht`;
   }
+  console.log('[KIND OF MEETING TEXT]:', kindOfMeeting);
+  console.log('[mailSubjectPrefix TEXT]:', mailSubjectPrefix);
   console.log('FETCHED DATA FROM AGENDA WITH URI: ', agenda);
   return {
     formattedStart,
@@ -116,7 +120,8 @@ const getAgendaNewsletterInformation = async (agendaId) => {
     publication_date,
     agendaURI: agenda,
     procedureText,
-    kindOfMeeting
+    kindOfMeeting,
+    mailSubjectPrefix,
   };
 };
 
