@@ -49,7 +49,8 @@ const createCampaign = async (req, res) => {
       formattedDocumentDate,
       agendaURI,
       procedureText,
-      kindOfMeeting
+      kindOfMeeting,
+      mailSubjectPrefix,
     } = await repository.getAgendaNewsletterInformation(agendaId);
 
     let newsletter = await repository.getNewsLetterByAgendaId(agendaURI);
@@ -86,7 +87,7 @@ const createCampaign = async (req, res) => {
     });
     console.timeEnd('CREATE MAILCHIMP TEMPLATE TIME');
 
-    const campaign = await createNewCampaignObject(created_template, formattedStart, allThemesOfNewsletter);
+    const campaign = await createNewCampaignObject(created_template, formattedStart, allThemesOfNewsletter, mailSubjectPrefix);
     console.time('CREATE MAILCHIMP CAMPAIGN TIME');
     const createdCampagne = await mailchimp.post({
       path: '/campaigns',
@@ -169,13 +170,14 @@ const createKindCondition = async () => {
   };
 };
 
-const createNewCampaignObject = async (created_template, formattedStart, allThemesOfNewsletter) => {
+const createNewCampaignObject = async (created_template, formattedStart, allThemesOfNewsletter, mailSubjectPrefix) => {
   const {id} = created_template;
   console.time('FETCH MAILCHIMP CONFIG TIME');
   const themeCondition = await createThemesCondition(allThemesOfNewsletter);
   const kindCondition = await createKindCondition();
   console.timeEnd('FETCH MAILCHIMP CONFIG TIME');
   console.log('CONDITIONS_USED:', JSON.stringify([themeCondition, kindCondition]));
+  // mailSubjectPrefix is the kind of meeting
   const campaign = {
     type: 'regular',
     recipients: {
@@ -186,9 +188,9 @@ const createNewCampaignObject = async (created_template, formattedStart, allThem
       }
     },
     settings: {
-      subject_line: `Beslissingen van ${formattedStart}`,
-      preview_text: `Beslissingen van ${formattedStart}`,
-      title: `Beslissingen van ${formattedStart}`,
+      subject_line: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
+      preview_text: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
+      title: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
       from_name: FROM_NAME,
       reply_to: REPLY_TO,
       inline_css: true,
