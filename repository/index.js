@@ -1,4 +1,4 @@
-import { query, sparqlEscapeUri } from 'mu';
+import { query, sparqlEscapeUri, sparqlEscapeString } from 'mu';
 import {ok} from 'assert';
 
 const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
@@ -50,7 +50,7 @@ const getAgendaInformation = async (agendaId) => {
         SELECT DISTINCT ?agenda ?planned_start ?data_docs ?publication_date ?kind WHERE {
             GRAPH <${targetGraph}> {
               ?agenda a besluitvorming:Agenda .
-              ?agenda mu:uuid "${agendaId}" .
+              ?agenda mu:uuid ${sparqlEscapeString(agendaId)} .
               ?agenda besluitvorming:isAgendaVoor ?meeting . 
               ?meeting besluit:geplandeStart ?planned_start .
               OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
