@@ -284,7 +284,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 	                          <font>
 	                            De documenten van deze ${kindOfMeetingLowerCase} zullen beschikbaar zijn vanaf ${data_docs}
 	                            <br>
-	                            De documenten worden beschikbaar gesteld op <a href="http://www.vlaanderen.be/nl/vlaamse-regering/beslissingenvlaamseregering">http://www.vlaanderen.be/nl/vlaamse-regering/beslissingenvlaamseregering</a>
+	                            De documenten worden beschikbaar gesteld op <a href="https://beslissingenvlaamseregering.vlaanderen.be">https://beslissingenvlaamseregering.vlaanderen.be</a>
 	                          </font>
 	                        </td>
 	                      </tr>
