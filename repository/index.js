@@ -153,7 +153,7 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
           ?agendaitem ext:heeftBevoegdeVoorAgendapunt ?mandatee .
           ?mandatee dct:title ?mandateeTitle .
           ?mandatee mandaat:rangorde ?mandateePriority .
-          ?mandatee ext:nickName ?mandateeName . 
+          ?mandatee ext:nieuwsbriefTitel ?mandateeName . 
         }
         OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
         OPTIONAL { ?newsletter dct:title ?title . }
