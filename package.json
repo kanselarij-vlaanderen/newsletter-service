@@ -1,6 +1,6 @@
 {
   "name": "newsletter-service",
-  "version": "1.0.0",
+  "version": "2.4.0",
   "description": "",
   "main": "app.js",
   "dependencies": {
@@ -23,5 +23,5 @@
     "test": "jest"
   },
   "author": "",
-  "license": "ISC"
+  "license": "MIT"
 }
