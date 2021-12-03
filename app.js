@@ -58,7 +58,7 @@ app.post('/sendToBelga/:id', async (req, res, next) => {
     console.time('SEND BELGA CAMPAIGN TIME');
     await service.generateXML(agendaId, true);
     console.time('SEND BELGA CAMPAIGN TIME');
-    res.status(200).end();
+    res.status(201).end();
   } catch (error) {
     next(error);
   }
