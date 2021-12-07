@@ -1,5 +1,10 @@
 import { query, sparqlEscapeUri, sparqlEscapeString } from 'mu';
-import {ok} from 'assert';
+import moment from 'moment';
+import 'moment-timezone';
+import {parseSparqlResults} from "../util";
+
+moment.locale('nl');
+moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
 
 const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
 const electronicKindURI =
@@ -9,11 +14,6 @@ const specialKindURI =
 const vlaamseVeerkrachtURI =
   'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/1d16cb70-0ae9-489e-bf97-c74897222e3c';
 
-import moment from 'moment';
-import 'moment-timezone';
-
-moment.locale('nl');
-moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
 
 const getAgendaWhereisMostRecentAndFinal = async () => {
   const queryString = `
@@ -38,7 +38,6 @@ const getAgendaWhereisMostRecentAndFinal = async () => {
   return parseSparqlResults(data);
 };
 
-// TODO OK
 const getAgendaInformation = async (agendaId) => {
   console.time('QUERY TIME AGENDA INFORMATION');
   const queryString = `
@@ -78,7 +77,6 @@ const getAgendaInformation = async (agendaId) => {
  *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter
  *  }
  */
-    // TODO OK
 const getAgendaNewsletterInformation = async (agendaId) => {
   let agendaInformation = await getAgendaInformation(agendaId);
   if (!agendaInformation || !agendaInformation[0]) {
@@ -126,7 +124,7 @@ const getAgendaNewsletterInformation = async (agendaId) => {
     mailSubjectPrefix,
   };
 };
-// TODO OK
+
 const getNewsLetterByAgendaId = async (agendaURI) => {
   console.time('QUERY TIME NEWSLETTER INFORMATION');
   const queryString = `
@@ -172,26 +170,8 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
   return parseSparqlResults(data);
 };
 
-// TODO ok
-const parseSparqlResults = (data) => {
-  const vars = data.head.vars;
-  return data.results.bindings.map((binding) => {
-    let obj = {};
-
-    vars.forEach((varKey) => {
-      if (binding[varKey]) {
-        obj[varKey] = binding[varKey].value;
-      } else {
-        obj[varKey] = null;
-      }
-    });
-    return obj;
-  });
-};
-
 module.exports = {
   getNewsLetterByAgendaId,
   getAgendaWhereisMostRecentAndFinal,
-  getMostRecentNewsletter,
   getAgendaNewsletterInformation,
 };

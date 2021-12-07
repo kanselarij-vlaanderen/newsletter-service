@@ -391,5 +391,9 @@ const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure
 `;
 };
 
+function escapeHtml(unsafe) {
+    return unsafe.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
 
-export { createNewsLetter,getNewsItem };
+
+export { createNewsLetter,getNewsItem,escapeHtml};

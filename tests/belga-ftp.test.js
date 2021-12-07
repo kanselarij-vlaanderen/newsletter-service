@@ -1,5 +1,5 @@
-import BelgaFTPService from '../repository/BelgaFTPService';
 import { user, password, host } from './env'
+import BelgaService from "../repository/belga-service";
 let AMOUNT_OF_FILES_ON_SERVER = 0;
 
 const belgaConfig = {
@@ -14,7 +14,7 @@ let service = null;
 
 describe('FTP moving file tests', () => {
   beforeEach(async () => {
-    service = new BelgaFTPService(belgaConfig);
+    service = new BelgaService(belgaConfig);
     await service.openConnection();
   });
 

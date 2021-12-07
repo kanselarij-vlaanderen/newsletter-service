@@ -1,14 +1,18 @@
 import mu from 'mu';
-import BelgaService from './repository/BelgaFTPService.js';
+import BelgaService from "./repository/belga-service";
+
 const app = mu.app;
+
 const Mailchimp = require('mailchimp-api-v3');
+const mailchimpService = require('./repository/mailchimp-service');
 const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
+
 const bodyParser = require('body-parser');
-const mailchimpService = require('./repository/MailchimpService.js');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
 dotenv.config();
+
 app.use(bodyParser.json({ type: 'application/*+json' }));
 app.use(cors());
 
@@ -21,7 +25,7 @@ const belgaConfig = {
   password,
   host
 };
-const service = new BelgaService(belgaConfig);
+const belgaService = new BelgaService(belgaConfig);
 
 app.post('/createCampaign', (req, res) => {
   return mailchimpService.createCampaign(req, res);
@@ -51,7 +55,7 @@ app.post('/sendToBelga/:id', async (req, res, next) => {
   }
   try {
     console.time('SEND BELGA CAMPAIGN TIME');
-    await service.generateXML(agendaId, true);
+    await belgaService.generateXML(agendaId, true);
     console.time('SEND BELGA CAMPAIGN TIME');
     res.status(201).end();
   } catch (error) {
@@ -102,6 +106,6 @@ app.get('/xml-newsletter/:agenda_id', async (req, res) => {
   if (!agendaId) {
     throw new Error('No agenda_id provided.');
   }
-  const generatedXMLPath = await service.generateXML(agendaId);
+  const generatedXMLPath = await belgaService.generateXML(agendaId);
   res.download(generatedXMLPath); // Set disposition and send it.
 });
