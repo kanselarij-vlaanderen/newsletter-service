@@ -5,7 +5,6 @@ const Mailchimp = require('mailchimp-api-v3');
 const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
 const bodyParser = require('body-parser');
 const mailchimpService = require('./repository/MailchimpService.js');
-const repository = require('./repository/index.js');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
@@ -26,10 +25,6 @@ const service = new BelgaService(belgaConfig);
 
 app.post('/createCampaign', (req, res) => {
   return mailchimpService.createCampaign(req, res);
-});
-
-app.get('/', (req, res) => {
-  return repository.getMostRecentNewsletter(req, res);
 });
 
 app.post('/sendMailCampaign/:id', async (req, res, next) => {
@@ -64,7 +59,7 @@ app.post('/sendToBelga/:id', async (req, res, next) => {
   }
 });
 
-
+// TODO Do these 2 get the same?
 app.get('/fetchTestMailCampaign/:id', async (req, res, next) => {
   const campaign_id = req.params.id;
   try {

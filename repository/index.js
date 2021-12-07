@@ -38,6 +38,7 @@ const getAgendaWhereisMostRecentAndFinal = async () => {
   return parseSparqlResults(data);
 };
 
+// TODO OK
 const getAgendaInformation = async (agendaId) => {
   console.time('QUERY TIME AGENDA INFORMATION');
   const queryString = `
@@ -77,6 +78,7 @@ const getAgendaInformation = async (agendaId) => {
  *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter
  *  }
  */
+    // TODO OK
 const getAgendaNewsletterInformation = async (agendaId) => {
   let agendaInformation = await getAgendaInformation(agendaId);
   if (!agendaInformation || !agendaInformation[0]) {
@@ -124,7 +126,7 @@ const getAgendaNewsletterInformation = async (agendaId) => {
     mailSubjectPrefix,
   };
 };
-
+// TODO OK
 const getNewsLetterByAgendaId = async (agendaURI) => {
   console.time('QUERY TIME NEWSLETTER INFORMATION');
   const queryString = `
@@ -170,50 +172,7 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
   return parseSparqlResults(data);
 };
 
-const getMostRecentNewsletter = async (req, res) => {
-  try {
-    const response = await getAgendaWhereisMostRecentAndFinal();
-    const {agenda_uuid} = response[0] || {agenda_uuid: null};
-    if (!agenda_uuid) {
-      res.send({status: ok, statusCode: 404, message: 'Newsletter not found.'});
-    } else {
-      const {agendaURI} = await repository.getAgendaNewsletterInformation(agenda_uuid); // TODO: this function is broken because of missing import?
-      let newsletter = await getNewsLetterByAgendaId(agendaURI);
-      if (!newsletter) {
-        throw new Error('no newsletters present');
-      }
-
-      newsletter = newsletter.filter((newsletter_item) => {
-        if (newsletter_item.finished) {
-          let item = {};
-          item.id = newsletter_item.uuid;
-          item.webtitle = newsletter_item.title;
-          item.description = newsletter_item.richtext;
-          item.body = newsletter_item.text;
-          item.publication_date = newsletter_item.created;
-          item.modification_date = newsletter_item.modified;
-          item.type = 'agenda_item';
-          if (item.remark) {
-            item.agenda_item_type = 'Opmerking';
-          } else {
-            item.agenda_item_type = 'Beslissing';
-          }
-          return item;
-        }
-      });
-
-      res.send({
-        total: newsletter.length,
-        size: newsletter.length,
-        items: newsletter,
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    res.send({status: ok, statusCode: 500, body: {error}});
-  }
-};
-
+// TODO ok
 const parseSparqlResults = (data) => {
   const vars = data.head.vars;
   return data.results.bindings.map((binding) => {

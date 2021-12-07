@@ -8,6 +8,7 @@
  *      fourth group: Mandatee1 - 1, mandatee3 - 3
  * This is different from the normal priority of the agendaitems in the agenda.
  */
+// TODO OK
 export const reduceNewslettersToMandateesByPriority = (newsletter) => {
   return setCalculatedPrioritiesOfNewsletter(
     newsletter.reduce((uniqueNewsletters, newsItem) => {
@@ -35,7 +36,7 @@ export const reduceNewslettersToMandateesByPriority = (newsletter) => {
     }, [])
   );
 };
-
+// TODO ok
 const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
   uniqueNewsletters.map((newsItemWithMandatees) => {
     const sortedMandatees = newsItemWithMandatees.mandatees.sort((a, b) => a.priority - b.priority);
@@ -61,7 +62,7 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
   });
   return sortNewsletterItems(uniqueNewsletters);
 };
-
+// TODO ok
 const sortNewsletterItems = (items) => {
   return items.sort((a,b) => {
     if (a.groupPriority === b.groupPriority) {
@@ -70,7 +71,7 @@ const sortNewsletterItems = (items) => {
     return a.groupPriority > b.groupPriority ? 1 : -1;
   })
 }
-
+// TODO OK
 const findExistingItem = (list, item) => {
   return list.find((listItem) => listItem.newsletter === item.newsletter);
 };
@@ -79,6 +80,8 @@ const findExistingItem = (list, item) => {
  * @param {*} sortedMandatees (mandatees sorted by priority)
  * returns a computed proposalName based on the mandatees
  */
+// TODO ok
+
 const computeProposalTextForNewsletterItem = (sortedMandatees) => {
   let proposalText = "Op voorstel van ";
   const seperatorComma = ", ";
@@ -107,6 +110,7 @@ const computeProposalTextForNewsletterItem = (sortedMandatees) => {
   }
   return "";
 };
+// TODO ok
 
 const alphaNumericPriority = (mandateePriority) => {
   const alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];

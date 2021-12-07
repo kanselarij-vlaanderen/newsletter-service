@@ -1,6 +1,5 @@
-const {createNewsLetter} = require('../html-renderer/NewsLetter');
-const {getNewsItem} = require('../html-renderer/NewsItem');
 import {ok} from 'assert';
+import {createNewsLetter, getNewsItem} from "../util/html-renderer";
 
 const repository = require('./index.js');
 const moment = require('moment');
@@ -37,7 +36,7 @@ const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID;
 const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel persberichten als beslissingen'];
 
 moment.locale('nl');
-
+// TODO OK
 const createCampaign = async (req, res) => {
   try {
     const agendaId = req.query.agendaId;
@@ -74,7 +73,7 @@ const createCampaign = async (req, res) => {
       console.log('PRIORITY:', item.groupPriority);
       return getNewsItem(item, segmentConstraint);
     });
-    let html = await createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate, procedureText, kindOfMeeting);
+    let html = createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate, procedureText, kindOfMeeting);
 
     const template = {
       name: `Beslissingen van ${formattedStart}`,
@@ -120,6 +119,7 @@ const createCampaign = async (req, res) => {
   }
 };
 
+// TODO OK
 const deleteCampaign = (id) => {
   return mailchimp.delete({
     path: `/campaigns/${id}`
@@ -129,16 +129,17 @@ const deleteCampaign = (id) => {
 /** This function creates the beginning of a merge-tag-block.
  * https://mailchimp.com/help/use-conditional-merge-tag-blocks/#Use_Groups_with_Conditional_Merge_Tag_Blocks
  */
+// TODO OK
 const createBeginSegment = (themesString, segmentPrefix = "Thema's") => {
   return `*|INTERESTED:${segmentPrefix}:${themesString}|*`;
 };
-
+// TODO OK
 const createEndSegment = () => {
   return `*|END:INTERESTED|*`;
 };
 
 export {deleteCampaign, createCampaign};
-
+// TODO OK
 const createThemesCondition = async (allThemesOfNewsletter) => {
   const allUniqueThemesOfNewsletter = [...new Set(allThemesOfNewsletter)];
   const interests = await fetchInterestsByIdFromLists(INTEREST_CATEGORY_ID);
@@ -154,7 +155,7 @@ const createThemesCondition = async (allThemesOfNewsletter) => {
     value: interestMapping.map((item) => item.id)
   };
 };
-
+// TODO ok
 const createKindCondition = async () => {
   const interestedKinds = await fetchInterestsByIdFromLists(KIND_CATEGORY_ID);
   const interestKindMapping = interestedKinds.filter((interest) => {
@@ -169,7 +170,7 @@ const createKindCondition = async () => {
     value: interestKindMapping.map((item) => item.id)
   };
 };
-
+// TODO OK
 const createNewCampaignObject = async (created_template, formattedStart, allThemesOfNewsletter, mailSubjectPrefix) => {
   const {id} = created_template;
   console.time('FETCH MAILCHIMP CONFIG TIME');
@@ -209,6 +210,7 @@ const createNewCampaignObject = async (created_template, formattedStart, allThem
  * Returns [{id: string, name: string}]
  * optional parameter ?count:integer default:100
  */
+// TODO ok
 const fetchInterestsByIdFromLists = async (category_id, count = 100) => {
   const interests = await mailchimp.get({
     path: `lists/${LIST_ID}/interest-categories/${category_id}/interests?count=${count}`

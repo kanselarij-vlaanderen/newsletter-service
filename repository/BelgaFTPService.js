@@ -1,7 +1,9 @@
+import {createXMLConfig} from "../util/xml-renderer";
+
 const ftpClient = require('ftp');
 const fs = require('fs');
 const xml = require('xml');
-const xmlConfig = require('../xml-renderer/config.js');
+const xmlRenderer = require('../util/xml-renderer.js');
 const helper = require('../repository/helpers');
 import moment from 'moment';
 
@@ -15,6 +17,7 @@ export default class BelgaService {
     config = belgaConfig;
   }
 
+  // TODO OK
   async generateXML(agendaId, transferToFtp = false) {
     repository = require('./index.js');
     console.time('FETCH BELGA INFORMATION TIME');
@@ -29,7 +32,7 @@ export default class BelgaService {
     const kindOfmeetingLowerCase = kindOfMeeting.toLowerCase().replace('vlaamse veerkracht', 'Vlaamse Veerkracht');
     const title = `Beslissingen van de ${kindOfmeetingLowerCase} van ${formattedStart}`;
     const data = await repository.getNewsLetterByAgendaId(agendaURI);
-    const content = await createNewsletterString(data);
+    const content = createNewsletterString(data);
 
     console.timeEnd('FETCH BELGA INFORMATION TIME');
     const sentAt = moment
@@ -39,9 +42,9 @@ export default class BelgaService {
 
     const escapedContent = escapeHtml(`<![CDATA[ ${content} ]]>`);
     const identicationDate = moment(publication_date).format('YYYYMMDD');
-    const XMLCONFIG = xmlConfig.createXMLConfig(escapedContent, sentAt, identicationDate, title);
+    const xmlConfig = createXMLConfig(escapedContent, sentAt, identicationDate, title);
 
-    const xmlString = xml(XMLCONFIG, { declaration: true });
+    const xmlString = xml( xmlConfig, { declaration: true });
     const name = `Beslissingen_van_de_${kindOfmeetingLowerCase}_${procedureText || 'van'}_${formattedStart}.xml`
       .split(' ')
       .join('_');
@@ -79,7 +82,7 @@ export default class BelgaService {
       });
     });
   }
-
+// TODO OK
   openConnection() {
     console.time('OPENING BELGA-FTP CONNECTION');
     return new Promise((resolve, reject) => {
@@ -91,7 +94,7 @@ export default class BelgaService {
       client.connect(config);
     });
   }
-
+// TODO OK
   closeConnection() {
     console.time('CLOSING BELGA-FTP CONNECTION');
     return new Promise((resolve, reject) => {
@@ -103,7 +106,7 @@ export default class BelgaService {
       client.end();
     });
   }
-
+// TODO OK
   moveFileToFTP(localPath, pathName) {
     return new Promise((resolve, reject) => {
       client.put(localPath, pathName, (err) => {
@@ -141,6 +144,7 @@ export default class BelgaService {
  * Returns a joined list of all items formatted in a readable string
  * @param {title: string, proposal: string, richtext:string} data -> list of items
  */
+// TODO OK
 const createNewsletterString = (data) => {
   let agendaitems = [];
   const reducedNewsletters = helper.reduceNewslettersToMandateesByPriority(data);
@@ -160,7 +164,7 @@ const createNewsletterString = (data) => {
   });
   return agendaitems.join(``);
 };
-
+// TODO OK
 function escapeHtml(unsafe) {
   return unsafe.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
