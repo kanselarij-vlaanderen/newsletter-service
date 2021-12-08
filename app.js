@@ -1,4 +1,5 @@
-import mu from 'mu';
+import {errorHandler} from 'mu';
+import {ok} from 'assert';
 import BelgaService from "./repository/belga-service";
 
 const app = mu.app;
@@ -10,102 +11,169 @@ const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv');
-
 dotenv.config();
-
-app.use(bodyParser.json({ type: 'application/*+json' }));
-app.use(cors());
 
 const user = process.env.BELGA_FTP_USERNAME;
 const password = process.env.BELGA_FTP_PASSWORD;
 const host = 'ftp.belga.be';
 
 const belgaConfig = {
-  user,
-  password,
-  host
+    user,
+    password,
+    host
 };
 const belgaService = new BelgaService(belgaConfig);
 
-app.post('/createCampaign', (req, res) => {
-  return mailchimpService.createCampaign(req, res);
+app.use(bodyParser.json({type: 'application/*+json'}));
+app.use(errorHandler);
+const cacheClearTimeout = process.env.CACHE_CLEAR_TIMEOUT || 1500;
+
+app.post('/mailCampaign', async (req, res) => {
+    const agendaId = req.body.agendaId;
+    if (!agendaId) {
+        throw new Error('No agenda id.');
+    }
+    try {
+        const mailCampaign = mailchimpService.createCampaign(agendaId);
+        setTimeout(() => {
+            res.send({status: ok, statusCode: 201, data: {"id": mailCampaign.campaign_id, "webcampaign-id":mailCampaign.campaign_web_id,"archive-url":mailCampaign.url}});
+        }, cacheClearTimeout);
+    } catch (err) {
+        console.error(err);
+        res.send({
+            error: {
+                code: 500,
+                title: 'Create mail campaign failed.',
+                detail: (err.message || 'Something went wrong during the creation of the mail campaign.')
+            }
+        });
+    }
 });
 
-app.post('/sendMailCampaign/:id', async (req, res, next) => {
-  const campaign_id = req.params.id;
-  if (!campaign_id ) {
-    throw new Error('No campaign id.');
-  }
-  try {
-    console.time('SEND MAILCHIMP CAMPAIGN TIME');
-    const sendCampaign = await mailchimp.post({
-      path: `/campaigns/${campaign_id}/actions/send`
-    });
-    console.time('SEND MAILCHIMP CAMPAIGN TIME');
-    res.send({ sendCampaign });
-  } catch (error) {
-    next(error);
-  }
+app.put('/mailCampaign', async (req, res, next) => {
+    const campaignId = req.body.id;
+    if (!campaignId) {
+        throw new Error('No campaign id.');
+    }
+    try {
+        const sendCampaign = await mailchimp.post({
+            path: `/campaigns/${campaignId}/actions/send`
+        });
+        setTimeout(() => {
+            res.send({status: ok, statusCode: 200, data: {"type": "mail-campaign", "mail-campaign": sendCampaign}});
+        }, cacheClearTimeout);
+    } catch (err) {
+        console.error(err);
+        res.send({
+            error: {
+                code: 500,
+                title: 'Send mail campaign failed.',
+                detail: (err.message || 'Something went wrong while sending the mail campaign.')
+            }
+        });
+    }
 });
 
-app.post('/sendToBelga/:id', async (req, res, next) => {
-  const agendaId = req.params.id;
-  if (!agendaId) {
-    throw new Error('No agenda id.');
-  }
-  try {
-    console.time('SEND BELGA CAMPAIGN TIME');
-    await belgaService.generateXML(agendaId, true);
-    console.time('SEND BELGA CAMPAIGN TIME');
-    res.status(201).end();
-  } catch (error) {
-    next(error);
-  }
+app.get('/mailCampaign', async (req, res, next) => {
+    const campaignId = req.body.campaignId;
+    try {
+        const mailchimpCampaign = await mailchimp.get({
+            path: `/campaigns/${campaignId}/content`
+        });
+        setTimeout(() => {
+            res.send({status: ok, statusCode: 200, data: {"mailchimp-campaign": mailchimpCampaign}});
+        }, cacheClearTimeout);
+    } catch (err) {
+        console.error(err);
+        res.send({
+            error: {
+                code: 500,
+                title: 'Get Mailchimp campaign failed.',
+                detail: (err.message || 'Something went wrong while fetching the mailchimp campaign.')
+            }
+        });
+    }
 });
 
-// TODO Do these 2 get the same?
-app.get('/fetchTestMailCampaign/:id', async (req, res, next) => {
-  const campaign_id = req.params.id;
-  try {
-    console.time('FETCH CAMPAIGN PREVIEW');
-    const campaignHTML = await mailchimp.get({
-      path: `/campaigns/${campaign_id}/content`
-    });
-    console.timeEnd('FETCH CAMPAIGN PREVIEW');
-    res.send({ body: campaignHTML.html });
-  } catch (error) {
-    next(error);
-  }
+app.delete('/mailCampaign', async (req, res) => {
+    const campaignId = req.body.id;
+    if (!campaignId) {
+        throw new Error('No Campaign Id provided');
+    }
+    try {
+        await mailchimpService.deleteCampaign(campaignId);
+        setTimeout(() => {
+            res.send({status: ok, statusCode: 200});
+        }, cacheClearTimeout);
+    } catch (err) {
+        console.error(err);
+        res.send({
+            error: {
+                code: 500,
+                title: 'Delete mail campaign failed.',
+                detail: (err.message || 'Something went wrong while deleting mail campaign.')
+            }
+        });
+    }
 });
 
-app.get('/fetchTestMailCampaignMetaData/:id', async (req, res, next) => {
-  const campaign_id = req.params.id;
-  try {
-    console.time('FETCH CAMPAIGN METADATA');
-    const campaignHTML = await mailchimp.get({
-      path: `/campaigns/${campaign_id}`
-    });
-    console.timeEnd('FETCH CAMPAIGN METADATA');
-    res.send({ body: campaignHTML });
-  } catch (error) {
-    next(error);
-  }
+app.post('/belga', async (req, res, next) => {
+    const agendaId = req.body.agendaId;
+    if (!agendaId) {
+        throw new Error('No agenda provided.');
+    }
+    try {
+        await belgaService.generateXML(agendaId, true);
+        setTimeout(() => {
+            res.send({status: ok, statusCode: 201});
+        }, cacheClearTimeout);
+    } catch (err) {
+        console.error(err);
+        res.send({
+            error: {
+                code: 500,
+                title: 'Send to Belga failed.',
+                detail: (err.message || 'Something went wrong while sending to Belga.')
+            }
+        });
+    }
 });
 
-app.delete('/deleteMailCampaign/:id', async (req, res) => {
-  const campaign_id = req.params.id;
-  if (!campaign_id) {
-    throw new Error('Request parameter campaign_id can not be null');
-  }
-  const deleted = await mailchimpService.deleteCampaign(campaign_id);
-  res.send({ deleted });
+app.get('/belga', async (req, res) => {
+    let agendaId = req.body.agendaId;
+    if (!agendaId) {
+        throw new Error('No agenda provided.');
+    }
+    try {
+        const generatedXMLPath = await belgaService.generateXML(agendaId);
+        setTimeout(() => {
+            res.download(generatedXMLPath);
+            res.send({status: ok, statusCode: 200});
+        }, cacheClearTimeout);
+    } catch (err) {
+        console.error(err);
+        res.send({
+            error: {
+                code: 500,
+                title: 'Get XML failed.',
+                detail: (err.message || 'Something went wrong while downloading the XML.')
+            }
+        });
+    }
+
 });
 
-app.get('/xml-newsletter/:agenda_id', async (req, res) => {
-  let agendaId = req.params.agenda_id;
-  if (!agendaId) {
-    throw new Error('No agenda_id provided.');
-  }
-  const generatedXMLPath = await belgaService.generateXML(agendaId);
-  res.download(generatedXMLPath); // Set disposition and send it.
-});
+// TODO Delete if no longer needed
+// app.get('/fetchTestMailCampaignMetaData/:id', async (req, res, next) => {
+//     const campaign_id = req.params.id;
+//     try {
+//         console.time('FETCH CAMPAIGN METADATA');
+//         const campaignHTML = await mailchimp.get({
+//             path: `/campaigns/${campaign_id}`
+//         });
+//         console.timeEnd('FETCH CAMPAIGN METADATA');
+//         res.send({body: campaignHTML});
+//     } catch (error) {
+//         next(error);
+//     }
+// });
