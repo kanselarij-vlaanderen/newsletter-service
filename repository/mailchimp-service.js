@@ -1,4 +1,4 @@
-import {createNewsLetter, getNewsItem} from "../util/html-renderer";
+import {createNewsLetter, getNewsItem} from "../util/html";
 import {reduceNewslettersToMandateesByPriority} from "../util/newsletter";
 
 const repository = require('./index.js');

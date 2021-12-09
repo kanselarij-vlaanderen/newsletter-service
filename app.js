@@ -1,3 +1,4 @@
+import mu from 'mu';
 import {errorHandler} from 'mu';
 import {ok} from 'assert';
 import BelgaService from "./repository/belga-service";
@@ -24,8 +25,9 @@ const belgaConfig = {
 };
 const belgaService = new BelgaService(belgaConfig);
 
-app.use(bodyParser.json({type: 'application/*+json'}));
 app.use(errorHandler);
+app.use(bodyParser.json({ type: 'application/*+json' }));
+app.use(cors());
 const cacheClearTimeout = process.env.CACHE_CLEAR_TIMEOUT || 1500;
 
 app.post('/mailCampaign', async (req, res) => {
@@ -34,9 +36,9 @@ app.post('/mailCampaign', async (req, res) => {
         throw new Error('No agenda id.');
     }
     try {
-        const mailCampaign = mailchimpService.createCampaign(agendaId);
+        const mailCampaign = await mailchimpService.createCampaign(agendaId);
         setTimeout(() => {
-            res.send({status: ok, statusCode: 201, data: {"id": mailCampaign.campaign_id, "webcampaign-id":mailCampaign.campaign_web_id,"archive-url":mailCampaign.url}});
+            res.send({status: ok, statusCode: 201, data: {"id": mailCampaign.campaign_id, "webcampaignId":mailCampaign.campaign_web_id,"archiveUrl":mailCampaign.url}});
         }, cacheClearTimeout);
     } catch (err) {
         console.error(err);
@@ -75,7 +77,7 @@ app.put('/mailCampaign', async (req, res, next) => {
 });
 
 app.get('/mailCampaign', async (req, res, next) => {
-    const campaignId = req.body.campaignId;
+    const campaignId = req.body.id;
     try {
         const mailchimpCampaign = await mailchimp.get({
             path: `/campaigns/${campaignId}/content`
@@ -125,7 +127,7 @@ app.post('/belga', async (req, res, next) => {
     try {
         await belgaService.generateXML(agendaId, true);
         setTimeout(() => {
-            res.send({status: ok, statusCode: 201});
+            res.send({status: ok, statusCode: 200});
         }, cacheClearTimeout);
     } catch (err) {
         console.error(err);
@@ -148,7 +150,6 @@ app.get('/belga', async (req, res) => {
         const generatedXMLPath = await belgaService.generateXML(agendaId);
         setTimeout(() => {
             res.download(generatedXMLPath);
-            res.send({status: ok, statusCode: 200});
         }, cacheClearTimeout);
     } catch (err) {
         console.error(err);

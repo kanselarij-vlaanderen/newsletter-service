@@ -52,9 +52,9 @@ export default class BelgaService {
         const output = fs.createWriteStream(path);
         output.write(xmlString);
         if (transferToFtp) {
-            this.openConnection();
-            this.moveFileToFTP(path, name);
-            this.closeConnection();
+            await this.openConnection();
+            await this.moveFileToFTP(path, name);
+            await this.closeConnection();
         }
         return new Promise((resolve, reject) => {
             output.on('open', function(fd) {
