@@ -46,11 +46,13 @@ const createCampaign = async (agendaId) => {
     } = await repository.getAgendaNewsletterInformation(agendaId);
 
     let newsletter = await repository.getNewsLetterByAgendaId(agendaURI);
+
     if (!newsletter || !newsletter[0]) {
         throw new Error('No newsletters present!');
     }
 
     const reducedNewsletters = reduceNewslettersToMandateesByPriority(newsletter);
+
     let allThemesOfNewsletter = [];
     const news_items_HTML = reducedNewsletters.map((item) => {
         let segmentConstraint = {begin: '', end: ''};
@@ -66,12 +68,14 @@ const createCampaign = async (agendaId) => {
         console.log('PRIORITY:', item.groupPriority);
         return getNewsItem(item, segmentConstraint);
     });
+
     let html = createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate, procedureText, kindOfMeeting);
 
     const template = {
         name: `Beslissingen van ${formattedStart}`,
         html
     };
+
     console.time('CREATE MAILCHIMP TEMPLATE TIME');
     const created_template = await mailchimp.post({
         path: '/templates',
@@ -80,6 +84,7 @@ const createCampaign = async (agendaId) => {
     console.timeEnd('CREATE MAILCHIMP TEMPLATE TIME');
 
     const campaign = await createNewCampaignObject(created_template, formattedStart, allThemesOfNewsletter, mailSubjectPrefix);
+
     console.time('CREATE MAILCHIMP CAMPAIGN TIME');
     const createdCampagne = await mailchimp.post({
         path: '/campaigns',
@@ -94,21 +99,37 @@ const createCampaign = async (agendaId) => {
         console.log(`[MAILCHIMP] Failed to delete template`, error)
     });
     console.timeEnd('DELETE MAILCHIMP TEMPLATE TIME');
-
-    const {web_id, archive_url} = createdCampagne;
-    console.log(`Successfully created mailchimp-campaign with id:${web_id}`);
-    return {
-        campaign_id: createdCampagne.id,
-        campaign_web_id: web_id,
-        url:archive_url
-    };
+    return createdCampagne;
 };
 
-const deleteCampaign = (id) => {
-    return mailchimp.delete({
+const deleteCampaign = async (id) => {
+    console.time('DELETE MAILCHIMP CAMPAIGN TIME');
+    const deletedCampaign = await mailchimp.delete({
         path: `/campaigns/${id}`
     });
+    console.timeEnd('DELETE MAILCHIMP CAMPAIGN TIME');
+    return deletedCampaign;
 };
+
+const getCampaign = async (id) => {
+    console.time('GET MAILCHIMP CAMPAIGN TIME');
+    const campaign = await mailchimp.get({
+        path: `/campaigns/${id}/content`
+    });
+    console.timeEnd('GET MAILCHIMP CAMPAIGN TIME');
+    return campaign;
+};
+
+const sendCampaign = async (id) => {
+    console.time('SEND MAILCHIMP CAMPAIGN TIME');
+    const campaign = await mailchimp.post({
+        path: `/campaigns/${id}/actions/send`
+    });
+    console.timeEnd('SEND MAILCHIMP CAMPAIGN TIME');
+    return campaign;
+};
+
+export {deleteCampaign, createCampaign, getCampaign ,sendCampaign};
 
 /** This function creates the beginning of a merge-tag-block.
  * https://mailchimp.com/help/use-conditional-merge-tag-blocks/#Use_Groups_with_Conditional_Merge_Tag_Blocks
@@ -119,7 +140,6 @@ const createBeginSegment = (themesString, segmentPrefix = "Thema's") => {
 const createEndSegment = () => {
     return `*|END:INTERESTED|*`;
 };
-
 const createThemesCondition = async (allThemesOfNewsletter) => {
     const allUniqueThemesOfNewsletter = [...new Set(allThemesOfNewsletter)];
     const interests = await fetchInterestsByIdFromLists(INTEREST_CATEGORY_ID);
@@ -135,7 +155,6 @@ const createThemesCondition = async (allThemesOfNewsletter) => {
         value: interestMapping.map((item) => item.id)
     };
 };
-
 const createKindCondition = async () => {
     const interestedKinds = await fetchInterestsByIdFromLists(KIND_CATEGORY_ID);
     const interestKindMapping = interestedKinds.filter((interest) => {
@@ -195,4 +214,3 @@ const fetchInterestsByIdFromLists = async (category_id, count = 100) => {
     });
     return interests.interests;
 };
-export {deleteCampaign, createCampaign};

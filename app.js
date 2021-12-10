@@ -1,18 +1,8 @@
-import mu from 'mu';
-import {errorHandler} from 'mu';
+import {app, errorHandler} from 'mu';
 import {ok} from 'assert';
+import bodyParser from 'body-parser';
 import BelgaService from "./repository/belga-service";
-
-const app = mu.app;
-
-const Mailchimp = require('mailchimp-api-v3');
-const mailchimpService = require('./repository/mailchimp-service');
-const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
-
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const dotenv = require('dotenv');
-dotenv.config();
+import * as mailchimpService from "./repository/mailchimp-service";
 
 const user = process.env.BELGA_FTP_USERNAME;
 const password = process.env.BELGA_FTP_PASSWORD;
@@ -25,10 +15,8 @@ const belgaConfig = {
 };
 const belgaService = new BelgaService(belgaConfig);
 
+app.use(bodyParser.json({type: 'application/*+json'}));
 app.use(errorHandler);
-app.use(bodyParser.json({ type: 'application/*+json' }));
-app.use(cors());
-const cacheClearTimeout = process.env.CACHE_CLEAR_TIMEOUT || 1500;
 
 app.post('/mailCampaign', async (req, res) => {
     const agendaId = req.body.agendaId;
@@ -37,9 +25,14 @@ app.post('/mailCampaign', async (req, res) => {
     }
     try {
         const mailCampaign = await mailchimpService.createCampaign(agendaId);
-        setTimeout(() => {
-            res.send({status: ok, statusCode: 201, data: {"id": mailCampaign.campaign_id, "webcampaignId":mailCampaign.campaign_web_id,"archiveUrl":mailCampaign.url}});
-        }, cacheClearTimeout);
+        res.send({
+            status: ok, statusCode: 201, data:
+                {
+                    'id': mailCampaign.id,
+                    'webId': mailCampaign.web_id,
+                    'archiveUrl': mailCampaign.archive_url
+                }
+        });
     } catch (err) {
         console.error(err);
         res.send({
@@ -52,18 +45,15 @@ app.post('/mailCampaign', async (req, res) => {
     }
 });
 
-app.put('/mailCampaign', async (req, res, next) => {
+app.post('/sendMailCampaign', async (req, res) => {
     const campaignId = req.body.id;
     if (!campaignId) {
         throw new Error('No campaign id.');
     }
     try {
-        const sendCampaign = await mailchimp.post({
-            path: `/campaigns/${campaignId}/actions/send`
-        });
-        setTimeout(() => {
-            res.send({status: ok, statusCode: 200, data: {"type": "mail-campaign", "mail-campaign": sendCampaign}});
-        }, cacheClearTimeout);
+        const sendCampaign = await mailchimpService.sendCampaign(campaignId);
+        res.send({status: ok, statusCode: 201, data: {"type": "mail-campaign", "mail-campaign": sendCampaign}});
+
     } catch (err) {
         console.error(err);
         res.send({
@@ -76,15 +66,11 @@ app.put('/mailCampaign', async (req, res, next) => {
     }
 });
 
-app.get('/mailCampaign', async (req, res, next) => {
+app.get('/mailCampaign', async (req, res) => {
     const campaignId = req.body.id;
     try {
-        const mailchimpCampaign = await mailchimp.get({
-            path: `/campaigns/${campaignId}/content`
-        });
-        setTimeout(() => {
-            res.send({status: ok, statusCode: 200, data: {"mailchimp-campaign": mailchimpCampaign}});
-        }, cacheClearTimeout);
+        const mailchimpCampaign = await mailchimpService.getCampaign(campaignId);
+        res.send({status: ok, statusCode: 200, data: {"mailchimp-campaign": mailchimpCampaign}});
     } catch (err) {
         console.error(err);
         res.send({
@@ -104,9 +90,7 @@ app.delete('/mailCampaign', async (req, res) => {
     }
     try {
         await mailchimpService.deleteCampaign(campaignId);
-        setTimeout(() => {
-            res.send({status: ok, statusCode: 200});
-        }, cacheClearTimeout);
+        res.send({status: ok, statusCode: 200});
     } catch (err) {
         console.error(err);
         res.send({
@@ -119,16 +103,15 @@ app.delete('/mailCampaign', async (req, res) => {
     }
 });
 
-app.post('/belga', async (req, res, next) => {
+app.post('/belga', async (req, res) => {
     const agendaId = req.body.agendaId;
     if (!agendaId) {
         throw new Error('No agenda provided.');
     }
     try {
         await belgaService.generateXML(agendaId, true);
-        setTimeout(() => {
-            res.send({status: ok, statusCode: 200});
-        }, cacheClearTimeout);
+        res.send({status: ok, statusCode: 200});
+
     } catch (err) {
         console.error(err);
         res.send({
@@ -148,9 +131,7 @@ app.get('/belga', async (req, res) => {
     }
     try {
         const generatedXMLPath = await belgaService.generateXML(agendaId);
-        setTimeout(() => {
-            res.download(generatedXMLPath);
-        }, cacheClearTimeout);
+        res.download(generatedXMLPath);
     } catch (err) {
         console.error(err);
         res.send({
@@ -163,18 +144,3 @@ app.get('/belga', async (req, res) => {
     }
 
 });
-
-// TODO Delete if no longer needed
-// app.get('/fetchTestMailCampaignMetaData/:id', async (req, res, next) => {
-//     const campaign_id = req.params.id;
-//     try {
-//         console.time('FETCH CAMPAIGN METADATA');
-//         const campaignHTML = await mailchimp.get({
-//             path: `/campaigns/${campaign_id}`
-//         });
-//         console.timeEnd('FETCH CAMPAIGN METADATA');
-//         res.send({body: campaignHTML});
-//     } catch (error) {
-//         next(error);
-//     }
-// });
