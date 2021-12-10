@@ -15,6 +15,9 @@ const belgaConfig = {
 };
 const belgaService = new BelgaService(belgaConfig);
 
+const dotenv = require('dotenv');
+dotenv.config();
+
 app.use(bodyParser.json({type: 'application/*+json'}));
 app.use(errorHandler);
 

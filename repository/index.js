@@ -15,29 +15,6 @@ const vlaamseVeerkrachtURI =
   'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/1d16cb70-0ae9-489e-bf97-c74897222e3c';
 
 
-const getAgendaWhereisMostRecentAndFinal = async () => {
-  const queryString = `
-        PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
-        PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
-        PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
-        PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
-        PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
-        PREFIX dct: <http://purl.org/dc/terms/>
-
-        SELECT DISTINCT ?uuid ?date ?agenda_uuid ?agenda_date WHERE {
-            GRAPH <${targetGraph}> {
-            ?meeting mu:uuid ?uuid; a besluit:Vergaderactiviteit .
-            ?meeting ext:finaleZittingVersie "true"^^xsd:boolean .
-            ?meeting besluit:geplandeStart ?date .
-            ?agenda besluitvorming:isAgendaVoor ?meeting .
-            ?agenda dct:modified ?agenda_date .
-            ?agenda mu:uuid ?agenda_uuid .
-          }
-        } ORDER BY DESC(?date) DESC(?agenda_date) LIMIT 1`;
-  const data = await query(queryString);
-  return parseSparqlResults(data);
-};
-
 const getAgendaInformation = async (agendaId) => {
   console.time('QUERY TIME AGENDA INFORMATION');
   const queryString = `
@@ -170,8 +147,5 @@ const getNewsLetterByAgendaId = async (agendaURI) => {
   return parseSparqlResults(data);
 };
 
-module.exports = {
-  getNewsLetterByAgendaId,
-  getAgendaWhereisMostRecentAndFinal,
-  getAgendaNewsletterInformation,
-};
+export {getNewsLetterByAgendaId, getAgendaNewsletterInformation};
+

@@ -13,6 +13,7 @@ let repository = null; // We need to do this to make it possible to test this se
 let config = null;
 
 export default class BelgaService {
+
     constructor(belgaConfig) {
         config = belgaConfig;
     }
@@ -51,6 +52,7 @@ export default class BelgaService {
 
         const output = fs.createWriteStream(path);
         output.write(xmlString);
+
         if (transferToFtp) {
             await this.openConnection();
             await this.moveFileToFTP(path, name);
