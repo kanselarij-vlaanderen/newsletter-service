@@ -126,7 +126,7 @@ export default class BelgaService {
     deleteFileFromServer(filePath) {
         console.time('DELETING FILE FROM BELGA');
         return new Promise((resolve, reject) => {
-            client.delete(filePath, (err, stream) => {
+            client.delete(filePath, (err) => {
                 if (err) {
                     return reject(new Error(`Error deleting the file from directory.`));
                 }

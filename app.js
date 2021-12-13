@@ -21,7 +21,7 @@ dotenv.config();
 app.use(bodyParser.json({type: 'application/*+json'}));
 app.use(errorHandler);
 
-app.post('/mailCampaign', async (req, res) => {
+app.post('/createMailCampaign', async (req, res) => {
     const agendaId = req.body.agendaId;
     if (!agendaId) {
         throw new Error('No agenda id.');
@@ -69,7 +69,7 @@ app.post('/sendMailCampaign', async (req, res) => {
     }
 });
 
-app.get('/mailCampaign', async (req, res) => {
+app.get('/fetchMailCampaign', async (req, res) => {
     const campaignId = req.body.id;
     try {
         const mailchimpCampaign = await mailchimpService.getCampaign(campaignId);
@@ -86,7 +86,7 @@ app.get('/mailCampaign', async (req, res) => {
     }
 });
 
-app.delete('/mailCampaign', async (req, res) => {
+app.delete('/deleteMailCampaign', async (req, res) => {
     const campaignId = req.body.id;
     if (!campaignId) {
         throw new Error('No Campaign Id provided');
@@ -106,7 +106,7 @@ app.delete('/mailCampaign', async (req, res) => {
     }
 });
 
-app.post('/belga', async (req, res) => {
+app.post('/sendToBelga', async (req, res) => {
     const agendaId = req.body.agendaId;
     if (!agendaId) {
         throw new Error('No agenda provided.');
@@ -127,7 +127,7 @@ app.post('/belga', async (req, res) => {
     }
 });
 
-app.get('/belga', async (req, res) => {
+app.get('/fetchXML', async (req, res) => {
     let agendaId = req.body.agendaId;
     if (!agendaId) {
         throw new Error('No agenda provided.');

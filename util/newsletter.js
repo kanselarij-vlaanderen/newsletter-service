@@ -115,10 +115,10 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
 
         let alphaNumericPrio;
         if (priorities.length > 0) {
-            // the priorities are letters of the alphabet to do a alphanumeric sort, make 1 string of them
+            // the priorities are letters of the alphabet to do an alphanumeric sort, make 1 string of them
             alphaNumericPrio = priorities.join();
         } else {
-            // no mandatees means lowest priority
+            // no mandatees means the lowest priority
             alphaNumericPrio = 'ZZZZZZZZ';
         }
 

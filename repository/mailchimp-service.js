@@ -1,6 +1,6 @@
 import {createNewsLetter, getNewsItem} from "../util/html";
 import {reduceNewslettersToMandateesByPriority} from "../util/newsletter";
-import repository from "./index";
+import * as repository from "./index";
 
 const moment = require('moment');
 const Mailchimp = require('mailchimp-api-v3');
