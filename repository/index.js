@@ -14,8 +14,33 @@ const specialKindURI =
 const vlaamseVeerkrachtURI =
   'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/1d16cb70-0ae9-489e-bf97-c74897222e3c';
 
+const getLatestAgendaFromMeetingQuery = async (meetingId) => {
+  console.time('QUERY TIME AGENDA INFORMATION');
+  const queryString = `
+        PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+        PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+        PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
+        PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
+        PREFIX dct: <http://purl.org/dc/terms/>
 
-const getAgendaInformation = async (agendaId) => {
+        SELECT DISTINCT ?agenda ?planned_start ?data_docs ?publication_date ?kind WHERE {
+            GRAPH <${targetGraph}> {
+              ?meeting a besluit:Vergaderactiviteit .
+              ?meeting mu:uuid ${sparqlEscapeString(meetingId)} .
+              ?meeting besluit:geplandeStart ?planned_start . 
+              ?meeting besluitvorming:isAgendaVoor ?agenda . 
+              OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
+              OPTIONAL { ?meeting dct:type ?kind }
+              OPTIONAL { ?newsletter ext:issuedDocDate ?data_docs . }
+              OPTIONAL { ?newsletter dct:issued ?publication_date . }
+             }
+        }`;
+  const data = await query(queryString);
+  console.timeEnd('QUERY TIME AGENDA INFORMATION');
+  return parseSparqlResults(data);
+};
+
+const getAgendaInformationQuery = async (agendaId) => {
   console.time('QUERY TIME AGENDA INFORMATION');
   const queryString = `
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
@@ -55,11 +80,16 @@ const getAgendaInformation = async (agendaId) => {
  *  }
  */
 const getAgendaNewsletterInformation = async (agendaId) => {
-  let agendaInformation = await getAgendaInformation(agendaId);
+  let agendaInformation = await getAgendaInformationQuery(agendaId);
   if (!agendaInformation || !agendaInformation[0]) {
-    return {};
+    throw new Error('No agenda Information was found');
   }
   const {planned_start, publication_date, data_docs, agenda, kind} = agendaInformation[0];
+  //TODO
+  console.log(data_docs)
+  if (!data_docs || !data_docs[0]) {
+    throw new Error('This agenda has no Nota Documents');
+  }
   const formattedStart = moment(planned_start)
     .tz('Europe/Berlin')
     .format('DD MMMM YYYY');

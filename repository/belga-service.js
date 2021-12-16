@@ -58,17 +58,17 @@ export default class BelgaService {
             await this.moveFileToFTP(path, name);
             await this.closeConnection();
         }
-        return new Promise((resolve, reject) => {
-            output.on('open', function(fd) {
-                console.log('file is open!');
-                console.log('fd: ' + fd);
-                resolve(path);
-            });
-
-            output.on('error', function(err) {
-                reject(err);
-            });
-        });
+        // return new Promise((resolve, reject) => {
+        //     output.on('open', function(fd) {
+        //         console.log('file is open!');
+        //         console.log('fd: ' + fd);
+        //         resolve(path);
+        //     });
+        //
+        //     output.on('error', function(err) {
+        //         reject(err);
+        //     });
+        // });
     }
 
     listFTPServerDirectory() {

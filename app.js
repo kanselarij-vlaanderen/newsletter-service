@@ -21,7 +21,7 @@ dotenv.config();
 app.use(bodyParser.json({type: 'application/*+json'}));
 app.use(errorHandler);
 
-app.post('/createMailCampaign', async (req, res) => {
+app.post('/mail-campaign', async (req, res) => {
     const agendaId = req.body.agendaId;
     if (!agendaId) {
         throw new Error('No agenda id.');
@@ -31,9 +31,12 @@ app.post('/createMailCampaign', async (req, res) => {
         res.send({
             status: ok, statusCode: 201, data:
                 {
+                    'type' : 'mail-campaign',
                     'id': mailCampaign.id,
-                    'webId': mailCampaign.web_id,
-                    'archiveUrl': mailCampaign.archive_url
+                    'attributes': {
+                        'webId': mailCampaign.web_id,
+                        'archiveUrl': mailCampaign.archive_url
+                    }
                 }
         });
     } catch (err) {
@@ -48,15 +51,21 @@ app.post('/createMailCampaign', async (req, res) => {
     }
 });
 
-app.post('/sendMailCampaign', async (req, res) => {
+app.post('/send-mail-campaign', async (req, res) => {
     const campaignId = req.body.id;
     if (!campaignId) {
         throw new Error('No campaign id.');
     }
     try {
         const sendCampaign = await mailchimpService.sendCampaign(campaignId);
-        res.send({status: ok, statusCode: 201, data: {"type": "mail-campaign", "mail-campaign": sendCampaign}});
-
+        res.send({status: ok, statusCode: 201,
+            data: {
+                'type' : 'mail-campaign',
+                'id': sendCampaign.id,
+                    'attributes': {
+                        'campaign': sendCampaign,
+                    }
+        }});
     } catch (err) {
         console.error(err);
         res.send({
@@ -69,11 +78,20 @@ app.post('/sendMailCampaign', async (req, res) => {
     }
 });
 
-app.get('/fetchMailCampaign', async (req, res) => {
-    const campaignId = req.body.id;
+app.get('/mail-campaign/:id', async (req, res) => {
+    const campaignId = req.params.id;
+    if (!campaignId) {
+        throw new Error('No campaign id provided');
+    }
     try {
         const mailchimpCampaign = await mailchimpService.getCampaign(campaignId);
-        res.send({status: ok, statusCode: 200, data: {"mailchimp-campaign": mailchimpCampaign}});
+        res.send({status: ok, statusCode: 200, data: {
+                'type' : 'mail-chimp-campaign',
+                'id': mailchimpCampaign.id,
+                'attributes': {
+                    'campaign': mailchimpCampaign,
+                }
+            }});
     } catch (err) {
         console.error(err);
         res.send({
@@ -86,10 +104,10 @@ app.get('/fetchMailCampaign', async (req, res) => {
     }
 });
 
-app.delete('/deleteMailCampaign', async (req, res) => {
-    const campaignId = req.body.id;
+app.delete('/mail-campaign/:id', async (req, res) => {
+    const campaignId = req.params.id;
     if (!campaignId) {
-        throw new Error('No Campaign Id provided');
+        throw new Error('No campaign id provided');
     }
     try {
         await mailchimpService.deleteCampaign(campaignId);
@@ -106,7 +124,7 @@ app.delete('/deleteMailCampaign', async (req, res) => {
     }
 });
 
-app.post('/sendToBelga', async (req, res) => {
+app.post('/belga', async (req, res) => {
     const agendaId = req.body.agendaId;
     if (!agendaId) {
         throw new Error('No agenda provided.');
@@ -114,7 +132,6 @@ app.post('/sendToBelga', async (req, res) => {
     try {
         await belgaService.generateXML(agendaId, true);
         res.send({status: ok, statusCode: 200});
-
     } catch (err) {
         console.error(err);
         res.send({
@@ -127,14 +144,15 @@ app.post('/sendToBelga', async (req, res) => {
     }
 });
 
-app.get('/fetchXML', async (req, res) => {
-    let agendaId = req.body.agendaId;
+app.get('/belga/:agenda-id', async (req, res) => {
+    let agendaId = req.params.agenda-id;
     if (!agendaId) {
         throw new Error('No agenda provided.');
     }
     try {
         const generatedXMLPath = await belgaService.generateXML(agendaId);
         res.download(generatedXMLPath);
+        res.send({status: ok, statusCode: 200});
     } catch (err) {
         console.error(err);
         res.send({
@@ -145,5 +163,4 @@ app.get('/fetchXML', async (req, res) => {
             }
         });
     }
-
 });
