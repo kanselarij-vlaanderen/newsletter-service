@@ -103,6 +103,9 @@ const createCampaign = async (agendaId) => {
 };
 
 const deleteCampaign = async (id) => {
+    if (!id) {
+        throw new Error('No campaign id.');
+    }
     console.time('DELETE MAILCHIMP CAMPAIGN TIME');
     const deletedCampaign = await mailchimp.delete({
         path: `/campaigns/${id}`
@@ -112,15 +115,33 @@ const deleteCampaign = async (id) => {
 };
 
 const getCampaign = async (id) => {
+    if (!id) {
+        throw new Error('No campaign id.');
+    }
     console.time('GET MAILCHIMP CAMPAIGN TIME');
     const campaign = await mailchimp.get({
-        path: `/campaigns/${id}/content`
+        path: `/campaigns/${id}`
     });
     console.timeEnd('GET MAILCHIMP CAMPAIGN TIME');
     return campaign;
 };
 
+const getCampaignContent = async (id) => {
+    if (!id) {
+        throw new Error('No campaign id.');
+    }
+    console.time('GET MAILCHIMP CAMPAIGN CONTENT TIME');
+    const campaign = await mailchimp.get({
+        path: `/campaigns/${id}/content`
+    });
+    console.timeEnd('GET MAILCHIMP CAMPAIGN CONTENT TIME');
+    return campaign;
+};
+
 const sendCampaign = async (id) => {
+    if (!id) {
+        throw new Error('No campaign id.');
+    }
     console.time('SEND MAILCHIMP CAMPAIGN TIME');
     const campaign = await mailchimp.post({
         path: `/campaigns/${id}/actions/send`
@@ -129,7 +150,7 @@ const sendCampaign = async (id) => {
     return campaign;
 };
 
-export {deleteCampaign, createCampaign, getCampaign ,sendCampaign};
+export {deleteCampaign, createCampaign, getCampaign, getCampaignContent ,sendCampaign};
 
 /** This function creates the beginning of a merge-tag-block.
  * https://mailchimp.com/help/use-conditional-merge-tag-blocks/#Use_Groups_with_Conditional_Merge_Tag_Blocks

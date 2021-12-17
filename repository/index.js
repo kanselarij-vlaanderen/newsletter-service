@@ -80,14 +80,15 @@ const getAgendaInformationQuery = async (agendaId) => {
  *  }
  */
 const getAgendaNewsletterInformation = async (agendaId) => {
+  if (!agendaId) {
+    throw new Error('No agenda provided.');
+  }
   let agendaInformation = await getAgendaInformationQuery(agendaId);
   if (!agendaInformation || !agendaInformation[0]) {
     throw new Error('No agenda Information was found');
   }
   const {planned_start, publication_date, data_docs, agenda, kind} = agendaInformation[0];
-  //TODO
-  console.log(data_docs)
-  if (!data_docs || !data_docs[0]) {
+  if (!data_docs) {
     throw new Error('This agenda has no Nota Documents');
   }
   const formattedStart = moment(planned_start)

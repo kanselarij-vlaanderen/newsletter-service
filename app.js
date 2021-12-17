@@ -22,10 +22,7 @@ app.use(bodyParser.json({type: 'application/*+json'}));
 app.use(errorHandler);
 
 app.post('/mail-campaign', async (req, res) => {
-    const agendaId = req.body.agendaId;
-    if (!agendaId) {
-        throw new Error('No agenda id.');
-    }
+    const agendaId = req.body.data.agendaId;
     try {
         const mailCampaign = await mailchimpService.createCampaign(agendaId);
         res.send({
@@ -52,10 +49,7 @@ app.post('/mail-campaign', async (req, res) => {
 });
 
 app.post('/send-mail-campaign', async (req, res) => {
-    const campaignId = req.body.id;
-    if (!campaignId) {
-        throw new Error('No campaign id.');
-    }
+    const campaignId = req.body.data.id;
     try {
         const sendCampaign = await mailchimpService.sendCampaign(campaignId);
         res.send({status: ok, statusCode: 201,
@@ -80,16 +74,13 @@ app.post('/send-mail-campaign', async (req, res) => {
 
 app.get('/mail-campaign/:id', async (req, res) => {
     const campaignId = req.params.id;
-    if (!campaignId) {
-        throw new Error('No campaign id provided');
-    }
     try {
         const mailchimpCampaign = await mailchimpService.getCampaign(campaignId);
         res.send({status: ok, statusCode: 200, data: {
                 'type' : 'mail-chimp-campaign',
                 'id': mailchimpCampaign.id,
                 'attributes': {
-                    'campaign': mailchimpCampaign,
+                    'createTime': mailchimpCampaign.create_time,
                 }
             }});
     } catch (err) {
@@ -104,11 +95,32 @@ app.get('/mail-campaign/:id', async (req, res) => {
     }
 });
 
+app.get('/mail-campaign-content/:id', async (req, res) => {
+    const campaignId = req.params.id;
+    try {
+        const mailchimpCampaign = await mailchimpService.getCampaignContent(campaignId);
+        res.send({status: ok, statusCode: 200, data: {
+                'type' : 'mail-chimp-campaign',
+                'id': campaignId,
+                'attributes': {
+                    'html': mailchimpCampaign.html,
+                }
+            }});
+    } catch (err) {
+        console.error(err);
+        res.send({
+            error: {
+                code: 500,
+                title: 'Get Mailchimp campaign failed.',
+                detail: (err.message || 'Something went wrong while fetching the mailchimp campaign.')
+            }
+        });
+    }
+});
+
+
 app.delete('/mail-campaign/:id', async (req, res) => {
     const campaignId = req.params.id;
-    if (!campaignId) {
-        throw new Error('No campaign id provided');
-    }
     try {
         await mailchimpService.deleteCampaign(campaignId);
         res.send({status: ok, statusCode: 200});
@@ -125,13 +137,11 @@ app.delete('/mail-campaign/:id', async (req, res) => {
 });
 
 app.post('/belga', async (req, res) => {
-    const agendaId = req.body.agendaId;
-    if (!agendaId) {
-        throw new Error('No agenda provided.');
-    }
+    const agendaId = req.body.data.agendaId;
     try {
         await belgaService.generateXML(agendaId, true);
-        res.send({status: ok, statusCode: 200});
+        res.send({status: ok, statusCode: 200, data:
+                {type:'belga-campaign'}});
     } catch (err) {
         console.error(err);
         res.send({
@@ -146,13 +156,11 @@ app.post('/belga', async (req, res) => {
 
 app.get('/belga/:agenda-id', async (req, res) => {
     let agendaId = req.params.agenda-id;
-    if (!agendaId) {
-        throw new Error('No agenda provided.');
-    }
     try {
         const generatedXMLPath = await belgaService.generateXML(agendaId);
         res.download(generatedXMLPath);
-        res.send({status: ok, statusCode: 200});
+        res.send({status: ok, statusCode: 200,data:
+        {type:'belga-campaign'}});
     } catch (err) {
         console.error(err);
         res.send({
