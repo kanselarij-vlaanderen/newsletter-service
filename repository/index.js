@@ -14,33 +14,57 @@ const specialKindURI =
 const vlaamseVeerkrachtURI =
   'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/1d16cb70-0ae9-489e-bf97-c74897222e3c';
 
-const getLatestAgendaFromMeetingQuery = async (meetingId) => {
-  console.time('QUERY TIME AGENDA INFORMATION');
-  const queryString = `
-        PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
-        PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
-        PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
-        PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
-        PREFIX dct: <http://purl.org/dc/terms/>
 
-        SELECT DISTINCT ?agenda ?planned_start ?data_docs ?publication_date ?kind WHERE {
-            GRAPH <${targetGraph}> {
-              ?meeting a besluit:Vergaderactiviteit .
-              ?meeting mu:uuid ${sparqlEscapeString(meetingId)} .
-              ?meeting besluit:geplandeStart ?planned_start . 
-              ?meeting besluitvorming:isAgendaVoor ?agenda . 
-              OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
-              OPTIONAL { ?meeting dct:type ?kind }
-              OPTIONAL { ?newsletter ext:issuedDocDate ?data_docs . }
-              OPTIONAL { ?newsletter dct:issued ?publication_date . }
-             }
-        }`;
-  const data = await query(queryString);
-  console.timeEnd('QUERY TIME AGENDA INFORMATION');
-  return parseSparqlResults(data);
+const getMeetingURI = async (meetingId) => {
+  console.time('QUERY TIME MEETING INFORMATION');
+  const queryString = `
+  PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
+  PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+  SELECT DISTINCT ?meeting WHERE {
+    ?meeting a besluit:Vergaderactiviteit ;
+      mu:uuid ${sparqlEscapeString(meetingId)} .
+  }`;
+
+  const data = await query(queryString).catch(err => {
+    console.error(err);
+  });
+  console.timeEnd('QUERY TIME MEETING INFORMATION');
+  if (data.results.bindings.length) {
+    return data.results.bindings[0].meeting.value;
+  }
+  throw new Error(`Meeting with id ${meetingId} not found`);
+
 };
+/**
+ * Gets the latest agenda from the given meeting, regardless of the agenda status
+ *
+ * @param {uri} meetingURI
+ * @returns {*} agendaURI
+ */
+const getLastestAgenda = async (meetingURI) => {
+  console.time('QUERY TIME LATEST AGENDA INFORMATION');
+  const queryString = `
+  PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
+  PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
+  SELECT DISTINCT ?agenda
+  WHERE {
+    ${sparqlEscapeUri(meetingURI)} a besluit:Vergaderactiviteit .
+    ?agenda besluitvorming:isAgendaVoor ${sparqlEscapeUri(meetingURI)} ;
+      a besluitvorming:Agenda ;
+      besluitvorming:volgnummer ?serialnumber .
+  } ORDER BY DESC(?serialnumber) LIMIT 1
+  `;
 
-const getAgendaInformationQuery = async (agendaId) => {
+  const result = await query(queryString);
+  console.timeEnd('QUERY TIME LATEST AGENDA INFORMATION');
+  if (result.results.bindings.length) {
+    return result.results.bindings[0].agenda.value;
+  }
+  // should be unreachable, a meeting without agendas shouldn't exist
+  throw new Error(`No agendas found for meeting ${meetingURI}`);
+}
+
+const getAgendaInformationQuery = async (latestAgendaURI) => {
   console.time('QUERY TIME AGENDA INFORMATION');
   const queryString = `
         PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
@@ -49,11 +73,10 @@ const getAgendaInformationQuery = async (agendaId) => {
         PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
         PREFIX dct: <http://purl.org/dc/terms/>
 
-        SELECT DISTINCT ?agenda ?planned_start ?data_docs ?publication_date ?kind WHERE {
+        SELECT DISTINCT ?planned_start ?data_docs ?publication_date ?kind WHERE {
             GRAPH <${targetGraph}> {
-              ?agenda a besluitvorming:Agenda .
-              ?agenda mu:uuid ${sparqlEscapeString(agendaId)} .
-              ?agenda besluitvorming:isAgendaVoor ?meeting . 
+              ${sparqlEscapeString(latestAgendaURI)} a besluitvorming:Agenda .
+              ${sparqlEscapeString(latestAgendaURI)} besluitvorming:isAgendaVoor ?meeting . 
               ?meeting besluit:geplandeStart ?planned_start .
               OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
               OPTIONAL { ?meeting dct:type ?kind }
@@ -68,7 +91,7 @@ const getAgendaInformationQuery = async (agendaId) => {
 
 /**
  *  Fetches all date information from an agenda.
- *  @param agendaId:string
+ *  @param meetingId:string
  *  @returns an object: {
  *  formattedStart,           --> Formatted start date of a meeting | DD MMMM  YYYY
  *  formattedDocumentDate,    --> Formatted document release date   | DD MMMM YYYY [om] HH:mm
@@ -79,11 +102,14 @@ const getAgendaInformationQuery = async (agendaId) => {
  *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter
  *  }
  */
-const getAgendaNewsletterInformation = async (agendaId) => {
-  if (!agendaId) {
-    throw new Error('No agenda provided.');
+const getAgendaNewsletterInformation = async (meetingId) => {
+  if (!meetingId) {
+    throw new Error('No meeting provided.');
   }
-  let agendaInformation = await getAgendaInformationQuery(agendaId);
+  const meetingURI = await getMeetingURI(meetingId);
+  const latestAgendaURI = await getLastestAgenda(meetingURI)
+
+  let agendaInformation = await getAgendaInformationQuery(latestAgendaURI);
   if (!agendaInformation || !agendaInformation[0]) {
     throw new Error('No agenda Information was found');
   }
@@ -120,13 +146,13 @@ const getAgendaNewsletterInformation = async (agendaId) => {
   }
   console.log('[KIND OF MEETING TEXT]:', kindOfMeeting);
   console.log('[mailSubjectPrefix TEXT]:', mailSubjectPrefix);
-  console.log('FETCHED DATA FROM AGENDA WITH URI: ', agenda);
+  console.log('FETCHED DATA FROM AGENDA WITH URI: ', latestAgendaURI);
   return {
     formattedStart,
     formattedDocumentDate,
     formattedPublicationDate,
     publication_date,
-    agendaURI: agenda,
+    agendaURI: latestAgendaURI,
     procedureText,
     kindOfMeeting,
     mailSubjectPrefix,

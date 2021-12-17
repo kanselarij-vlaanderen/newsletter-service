@@ -22,11 +22,12 @@ app.use(bodyParser.json({type: 'application/*+json'}));
 app.use(errorHandler);
 
 app.post('/mail-campaign', async (req, res) => {
-    const agendaId = req.body.data.agendaId;
+    const meetingId = req.body.data.meetingId;
     try {
-        const mailCampaign = await mailchimpService.createCampaign(agendaId);
+        const mailCampaign = await mailchimpService.createCampaign(meetingId);
         res.send({
-            status: ok, statusCode: 201, data:
+            status: ok, statusCode: 201,
+            data:
                 {
                     'type' : 'mail-campaign',
                     'id': mailCampaign.id,
@@ -137,11 +138,10 @@ app.delete('/mail-campaign/:id', async (req, res) => {
 });
 
 app.post('/belga', async (req, res) => {
-    const agendaId = req.body.data.agendaId;
+    const meetingId = req.body.data.meetingId;
     try {
-        await belgaService.generateXML(agendaId, true);
-        res.send({status: ok, statusCode: 200, data:
-                {type:'belga-campaign'}});
+        await belgaService.generateXML(meetingId, true);
+        res.send({status: ok, statusCode: 200, data: {type:'belga-campaign'}});
     } catch (err) {
         console.error(err);
         res.send({
@@ -154,10 +154,10 @@ app.post('/belga', async (req, res) => {
     }
 });
 
-app.get('/belga/:agenda-id', async (req, res) => {
-    let agendaId = req.params.agenda-id;
+app.get('/belga/:meeting-id', async (req, res) => {
+    let meetingId = req.params.meeting-id;
     try {
-        const generatedXMLPath = await belgaService.generateXML(agendaId);
+        const generatedXMLPath = await belgaService.generateXML(meetingId);
         res.download(generatedXMLPath);
         res.send({status: ok, statusCode: 200,data:
         {type:'belga-campaign'}});

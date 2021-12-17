@@ -35,7 +35,7 @@ const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID;
 const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel persberichten als beslissingen'];
 
 moment.locale('nl');
-const createCampaign = async (agendaId) => {
+const createCampaign = async (meetingId) => {
     const {
         formattedStart,
         formattedDocumentDate,
@@ -43,7 +43,7 @@ const createCampaign = async (agendaId) => {
         procedureText,
         kindOfMeeting,
         mailSubjectPrefix,
-    } = await repository.getAgendaNewsletterInformation(agendaId);
+    } = await repository.getAgendaNewsletterInformation(meetingId);
 
     let newsletter = await repository.getNewsLetterByAgendaId(agendaURI);
 
