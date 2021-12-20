@@ -44,7 +44,7 @@ export default class BelgaService {
         const identicationDate = moment(publication_date).format('YYYYMMDD');
         const xmlConfig = createXMLConfig(escapedContent, sentAt, identicationDate, title);
 
-        const xmlString = xml( xmlConfig, { declaration: true });
+        const xmlString = xml(xmlConfig, {declaration: true});
         const name = `Beslissingen_van_de_${kindOfmeetingLowerCase}_${procedureText || 'van'}_${formattedStart}.xml`
             .split(' ')
             .join('_');
@@ -59,13 +59,13 @@ export default class BelgaService {
             await this.closeConnection();
         } else {
             return new Promise((resolve, reject) => {
-                output.on('open', function(fd) {
+                output.on('open', function (fd) {
                     console.log('file is open!');
                     console.log('fd: ' + fd);
                     resolve(path);
                 });
 
-                output.on('error', function(err) {
+                output.on('error', function (err) {
                     reject(err);
                 });
             });
@@ -85,6 +85,7 @@ export default class BelgaService {
             });
         });
     }
+
     openConnection() {
         console.time('OPENING BELGA-FTP CONNECTION');
         return new Promise((resolve, reject) => {
@@ -96,6 +97,7 @@ export default class BelgaService {
             client.connect(config);
         });
     }
+
     closeConnection() {
         console.time('CLOSING BELGA-FTP CONNECTION');
         return new Promise((resolve, reject) => {
@@ -107,6 +109,7 @@ export default class BelgaService {
             client.end();
         });
     }
+
     moveFileToFTP(localPath, pathName) {
         return new Promise((resolve, reject) => {
             client.put(localPath, pathName, (err) => {
@@ -125,6 +128,7 @@ export default class BelgaService {
                 return error;
             });
     }
+
     deleteFileFromServer(filePath) {
         console.time('DELETING FILE FROM BELGA');
         return new Promise((resolve, reject) => {

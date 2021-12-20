@@ -14,4 +14,4 @@ const parseSparqlResults = (data) => {
     });
 };
 
-export { parseSparqlResults };
+export {parseSparqlResults};

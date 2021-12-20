@@ -97,7 +97,7 @@ const findExistingItem = (list, item) => {
 };
 
 const sortNewsletterItems = (items) => {
-    return items.sort((a,b) => {
+    return items.sort((a, b) => {
         if (a.groupPriority === b.groupPriority) {
             return parseInt(a.agendaitemPrio) - parseInt(b.agendaitemPrio);
         }
@@ -132,7 +132,7 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
 };
 
 const alphaNumericPriority = (mandateePriority) => {
-    const alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+    const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
     if (mandateePriority) {
         const priority = parseInt(mandateePriority);
         return alphabet[priority - 1];
@@ -140,4 +140,4 @@ const alphaNumericPriority = (mandateePriority) => {
     return 'ZZZZZZZZ'
 }
 
-export { reduceNewslettersToMandateesByPriority, createNewsletterString };
+export {reduceNewslettersToMandateesByPriority, createNewsletterString};

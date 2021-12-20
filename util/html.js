@@ -3,7 +3,7 @@
  * @param {title: string, proposal: string, richtext: string, newsletter:uri(string)} NewsItem
  * @param {begin: string, end: string} segmentConstraint
  */
-const getNewsItem = ({ title, proposalText, richtext, newsletter }, segmentConstraint) => {
+const getNewsItem = ({title, proposalText, richtext, newsletter}, segmentConstraint) => {
     console.log(`CREATING NEWSITEM URI: ${newsletter}`);
     console.log(`USING SEGMENT: ${segmentConstraint.begin} CONTENT ${segmentConstraint.end}`);
     return `
@@ -396,4 +396,4 @@ function escapeHtml(unsafe) {
 }
 
 
-export { createNewsLetter,getNewsItem,escapeHtml};
+export {createNewsLetter, getNewsItem, escapeHtml};

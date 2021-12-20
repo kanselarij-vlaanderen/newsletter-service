@@ -150,7 +150,7 @@ const sendCampaign = async (id) => {
     return campaign;
 };
 
-export {deleteCampaign, createCampaign, getCampaign, getCampaignContent ,sendCampaign};
+export {deleteCampaign, createCampaign, getCampaign, getCampaignContent, sendCampaign};
 
 /** This function creates the beginning of a merge-tag-block.
  * https://mailchimp.com/help/use-conditional-merge-tag-blocks/#Use_Groups_with_Conditional_Merge_Tag_Blocks

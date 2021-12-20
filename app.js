@@ -29,7 +29,7 @@ app.post('/mail-campaign', async (req, res) => {
             status: ok, statusCode: 201,
             data:
                 {
-                    'type' : 'mail-campaign',
+                    'type': 'mail-campaign',
                     'id': mailCampaign.id,
                     'attributes': {
                         'webId': mailCampaign.web_id,
@@ -53,11 +53,13 @@ app.post('/send-mail-campaign', async (req, res) => {
     const campaignId = req.body.data.id;
     try {
         const sendCampaign = await mailchimpService.sendCampaign(campaignId);
-        res.send({status: ok, statusCode: 201,
+        res.send({
+            status: ok, statusCode: 201,
             data: {
-                'type' : 'mail-campaign',
+                'type': 'mail-campaign',
                 'id': sendCampaign.id
-        }});
+            }
+        });
     } catch (err) {
         console.error(err);
         res.send({
@@ -74,13 +76,15 @@ app.get('/mail-campaign/:id', async (req, res) => {
     const campaignId = req.params.id;
     try {
         const mailchimpCampaign = await mailchimpService.getCampaign(campaignId);
-        res.send({status: ok, statusCode: 200, data: {
-                'type' : 'mail-chimp-campaign',
+        res.send({
+            status: ok, statusCode: 200, data: {
+                'type': 'mail-chimp-campaign',
                 'id': mailchimpCampaign.id,
                 'attributes': {
                     'createTime': mailchimpCampaign.create_time,
                 }
-            }});
+            }
+        });
     } catch (err) {
         console.error(err);
         res.send({
@@ -97,13 +101,15 @@ app.get('/mail-campaign-content/:id', async (req, res) => {
     const campaignId = req.params.id;
     try {
         const mailchimpCampaign = await mailchimpService.getCampaignContent(campaignId);
-        res.send({status: ok, statusCode: 200, data: {
-                'type' : 'mail-chimp-campaign',
+        res.send({
+            status: ok, statusCode: 200, data: {
+                'type': 'mail-chimp-campaign',
                 'id': campaignId,
                 'attributes': {
                     'html': mailchimpCampaign.html,
                 }
-            }});
+            }
+        });
     } catch (err) {
         console.error(err);
         res.send({
@@ -138,7 +144,7 @@ app.post('/belga', async (req, res) => {
     const meetingId = req.body.data.meetingId;
     try {
         await belgaService.generateXML(meetingId, true);
-        res.send({status: ok, statusCode: 200, data: {type:'belga-campaign'}});
+        res.send({status: ok, statusCode: 200, data: {type: 'belga-campaign'}});
     } catch (err) {
         console.error(err);
         res.send({
@@ -152,12 +158,14 @@ app.post('/belga', async (req, res) => {
 });
 
 app.get('/belga/:meeting-id', async (req, res) => {
-    let meetingId = req.params.meeting-id;
+    let meetingId = req.params.meeting - id;
     try {
         const generatedXMLPath = await belgaService.generateXML(meetingId);
         res.download(generatedXMLPath);
-        res.send({status: ok, statusCode: 200,data:
-        {type:'belga-campaign'}});
+        res.send({
+            status: ok, statusCode: 200, data:
+                {type: 'belga-campaign'}
+        });
     } catch (err) {
         console.error(err);
         res.send({
