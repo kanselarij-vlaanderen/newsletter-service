@@ -75,8 +75,8 @@ const getAgendaInformationQuery = async (latestAgendaURI) => {
 
         SELECT DISTINCT ?planned_start ?data_docs ?publication_date ?kind WHERE {
             GRAPH <${targetGraph}> {
-              ${sparqlEscapeString(latestAgendaURI)} a besluitvorming:Agenda .
-              ${sparqlEscapeString(latestAgendaURI)} besluitvorming:isAgendaVoor ?meeting . 
+              ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda .
+              ${sparqlEscapeUri(latestAgendaURI)} besluitvorming:isAgendaVoor ?meeting. 
               ?meeting besluit:geplandeStart ?planned_start .
               OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
               OPTIONAL { ?meeting dct:type ?kind }

@@ -56,10 +56,7 @@ app.post('/send-mail-campaign', async (req, res) => {
         res.send({status: ok, statusCode: 201,
             data: {
                 'type' : 'mail-campaign',
-                'id': sendCampaign.id,
-                    'attributes': {
-                        'campaign': sendCampaign,
-                    }
+                'id': sendCampaign.id
         }});
     } catch (err) {
         console.error(err);
