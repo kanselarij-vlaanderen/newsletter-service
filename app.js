@@ -42,7 +42,7 @@ app.post('/sendMailCampaign/:id', async (req, res, next) => {
     const sendCampaign = await mailchimp.post({
       path: `/campaigns/${campaign_id}/actions/send`
     });
-    console.time('SEND MAILCHIMP CAMPAIGN TIME');
+    console.timeEnd('SEND MAILCHIMP CAMPAIGN TIME');
     res.send({ sendCampaign });
   } catch (error) {
     next(error);
@@ -57,7 +57,7 @@ app.post('/sendToBelga/:id', async (req, res, next) => {
   try {
     console.time('SEND BELGA CAMPAIGN TIME');
     await service.generateXML(agendaId, true);
-    console.time('SEND BELGA CAMPAIGN TIME');
+    console.timeEnd('SEND BELGA CAMPAIGN TIME');
     res.status(201).end();
   } catch (error) {
     next(error);
