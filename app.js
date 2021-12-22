@@ -39,9 +39,9 @@ app.post('/mail-campaign', async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.send({
+        res.status(500).send({
             error: {
-                code: 500,
+                status: 500,
                 title: 'Create mail campaign failed.',
                 detail: (err.message || 'Something went wrong during the creation of the mail campaign.')
             }
@@ -62,9 +62,9 @@ app.post('/send-mail-campaign', async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.send({
+        res.status(500).send({
             error: {
-                code: 500,
+                status: 500,
                 title: 'Send mail campaign failed.',
                 detail: (err.message || 'Something went wrong while sending the mail campaign.')
             }
@@ -87,9 +87,9 @@ app.get('/mail-campaign/:id', async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.send({
+        res.status(500).send({
             error: {
-                code: 500,
+                status: 500,
                 title: 'Get Mailchimp campaign failed.',
                 detail: (err.message || 'Something went wrong while fetching the mailchimp campaign.')
             }
@@ -112,9 +112,9 @@ app.get('/mail-campaign-content/:id', async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.send({
+        res.status(500).send({
             error: {
-                code: 500,
+                status: 500,
                 title: 'Get Mailchimp campaign failed.',
                 detail: (err.message || 'Something went wrong while fetching the mailchimp campaign.')
             }
@@ -130,9 +130,9 @@ app.delete('/mail-campaign/:id', async (req, res) => {
         res.send({status: ok, statusCode: 200});
     } catch (err) {
         console.error(err);
-        res.send({
+        res.status(500).send({
             error: {
-                code: 500,
+                status: 500,
                 title: 'Delete mail campaign failed.',
                 detail: (err.message || 'Something went wrong while deleting mail campaign.')
             }
@@ -147,9 +147,9 @@ app.post('/belga', async (req, res) => {
         res.send({status: ok, statusCode: 200, data: {type: 'belga-campaign'}});
     } catch (err) {
         console.error(err);
-        res.send({
+        res.status(500).send({
             error: {
-                code: 500,
+                status: 500,
                 title: 'Send to Belga failed.',
                 detail: (err.message || 'Something went wrong while sending to Belga.')
             }
@@ -168,9 +168,9 @@ app.get('/belga/:meeting-id', async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.send({
+        res.status(500).send({
             error: {
-                code: 500,
+                status: 500,
                 title: 'Get XML failed.',
                 detail: (err.message || 'Something went wrong while downloading the XML.')
             }

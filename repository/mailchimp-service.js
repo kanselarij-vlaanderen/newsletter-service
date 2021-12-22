@@ -77,27 +77,43 @@ const createCampaign = async (meetingId) => {
     };
 
     console.time('CREATE MAILCHIMP TEMPLATE TIME');
-    const created_template = await mailchimp.post({
-        path: '/templates',
-        body: template
-    });
+    let createdTemplate;
+    try {
+        createdTemplate =await mailchimp.post({
+            path: '/templates',
+            body: template
+        })
+    }catch (err) {
+        console.log(err.message);
+        throw new Error('Error while creating template : '+ err.message);
+    }
     console.timeEnd('CREATE MAILCHIMP TEMPLATE TIME');
 
-    const campaign = await createNewCampaignObject(created_template, formattedStart, allThemesOfNewsletter, mailSubjectPrefix);
+    const campaign = await createNewCampaignObject(createdTemplate, formattedStart, allThemesOfNewsletter, mailSubjectPrefix);
 
     console.time('CREATE MAILCHIMP CAMPAIGN TIME');
-    const createdCampagne = await mailchimp.post({
-        path: '/campaigns',
-        body: campaign
-    });
+
+    let createdCampagne;
+    try {
+        createdCampagne = await mailchimp.post({
+            path: '/campaigns',
+            body: campaign
+        })
+    }catch (err) {
+        console.log(err.message);
+        throw new Error('Error while creating campaign : '+ err.message);
+    }
     console.timeEnd('CREATE MAILCHIMP CAMPAIGN TIME');
 
     console.time('DELETE MAILCHIMP TEMPLATE TIME');
-    await mailchimp.delete({
-        path: `/templates/${created_template.id}`
-    }).catch((error) => {
-        console.log(`[MAILCHIMP] Failed to delete template`, error)
-    });
+    try {
+        await mailchimp.delete({
+            path: `/templates/${createdTemplate.id}`
+        })
+    }catch (err) {
+        console.log(err.message);
+        throw new Error('Error while deleting template : '+ err.message);
+    }
     console.timeEnd('DELETE MAILCHIMP TEMPLATE TIME');
     return createdCampagne;
 };
@@ -107,11 +123,17 @@ const deleteCampaign = async (id) => {
         throw new Error('No campaign id.');
     }
     console.time('DELETE MAILCHIMP CAMPAIGN TIME');
-    const deletedCampaign = await mailchimp.delete({
-        path: `/campaigns/${id}`
-    });
+    let campaign;
+    try {
+        campaign = await mailchimp.delete({
+            path: `/campaigns/${id}`
+        });
+    }catch (err) {
+        console.log(err.message);
+        throw new Error('Error while deleting campaign : '+ err.message);
+    }
     console.timeEnd('DELETE MAILCHIMP CAMPAIGN TIME');
-    return deletedCampaign;
+    return campaign;
 };
 
 const getCampaign = async (id) => {
@@ -119,10 +141,15 @@ const getCampaign = async (id) => {
         throw new Error('No campaign id.');
     }
     console.time('GET MAILCHIMP CAMPAIGN TIME');
-    const campaign = await mailchimp.get({
-        path: `/campaigns/${id}`
-    });
-    console.timeEnd('GET MAILCHIMP CAMPAIGN TIME');
+    let campaign;
+    try {
+        campaign = await mailchimp.get({
+            path: `/campaigns/${id}`
+        });
+    }catch (err) {
+        console.log(err.message);
+        throw new Error('Error while fetching campaign : '+ err.message);
+    }
     return campaign;
 };
 
@@ -131,9 +158,15 @@ const getCampaignContent = async (id) => {
         throw new Error('No campaign id.');
     }
     console.time('GET MAILCHIMP CAMPAIGN CONTENT TIME');
-    const campaign = await mailchimp.get({
-        path: `/campaigns/${id}/content`
-    });
+    let campaign;
+    try {
+        campaign = await mailchimp.get({
+            path: `/campaigns/${id}/content`
+        });
+    }catch (err) {
+        console.log(err.message);
+        throw new Error('Error while fetching campaign content : '+ err.message);
+    }
     console.timeEnd('GET MAILCHIMP CAMPAIGN CONTENT TIME');
     return campaign;
 };
@@ -143,9 +176,15 @@ const sendCampaign = async (id) => {
         throw new Error('No campaign id.');
     }
     console.time('SEND MAILCHIMP CAMPAIGN TIME');
-    const campaign = await mailchimp.post({
-        path: `/campaigns/${id}/actions/send`
-    });
+    let campaign;
+    try {
+        campaign = await mailchimp.post({
+            path: `/campaigns/${id}/actions/send`
+        });
+    }catch (err) {
+        console.log(err.message);
+        throw new Error('Error while sending campaign : '+ err.message);
+    }
     console.timeEnd('SEND MAILCHIMP CAMPAIGN TIME');
     return campaign;
 };
@@ -190,8 +229,8 @@ const createKindCondition = async () => {
         value: interestKindMapping.map((item) => item.id)
     };
 };
-const createNewCampaignObject = async (created_template, formattedStart, allThemesOfNewsletter, mailSubjectPrefix) => {
-    const {id} = created_template;
+const createNewCampaignObject = async (createdTemplate, formattedStart, allThemesOfNewsletter, mailSubjectPrefix) => {
+    const {id} = createdTemplate;
     console.time('FETCH MAILCHIMP CONFIG TIME');
     const themeCondition = await createThemesCondition(allThemesOfNewsletter);
     const kindCondition = await createKindCondition();
