@@ -6,23 +6,23 @@ const moment = require('moment');
 const Mailchimp = require('mailchimp-api-v3');
 
 const requiredEnvironmentVariables = [
-    'MAILCHIMP_API',
-    'MAILCHIMP_FROM_NAME',
-    'MAILCHIMP_REPLY_TO',
-    'MAILCHIMP_LIST_ID',
-    'MAILCHIMP_INTEREST_CATEGORY_ID',
-    'MAILCHIMP_KIND_CATEGORY_ID',
-    'BELGA_FTP_USERNAME',
-    'BELGA_FTP_PASSWORD'
+  'MAILCHIMP_API',
+  'MAILCHIMP_FROM_NAME',
+  'MAILCHIMP_REPLY_TO',
+  'MAILCHIMP_LIST_ID',
+  'MAILCHIMP_INTEREST_CATEGORY_ID',
+  'MAILCHIMP_KIND_CATEGORY_ID',
+  'BELGA_FTP_USERNAME',
+  'BELGA_FTP_PASSWORD'
 ];
 
 requiredEnvironmentVariables.forEach((key) => {
-    if (!process.env[key]) {
-        console.log('---------------------------------------------------------------');
-        console.log(`[ERROR]:Environment variable ${key} must be configured`);
-        console.log('---------------------------------------------------------------');
-        process.exit(1);
-    }
+  if (!process.env[key]) {
+    console.log('---------------------------------------------------------------');
+    console.log(`[ERROR]:Environment variable ${key} must be configured`);
+    console.log('---------------------------------------------------------------');
+    process.exit(1);
+  }
 });
 
 const mailchimp = new Mailchimp(process.env.MAILCHIMP_API);
@@ -36,157 +36,157 @@ const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel per
 
 moment.locale('nl');
 const createCampaign = async (meetingId) => {
-    const {
-        formattedStart,
-        formattedDocumentDate,
-        agendaURI,
-        procedureText,
-        kindOfMeeting,
-        mailSubjectPrefix,
-    } = await repository.getAgendaNewsletterInformation(meetingId);
+  const {
+    formattedStart,
+    formattedDocumentDate,
+    agendaURI,
+    procedureText,
+    kindOfMeeting,
+    mailSubjectPrefix,
+  } = await repository.getAgendaNewsletterInformation(meetingId);
 
-    let newsletter = await repository.getNewsLetterByAgendaId(agendaURI);
+  let newsletter = await repository.getNewsLetterByAgendaId(agendaURI);
 
-    if (!newsletter || !newsletter[0]) {
-        throw new Error('No newsletters present!');
+  if (!newsletter || !newsletter[0]) {
+    throw new Error('No newsletters present!');
+  }
+
+  const reducedNewsletters = reduceNewslettersToMandateesByPriority(newsletter);
+
+  let allThemesOfNewsletter = [];
+  const news_items_HTML = reducedNewsletters.map((item) => {
+    let segmentConstraint = {begin: '', end: ''};
+    if (item && item.themes) {
+      let uniqueThemes = [...new Set(item.themes.split(','))];
+      allThemesOfNewsletter.push(...uniqueThemes);
+
+      segmentConstraint = {
+        begin: createBeginSegment(uniqueThemes.join(',')),
+        end: createEndSegment()
+      };
     }
+    console.log('PRIORITY:', item.groupPriority);
+    return getNewsItem(item, segmentConstraint);
+  });
 
-    const reducedNewsletters = reduceNewslettersToMandateesByPriority(newsletter);
+  let html = createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate, procedureText, kindOfMeeting);
 
-    let allThemesOfNewsletter = [];
-    const news_items_HTML = reducedNewsletters.map((item) => {
-        let segmentConstraint = {begin: '', end: ''};
-        if (item && item.themes) {
-            let uniqueThemes = [...new Set(item.themes.split(','))];
-            allThemesOfNewsletter.push(...uniqueThemes);
+  const template = {
+    name: `Beslissingen van ${formattedStart}`,
+    html
+  };
 
-            segmentConstraint = {
-                begin: createBeginSegment(uniqueThemes.join(',')),
-                end: createEndSegment()
-            };
-        }
-        console.log('PRIORITY:', item.groupPriority);
-        return getNewsItem(item, segmentConstraint);
-    });
+  console.time('CREATE MAILCHIMP TEMPLATE TIME');
+  let createdTemplate;
+  try {
+    createdTemplate = await mailchimp.post({
+      path: '/templates',
+      body: template
+    })
+  } catch (err) {
+    console.log(err.message);
+    throw new Error('Error while creating template : ' + err.message);
+  }
+  console.timeEnd('CREATE MAILCHIMP TEMPLATE TIME');
 
-    let html = createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate, procedureText, kindOfMeeting);
+  const campaign = await createNewCampaignObject(createdTemplate, formattedStart, allThemesOfNewsletter, mailSubjectPrefix);
 
-    const template = {
-        name: `Beslissingen van ${formattedStart}`,
-        html
-    };
+  console.time('CREATE MAILCHIMP CAMPAIGN TIME');
 
-    console.time('CREATE MAILCHIMP TEMPLATE TIME');
-    let createdTemplate;
-    try {
-        createdTemplate =await mailchimp.post({
-            path: '/templates',
-            body: template
-        })
-    }catch (err) {
-        console.log(err.message);
-        throw new Error('Error while creating template : '+ err.message);
-    }
-    console.timeEnd('CREATE MAILCHIMP TEMPLATE TIME');
+  let createdCampagne;
+  try {
+    createdCampagne = await mailchimp.post({
+      path: '/campaigns',
+      body: campaign
+    })
+  } catch (err) {
+    console.log(err.message);
+    throw new Error('Error while creating campaign : ' + err.message);
+  }
+  console.timeEnd('CREATE MAILCHIMP CAMPAIGN TIME');
 
-    const campaign = await createNewCampaignObject(createdTemplate, formattedStart, allThemesOfNewsletter, mailSubjectPrefix);
-
-    console.time('CREATE MAILCHIMP CAMPAIGN TIME');
-
-    let createdCampagne;
-    try {
-        createdCampagne = await mailchimp.post({
-            path: '/campaigns',
-            body: campaign
-        })
-    }catch (err) {
-        console.log(err.message);
-        throw new Error('Error while creating campaign : '+ err.message);
-    }
-    console.timeEnd('CREATE MAILCHIMP CAMPAIGN TIME');
-
-    console.time('DELETE MAILCHIMP TEMPLATE TIME');
-    try {
-        await mailchimp.delete({
-            path: `/templates/${createdTemplate.id}`
-        })
-    }catch (err) {
-        console.log(err.message);
-        throw new Error('Error while deleting template : '+ err.message);
-    }
-    console.timeEnd('DELETE MAILCHIMP TEMPLATE TIME');
-    return createdCampagne;
+  console.time('DELETE MAILCHIMP TEMPLATE TIME');
+  try {
+    await mailchimp.delete({
+      path: `/templates/${createdTemplate.id}`
+    })
+  } catch (err) {
+    console.log(err.message);
+    throw new Error('Error while deleting template : ' + err.message);
+  }
+  console.timeEnd('DELETE MAILCHIMP TEMPLATE TIME');
+  return createdCampagne;
 };
 
 const deleteCampaign = async (id) => {
-    if (!id) {
-        throw new Error('No campaign id.');
-    }
-    console.time('DELETE MAILCHIMP CAMPAIGN TIME');
-    let campaign;
-    try {
-        campaign = await mailchimp.delete({
-            path: `/campaigns/${id}`
-        });
-    }catch (err) {
-        console.log(err.message);
-        throw new Error('Error while deleting campaign : '+ err.message);
-    }
-    console.timeEnd('DELETE MAILCHIMP CAMPAIGN TIME');
-    return campaign;
+  if (!id) {
+    throw new Error('No campaign id.');
+  }
+  console.time('DELETE MAILCHIMP CAMPAIGN TIME');
+  let campaign;
+  try {
+    campaign = await mailchimp.delete({
+      path: `/campaigns/${id}`
+    });
+  } catch (err) {
+    console.log(err.message);
+    throw new Error('Error while deleting campaign : ' + err.message);
+  }
+  console.timeEnd('DELETE MAILCHIMP CAMPAIGN TIME');
+  return campaign;
 };
 
 const getCampaign = async (id) => {
-    if (!id) {
-        throw new Error('No campaign id.');
-    }
-    console.time('GET MAILCHIMP CAMPAIGN TIME');
-    let campaign;
-    try {
-        campaign = await mailchimp.get({
-            path: `/campaigns/${id}`
-        });
-    }catch (err) {
-        console.log(err.message);
-        throw new Error('Error while fetching campaign : '+ err.message);
-    }
-    return campaign;
+  if (!id) {
+    throw new Error('No campaign id.');
+  }
+  console.time('GET MAILCHIMP CAMPAIGN TIME');
+  let campaign;
+  try {
+    campaign = await mailchimp.get({
+      path: `/campaigns/${id}`
+    });
+  } catch (err) {
+    console.log(err.message);
+    throw new Error('Error while fetching campaign : ' + err.message);
+  }
+  return campaign;
 };
 
 const getCampaignContent = async (id) => {
-    if (!id) {
-        throw new Error('No campaign id.');
-    }
-    console.time('GET MAILCHIMP CAMPAIGN CONTENT TIME');
-    let campaign;
-    try {
-        campaign = await mailchimp.get({
-            path: `/campaigns/${id}/content`
-        });
-    }catch (err) {
-        console.log(err.message);
-        throw new Error('Error while fetching campaign content : '+ err.message);
-    }
-    console.timeEnd('GET MAILCHIMP CAMPAIGN CONTENT TIME');
-    return campaign;
+  if (!id) {
+    throw new Error('No campaign id.');
+  }
+  console.time('GET MAILCHIMP CAMPAIGN CONTENT TIME');
+  let campaign;
+  try {
+    campaign = await mailchimp.get({
+      path: `/campaigns/${id}/content`
+    });
+  } catch (err) {
+    console.log(err.message);
+    throw new Error('Error while fetching campaign content : ' + err.message);
+  }
+  console.timeEnd('GET MAILCHIMP CAMPAIGN CONTENT TIME');
+  return campaign;
 };
 
 const sendCampaign = async (id) => {
-    if (!id) {
-        throw new Error('No campaign id.');
-    }
-    console.time('SEND MAILCHIMP CAMPAIGN TIME');
-    let campaign;
-    try {
-        campaign = await mailchimp.post({
-            path: `/campaigns/${id}/actions/send`
-        });
-    }catch (err) {
-        console.log(err.message);
-        throw new Error('Error while sending campaign : '+ err.message);
-    }
-    console.timeEnd('SEND MAILCHIMP CAMPAIGN TIME');
-    return campaign;
+  if (!id) {
+    throw new Error('No campaign id.');
+  }
+  console.time('SEND MAILCHIMP CAMPAIGN TIME');
+  let campaign;
+  try {
+    campaign = await mailchimp.post({
+      path: `/campaigns/${id}/actions/send`
+    });
+  } catch (err) {
+    console.log(err.message);
+    throw new Error('Error while sending campaign : ' + err.message);
+  }
+  console.timeEnd('SEND MAILCHIMP CAMPAIGN TIME');
+  return campaign;
 };
 
 export {deleteCampaign, createCampaign, getCampaign, getCampaignContent, sendCampaign};
@@ -195,70 +195,70 @@ export {deleteCampaign, createCampaign, getCampaign, getCampaignContent, sendCam
  * https://mailchimp.com/help/use-conditional-merge-tag-blocks/#Use_Groups_with_Conditional_Merge_Tag_Blocks
  */
 const createBeginSegment = (themesString, segmentPrefix = "Thema's") => {
-    return `*|INTERESTED:${segmentPrefix}:${themesString}|*`;
+  return `*|INTERESTED:${segmentPrefix}:${themesString}|*`;
 };
 const createEndSegment = () => {
-    return `*|END:INTERESTED|*`;
+  return `*|END:INTERESTED|*`;
 };
 const createThemesCondition = async (allThemesOfNewsletter) => {
-    const allUniqueThemesOfNewsletter = [...new Set(allThemesOfNewsletter)];
-    const interests = await fetchInterestsByIdFromLists(INTEREST_CATEGORY_ID);
-    const interestMapping = interests.filter((theme) => {
-        if (allUniqueThemesOfNewsletter.includes(theme.name)) {
-            return theme;
-        }
-    });
-    return {
-        condition_type: 'Interests',
-        field: `interests-${INTEREST_CATEGORY_ID}`,
-        op: 'interestcontains',
-        value: interestMapping.map((item) => item.id)
-    };
+  const allUniqueThemesOfNewsletter = [...new Set(allThemesOfNewsletter)];
+  const interests = await fetchInterestsByIdFromLists(INTEREST_CATEGORY_ID);
+  const interestMapping = interests.filter((theme) => {
+    if (allUniqueThemesOfNewsletter.includes(theme.name)) {
+      return theme;
+    }
+  });
+  return {
+    condition_type: 'Interests',
+    field: `interests-${INTEREST_CATEGORY_ID}`,
+    op: 'interestcontains',
+    value: interestMapping.map((item) => item.id)
+  };
 };
 const createKindCondition = async () => {
-    const interestedKinds = await fetchInterestsByIdFromLists(KIND_CATEGORY_ID);
-    const interestKindMapping = interestedKinds.filter((interest) => {
-        if (DECISION_STRINGS.includes(interest.name)) {
-            return interest;
-        }
-    });
-    return {
-        condition_type: 'Interests',
-        field: `interests-${KIND_CATEGORY_ID}`,
-        op: 'interestcontains',
-        value: interestKindMapping.map((item) => item.id)
-    };
+  const interestedKinds = await fetchInterestsByIdFromLists(KIND_CATEGORY_ID);
+  const interestKindMapping = interestedKinds.filter((interest) => {
+    if (DECISION_STRINGS.includes(interest.name)) {
+      return interest;
+    }
+  });
+  return {
+    condition_type: 'Interests',
+    field: `interests-${KIND_CATEGORY_ID}`,
+    op: 'interestcontains',
+    value: interestKindMapping.map((item) => item.id)
+  };
 };
 const createNewCampaignObject = async (createdTemplate, formattedStart, allThemesOfNewsletter, mailSubjectPrefix) => {
-    const {id} = createdTemplate;
-    console.time('FETCH MAILCHIMP CONFIG TIME');
-    const themeCondition = await createThemesCondition(allThemesOfNewsletter);
-    const kindCondition = await createKindCondition();
-    console.timeEnd('FETCH MAILCHIMP CONFIG TIME');
-    console.log('CONDITIONS_USED:', JSON.stringify([themeCondition, kindCondition]));
-    // mailSubjectPrefix is the kind of meeting
-    const campaign = {
-        type: 'regular',
-        recipients: {
-            list_id: LIST_ID,
-            segment_opts: {
-                match: 'all',
-                conditions: [themeCondition, kindCondition]
-            }
-        },
-        settings: {
-            subject_line: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
-            preview_text: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
-            title: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
-            from_name: FROM_NAME,
-            reply_to: REPLY_TO,
-            inline_css: true,
-            template_id: id
-        }
-    };
+  const {id} = createdTemplate;
+  console.time('FETCH MAILCHIMP CONFIG TIME');
+  const themeCondition = await createThemesCondition(allThemesOfNewsletter);
+  const kindCondition = await createKindCondition();
+  console.timeEnd('FETCH MAILCHIMP CONFIG TIME');
+  console.log('CONDITIONS_USED:', JSON.stringify([themeCondition, kindCondition]));
+  // mailSubjectPrefix is the kind of meeting
+  const campaign = {
+    type: 'regular',
+    recipients: {
+      list_id: LIST_ID,
+      segment_opts: {
+        match: 'all',
+        conditions: [themeCondition, kindCondition]
+      }
+    },
+    settings: {
+      subject_line: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
+      preview_text: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
+      title: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
+      from_name: FROM_NAME,
+      reply_to: REPLY_TO,
+      inline_css: true,
+      template_id: id
+    }
+  };
 
-    console.log('CREATING CAMPAIGN WITH CONFIG', JSON.stringify(campaign));
-    return campaign;
+  console.log('CREATING CAMPAIGN WITH CONFIG', JSON.stringify(campaign));
+  return campaign;
 };
 
 /**
@@ -269,8 +269,8 @@ const createNewCampaignObject = async (createdTemplate, formattedStart, allTheme
  * optional parameter ?count:integer default:100
  */
 const fetchInterestsByIdFromLists = async (category_id, count = 100) => {
-    const interests = await mailchimp.get({
-        path: `lists/${LIST_ID}/interest-categories/${category_id}/interests?count=${count}`
-    });
-    return interests.interests;
+  const interests = await mailchimp.get({
+    path: `lists/${LIST_ID}/interest-categories/${category_id}/interests?count=${count}`
+  });
+  return interests.interests;
 };

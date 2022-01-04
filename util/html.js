@@ -4,9 +4,9 @@
  * @param {begin: string, end: string} segmentConstraint
  */
 const getNewsItem = ({title, proposalText, richtext, newsletter}, segmentConstraint) => {
-    console.log(`CREATING NEWSITEM URI: ${newsletter}`);
-    console.log(`USING SEGMENT: ${segmentConstraint.begin} CONTENT ${segmentConstraint.end}`);
-    return `
+  console.log(`CREATING NEWSITEM URI: ${newsletter}`);
+  console.log(`USING SEGMENT: ${segmentConstraint.begin} CONTENT ${segmentConstraint.end}`);
+  return `
     ${segmentConstraint.begin}
     <table mc:repeatable="content" mc:variant="Tekstblok met introtekst" width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
@@ -16,7 +16,7 @@ const getNewsItem = ({title, proposalText, richtext, newsletter}, segmentConstra
       <tr>
         <td style="padding:5px 0 15px 0;">
           <font style="color:#333332;font-family:Calibri, Arial, sans-serif;font-size:26px;font-weight:600;line-height:26px;">${title ||
-    ''}</font>
+  ''}</font>
           <p class="intro-text" style="color:#666666;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;margin-top:5px;margin-bottom:0;">
             ${proposalText || ''}
           </p>
@@ -42,14 +42,14 @@ const getNewsItem = ({title, proposalText, richtext, newsletter}, segmentConstra
  * @param string kindOfMeeting used to display the kind of meeting the newsletter
  */
 const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure = "", kindOfMeeting) => {
-    const kindOfMeetingLowerCase = kindOfMeeting.toLowerCase().replace('vlaamse veerkracht', 'Vlaamse Veerkracht');
-    return `
+  const kindOfMeetingLowerCase = kindOfMeeting.toLowerCase().replace('vlaamse veerkracht', 'Vlaamse Veerkracht');
+  return `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 	<head>
 	  <meta http-equiv="content-type" content="text/html; charset=utf-8">
 	  <title>*|MC:SUBJECT|*</title>
-	
+
 	  <style type="text/css">
 	    .ExternalClass *{
 	      line-height:100%;
@@ -123,77 +123,77 @@ const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure
 	      table[class=full-table]{
 	        width:100% !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .no-mobile{
 	        display:none !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .header-text{
 	        padding:30px 20px !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .header-image{
 	        width:100% !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .footer-sublogo{
 	        width:100% !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .footer-text{
 	        width:auto !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .footer-container{
 	        padding:15px !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .content-container{
 	        padding:20px 20px 40px !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .item-text-container{
 	        width:auto !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .item-image{
 	        width:90px !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .item-title{
 	        width:calc(100% - 100px) !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .item-text{
 	        padding:20px 0 0 !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .section-title-border{
 	        width:100px !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .word-break{
 	        word-break:break-word;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .thumbnail-image{
 	        width:90px !important;
 	      }
-	
+
 	    }</style></head>
 	<body bgcolor="#e8ebee">
 	<!-- wrapper table -->
@@ -212,7 +212,7 @@ const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure
 	        </tr>
 	        <tr>
 	          <td colspan="2" style="border-bottom:3px solid #ffe615;line-height:0;">
-	
+
 	          </td>
 	        </tr>
 	        <tr>
@@ -328,7 +328,7 @@ const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure
 	              </table>
 	              <!-- end infoblock -->
 	              <!-- textblock with introtext -->
-						
+
 						${decisionNewsItems.join('')}
 						*|END:INTERESTED|*
 
@@ -392,7 +392,7 @@ const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure
 };
 
 function escapeHtml(unsafe) {
-    return unsafe.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  return unsafe.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
 
