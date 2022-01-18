@@ -4,7 +4,7 @@ import * as mailchimpService from './repository/mailchimp-service';
 
 const user = process.env.BELGA_FTP_USERNAME;
 const password = process.env.BELGA_FTP_PASSWORD;
-const host =  process.env.BELGA_FTP_HOST;
+const host = process.env.BELGA_FTP_HOST;
 
 const belgaConfig = {
   user,
@@ -68,7 +68,7 @@ app.get('/mail-campaigns/:id', async (req, res) => {
   try {
     const mailchimpCampaign = await mailchimpService.getCampaign(campaignId);
     res.send({
-       data: {
+      data: {
         'type': 'mail-campaign',
         'id': mailchimpCampaign.id,
         'attributes': {
@@ -131,11 +131,16 @@ app.delete('/mail-campaigns/:id', async (req, res) => {
   }
 });
 
-app.post('/belga', async (req, res) => {
+app.post('/belga-newsletters', async (req, res) => {
   const meetingId = req.body.data.meetingId;
   try {
-    await belgaService.generateXML(meetingId, true);
-    res.status(201).send({data: {type: 'belga-campaign'}});
+    const belgaNewsletter = await belgaService.generateXML(meetingId, true);
+    res.status(201).send({
+      data: {
+        id: belgaNewsletter.name,
+        type: 'belga-newsletter'
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send({
@@ -148,15 +153,11 @@ app.post('/belga', async (req, res) => {
   }
 });
 
-app.get('/belga/:meeting-id', async (req, res) => {
-  let meetingId = req.params.meeting-id;
+app.get('/belga-newsletters/:id', async (req, res) => {
+  let meetingId = req.params.id;
   try {
-    const generatedXMLPath = await belgaService.generateXML(meetingId);
-    res.download(generatedXMLPath);
-    res.send({
-      data:
-        {type: 'belga-campaign'}
-    });
+    const belgaNewsletter = await belgaService.generateXML(meetingId);
+    res.download(belgaNewsletter);
   } catch (err) {
     console.error(err);
     res.status(500).send({
