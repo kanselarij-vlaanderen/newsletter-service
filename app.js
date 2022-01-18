@@ -19,7 +19,6 @@ app.post('/mail-campaigns', async (req, res) => {
   try {
     const mailCampaign = await mailchimpService.createCampaign(meetingId);
     res.send({
-      status: ok, statusCode: 201,
       data:
         {
           'type': 'mail-campaign',
@@ -47,7 +46,6 @@ app.post('/send-mail-campaigns', async (req, res) => {
   try {
     const sendCampaign = await mailchimpService.sendCampaign(campaignId);
     res.send({
-      status: ok, statusCode: 201,
       data: {
         'type': 'mail-campaign',
         'id': sendCampaign.id
@@ -70,7 +68,7 @@ app.get('/mail-campaigns/:id', async (req, res) => {
   try {
     const mailchimpCampaign = await mailchimpService.getCampaign(campaignId);
     res.send({
-      status: ok, statusCode: 200, data: {
+       data: {
         'type': 'mail-chimp-campaign',
         'id': mailchimpCampaign.id,
         'attributes': {
@@ -95,7 +93,7 @@ app.get('/mail-campaign-content/:id', async (req, res) => {
   try {
     const mailchimpCampaign = await mailchimpService.getCampaignContent(campaignId);
     res.send({
-      status: ok, statusCode: 200, data: {
+      data: {
         'type': 'mail-chimp-campaign',
         'id': campaignId,
         'attributes': {
@@ -120,7 +118,7 @@ app.delete('/mail-campaigns/:id', async (req, res) => {
   const campaignId = req.params.id;
   try {
     await mailchimpService.deleteCampaign(campaignId);
-    res.send({status: ok, statusCode: 200});
+    res.send();
   } catch (err) {
     console.error(err);
     res.status(500).send({
@@ -137,7 +135,7 @@ app.post('/belga', async (req, res) => {
   const meetingId = req.body.data.meetingId;
   try {
     await belgaService.generateXML(meetingId, true);
-    res.send({status: ok, statusCode: 200, data: {type: 'belga-campaign'}});
+    res.send({data: {type: 'belga-campaign'}});
   } catch (err) {
     console.error(err);
     res.status(500).send({
@@ -156,7 +154,7 @@ app.get('/belga/:meeting-id', async (req, res) => {
     const generatedXMLPath = await belgaService.generateXML(meetingId);
     res.download(generatedXMLPath);
     res.send({
-      status: ok, statusCode: 200, data:
+      data:
         {type: 'belga-campaign'}
     });
   } catch (err) {
