@@ -1,12 +1,10 @@
-import {app, errorHandler} from 'mu';
-import {ok} from 'assert';
-import bodyParser from 'body-parser';
-import BelgaService from "./repository/belga-service";
-import * as mailchimpService from "./repository/mailchimp-service";
+import {app} from 'mu';
+import BelgaService from './repository/belga-service';
+import * as mailchimpService from './repository/mailchimp-service';
 
 const user = process.env.BELGA_FTP_USERNAME;
 const password = process.env.BELGA_FTP_PASSWORD;
-const host = 'ftp.belga.be';
+const host =  process.env.BELGA_FTP_HOST;;
 
 const belgaConfig = {
   user,
@@ -15,8 +13,6 @@ const belgaConfig = {
 };
 const belgaService = new BelgaService(belgaConfig);
 
-app.use(bodyParser.json({type: 'application/*+json'}));
-app.use(errorHandler);
 
 app.post('/mail-campaign', async (req, res) => {
   const meetingId = req.body.data.meetingId;
