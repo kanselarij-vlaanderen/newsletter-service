@@ -14,7 +14,7 @@ const belgaConfig = {
 const belgaService = new BelgaService(belgaConfig);
 
 
-app.post('/mail-campaign', async (req, res) => {
+app.post('/mail-campaigns', async (req, res) => {
   const meetingId = req.body.data.meetingId;
   try {
     const mailCampaign = await mailchimpService.createCampaign(meetingId);
@@ -42,7 +42,7 @@ app.post('/mail-campaign', async (req, res) => {
   }
 });
 
-app.post('/send-mail-campaign', async (req, res) => {
+app.post('/send-mail-campaigns', async (req, res) => {
   const campaignId = req.body.data.id;
   try {
     const sendCampaign = await mailchimpService.sendCampaign(campaignId);
@@ -65,7 +65,7 @@ app.post('/send-mail-campaign', async (req, res) => {
   }
 });
 
-app.get('/mail-campaign/:id', async (req, res) => {
+app.get('/mail-campaigns/:id', async (req, res) => {
   const campaignId = req.params.id;
   try {
     const mailchimpCampaign = await mailchimpService.getCampaign(campaignId);
@@ -116,7 +116,7 @@ app.get('/mail-campaign-content/:id', async (req, res) => {
 });
 
 
-app.delete('/mail-campaign/:id', async (req, res) => {
+app.delete('/mail-campaigns/:id', async (req, res) => {
   const campaignId = req.params.id;
   try {
     await mailchimpService.deleteCampaign(campaignId);
