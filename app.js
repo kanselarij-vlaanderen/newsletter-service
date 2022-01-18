@@ -41,8 +41,8 @@ app.post('/mail-campaigns', async (req, res) => {
   }
 });
 
-app.post('/send-mail-campaigns', async (req, res) => {
-  const campaignId = req.body.data.id;
+app.post('/mail-campaigns/:id/send', async (req, res) => {
+  const campaignId = req.params.id;
   try {
     const sendCampaign = await mailchimpService.sendCampaign(campaignId);
     res.status(201).send({
@@ -69,7 +69,7 @@ app.get('/mail-campaigns/:id', async (req, res) => {
     const mailchimpCampaign = await mailchimpService.getCampaign(campaignId);
     res.send({
        data: {
-        'type': 'mail-chimp-campaign',
+        'type': 'mail-campaign',
         'id': mailchimpCampaign.id,
         'attributes': {
           'createTime': mailchimpCampaign.create_time,
@@ -118,7 +118,7 @@ app.delete('/mail-campaigns/:id', async (req, res) => {
   const campaignId = req.params.id;
   try {
     await mailchimpService.deleteCampaign(campaignId);
-    res.send();
+    res.status(204).send();
   } catch (err) {
     console.error(err);
     res.status(500).send({
@@ -149,7 +149,7 @@ app.post('/belga', async (req, res) => {
 });
 
 app.get('/belga/:meeting-id', async (req, res) => {
-  let meetingId = req.params.meeting - id;
+  let meetingId = req.params.meeting-id;
   try {
     const generatedXMLPath = await belgaService.generateXML(meetingId);
     res.download(generatedXMLPath);
