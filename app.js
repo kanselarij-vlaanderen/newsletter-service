@@ -4,7 +4,7 @@ import * as mailchimpService from './repository/mailchimp-service';
 
 const user = process.env.BELGA_FTP_USERNAME;
 const password = process.env.BELGA_FTP_PASSWORD;
-const host =  process.env.BELGA_FTP_HOST;;
+const host =  process.env.BELGA_FTP_HOST;
 
 const belgaConfig = {
   user,
@@ -18,7 +18,7 @@ app.post('/mail-campaigns', async (req, res) => {
   const meetingId = req.body.data.meetingId;
   try {
     const mailCampaign = await mailchimpService.createCampaign(meetingId);
-    res.send({
+    res.status(201).send({
       data:
         {
           'type': 'mail-campaign',
@@ -45,7 +45,7 @@ app.post('/send-mail-campaigns', async (req, res) => {
   const campaignId = req.body.data.id;
   try {
     const sendCampaign = await mailchimpService.sendCampaign(campaignId);
-    res.send({
+    res.status(201).send({
       data: {
         'type': 'mail-campaign',
         'id': sendCampaign.id
@@ -135,7 +135,7 @@ app.post('/belga', async (req, res) => {
   const meetingId = req.body.data.meetingId;
   try {
     await belgaService.generateXML(meetingId, true);
-    res.send({data: {type: 'belga-campaign'}});
+    res.status(201).send({data: {type: 'belga-campaign'}});
   } catch (err) {
     console.error(err);
     res.status(500).send({
