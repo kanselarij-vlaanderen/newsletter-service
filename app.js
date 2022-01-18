@@ -88,13 +88,13 @@ app.get('/mail-campaigns/:id', async (req, res) => {
   }
 });
 
-app.get('/mail-campaign-content/:id', async (req, res) => {
+app.get('/mail-campaign/:id/content', async (req, res) => {
   const campaignId = req.params.id;
   try {
     const mailchimpCampaign = await mailchimpService.getCampaignContent(campaignId);
     res.send({
       data: {
-        'type': 'mail-chimp-campaign',
+        'type': 'mail-campaign-content',
         'id': campaignId,
         'attributes': {
           'html': mailchimpCampaign.html,
