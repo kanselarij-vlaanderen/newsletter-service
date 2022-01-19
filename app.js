@@ -13,7 +13,6 @@ const belgaConfig = {
 };
 const belgaService = new BelgaService(belgaConfig);
 
-
 app.post('/mail-campaigns', async (req, res) => {
   const meetingId = req.body.data.meetingId;
   try {
@@ -39,11 +38,11 @@ app.post('/mail-campaigns', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send({
-      error: {
+      errors: [{
         status: 500,
         title: 'Create mail campaign failed.',
         detail: (err.message || 'Something went wrong during the creation of the mail campaign.')
-      }
+      }]
     });
   }
 });
@@ -61,11 +60,11 @@ app.post('/mail-campaigns/:id/send', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send({
-      error: {
+      errors: [{
         status: 500,
         title: 'Send mail campaign failed.',
         detail: (err.message || 'Something went wrong while sending the mail campaign.')
-      }
+      }]
     });
   }
 });
@@ -86,11 +85,11 @@ app.get('/mail-campaigns/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send({
-      error: {
+      errors: [{
         status: 500,
         title: 'Get Mailchimp campaign failed.',
         detail: (err.message || 'Something went wrong while fetching the mailchimp campaign.')
-      }
+      }]
     });
   }
 });
@@ -111,11 +110,12 @@ app.get('/mail-campaign/:id/content', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send({
-      error: {
+      errors: [{
         status: 500,
         title: 'Get Mailchimp campaign failed.',
         detail: (err.message || 'Something went wrong while fetching the mailchimp campaign.')
       }
+      ]
     });
   }
 });
@@ -129,11 +129,11 @@ app.delete('/mail-campaigns/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send({
-      error: {
+      errors: [{
         status: 500,
         title: 'Delete mail campaign failed.',
         detail: (err.message || 'Something went wrong while deleting mail campaign.')
-      }
+      }]
     });
   }
 });
@@ -159,11 +159,11 @@ app.post('/belga-newsletters', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send({
-      error: {
+      errors: [{
         status: 500,
         title: 'Send to Belga failed.',
         detail: (err.message || 'Something went wrong while sending to Belga.')
-      }
+      }]
     });
   }
 });
@@ -176,11 +176,11 @@ app.get('/belga-newsletters/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send({
-      error: {
+      errors: [{
         status: 500,
         title: 'Get XML failed.',
         detail: (err.message || 'Something went wrong while downloading the XML.')
-      }
+      }]
     });
   }
 });
