@@ -19,15 +19,22 @@ app.post('/mail-campaigns', async (req, res) => {
   try {
     const mailCampaign = await mailchimpService.createCampaign(meetingId);
     res.status(201).send({
-      data:
-        {
-          'type': 'mail-campaign',
-          'id': mailCampaign.id,
-          'attributes': {
-            'webId': mailCampaign.web_id,
-            'archiveUrl': mailCampaign.archive_url
+      data: {
+        type: 'mail-campaign',
+        id: mailCampaign.id,
+        attributes: {
+          webId: mailCampaign.web_id,
+          archiveUrl: mailCampaign.archive_url
+        }
+      },
+      relationships: {
+        meeting: {
+          data: {
+            type: "meeting",
+            id: meetingId
           }
         }
+      }
     });
   } catch (err) {
     console.error(err);
@@ -47,8 +54,8 @@ app.post('/mail-campaigns/:id/send', async (req, res) => {
     const sendCampaign = await mailchimpService.sendCampaign(campaignId);
     res.status(201).send({
       data: {
-        'type': 'mail-campaign',
-        'id': sendCampaign.id
+        type: 'mail-campaign',
+        id: sendCampaign.id
       }
     });
   } catch (err) {
@@ -69,10 +76,10 @@ app.get('/mail-campaigns/:id', async (req, res) => {
     const mailchimpCampaign = await mailchimpService.getCampaign(campaignId);
     res.send({
       data: {
-        'type': 'mail-campaign',
-        'id': mailchimpCampaign.id,
-        'attributes': {
-          'createTime': mailchimpCampaign.create_time,
+        type: 'mail-campaign',
+        id: mailchimpCampaign.id,
+        attributes: {
+          createTime: mailchimpCampaign.create_time,
         }
       }
     });
@@ -94,10 +101,10 @@ app.get('/mail-campaign/:id/content', async (req, res) => {
     const mailchimpCampaign = await mailchimpService.getCampaignContent(campaignId);
     res.send({
       data: {
-        'type': 'mail-campaign-content',
-        'id': campaignId,
-        'attributes': {
-          'html': mailchimpCampaign.html,
+        type: 'mail-campaign-content',
+        id: campaignId,
+        attributes: {
+          html: mailchimpCampaign.html,
         }
       }
     });
@@ -139,6 +146,14 @@ app.post('/belga-newsletters', async (req, res) => {
       data: {
         id: belgaNewsletter.name,
         type: 'belga-newsletter'
+      },
+      relationships: {
+        meeting: {
+          data: {
+            type: "meeting",
+            id: meetingId
+          }
+        }
       }
     });
   } catch (err) {
