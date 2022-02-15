@@ -7,8 +7,8 @@ const flanders_url = 'webserviceurl.vlaanderen.be';
 const belga_url = 'webserviceurl.belga.be';
 
 function uuidv4() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
 }
@@ -93,7 +93,7 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate, title) => {
                 },
               ],
             },
-            { DateAndTime: sentAt },
+            {DateAndTime: sentAt},
           ],
         },
         {
@@ -105,8 +105,8 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate, title) => {
                     {
                       ProviderId: 'nieuws.vlaanderen.be',
                     },
-                    { DateId: identicationDate },
-                    { NewsItemId: randomUuid },
+                    {DateId: identicationDate},
+                    {NewsItemId: randomUuid},
                     {
                       RevisionId: [
                         {
@@ -204,8 +204,8 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate, title) => {
                     },
                     {
                       ContentItem: [
-                        { Comment: randomUuid },
-                        { DataContent: htmlContent},
+                        {Comment: randomUuid},
+                        {DataContent: htmlContent},
                       ],
                     },
                   ],
@@ -219,4 +219,4 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate, title) => {
   ];
 };
 
-export { createXMLConfig };
+export {createXMLConfig};

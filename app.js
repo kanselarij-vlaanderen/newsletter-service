@@ -1,46 +1,47 @@
-import mu from 'mu';
-import BelgaService from './repository/BelgaFTPService.js';
-const app = mu.app;
-
-import { prepareCampaign, sendCampaign, deleteCampaign } from './repository/MailchimpService';
-import { ok } from 'assert';
-const bodyParser = require('body-parser');
-
-const dotenv = require('dotenv');
-
-const repository = require('./repository/index.js');
-const cors = require('cors');
-
-dotenv.config();
-app.use(bodyParser.json({ type: 'application/*+json' }));
-app.use(cors());
+import { app } from 'mu';
+import { prepareCampaign, sendCampaign, deleteCampaign, getCampaignContent, getCampaignData } from './repository/mailchimp-service';
+import { getAgendaInformationForNewsletter } from './util/query-helper';
+import BelgaService from './repository/belga-service';
 
 const user = process.env.BELGA_FTP_USERNAME;
 const password = process.env.BELGA_FTP_PASSWORD;
-const host = 'ftp.belga.be';
+const host = process.env.BELGA_FTP_HOST;
 
 const belgaConfig = {
   user,
   password,
   host
 };
-const service = new BelgaService(belgaConfig);
+const belgaService = new BelgaService(belgaConfig);
 
-app.post('/createCampaign', (req, res) => {
+/**
+ * Prepare new MailChimp campaign
+ */
+app.post('/mail-campaigns', async function (req, res) {
   try {
-    const agendaId = req.query.agendaId;
-    if (!agendaId) {
-      throw new Error('Mandatory parameter agendaId not found.');
+    const meetingId = req.body.data.meetingId;
+    if (!meetingId) {
+      throw new Error('Mandatory parameter meetingId not found.');
     }
-    const agendaInformationForNewsLetter = await getAgendaInformationForNewsletter(agendaId);
+    const agendaInformationForNewsLetter = await getAgendaInformationForNewsletter(meetingId);
     const campaign = await prepareCampaign(agendaInformationForNewsLetter);
-    res.send({
-      status: ok,
-      statusCode: 200,
-      body: {
-        campaign_id: campaign.campaignId,
-        campaign_web_id: campaign.webId,
-        archive_url: campaign.archiveUrl
+
+    res.status(201).send({
+      data: {
+        type: 'mail-campaign',
+        id: campaign.campaignId, // TODO check if this exists
+        attributes: {
+          webId: campaign.webId,
+          archiveUrl: campaign.archiveUrl
+        }
+      },
+      relationships: {
+        meeting: {
+          data: {
+            type: "meeting",
+            id: meetingId
+          }
+        }
       }
     });
   } catch (error) {
@@ -54,11 +55,10 @@ app.post('/createCampaign', (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
-  return repository.getMostRecentNewsletter(req, res);
-});
-
-app.post('/sendMailCampaign/:id', async (req, res, next) => {
+/**
+ * Send campaign from Mailchimp
+ */
+app.post('/mail-campaigns/:id/send', async (req, res) => {
   try {
     const campaignId = req.params.id;
     if (!campaignId ) {
@@ -66,7 +66,12 @@ app.post('/sendMailCampaign/:id', async (req, res, next) => {
     }
 
     const sendCampaignResult = await sendCampaign(campaignId);
-    res.send({ sendCampaignResult });
+    res.status(201).send({
+      data: {
+        type: 'mail-campaign',
+        id: sendCampaignResult.campaignId // TODO is this correct?
+      }
+    });
   } catch (error) {
     console.log(`A problem occured when sending campaign ${campaignId} in Mailchimp.`);
     if (error.response) {
@@ -74,47 +79,14 @@ app.post('/sendMailCampaign/:id', async (req, res, next) => {
     } else {
       console.log(error);
     }
-    next(error);
+    res.status(500).send(error);
   }
 });
 
-app.post('/sendToBelga/:id', async (req, res, next) => {
-  const agendaId = req.params.id;
-  if (!agendaId) {
-    throw new Error('No agenda id.');
-  }
-  try {
-    console.time('SEND BELGA CAMPAIGN TIME');
-    await service.generateXML(agendaId, true);
-    console.timeEnd('SEND BELGA CAMPAIGN TIME');
-    res.status(200).send({status: 200, title: 'Sending to Belga succeeded'});
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-app.get('/fetchTestMailCampaign/:id', async (req, res, next) => {
-  try {
-    const campaignId = req.params.id;
-    if (!campaignId ) {
-      throw new Error('Request parameter id can not be null.');
-    }
-
-    const campaignHtml = await getCampaignContent(campaignId);
-    res.send({ body: campaignHtml.html });
-  } catch (error) {
-    console.log(`A problem occured when getting campaign content for campaign id ${campaignId} in Mailchimp.`);
-    if (error.response) {
-      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
-    } else {
-      console.log(error);
-    }
-    next(error);
-  }
-});
-
-app.get('/fetchTestMailCampaignMetaData/:id', async (req, res, next) => {
+/**
+ * Get campaign meta data
+ */
+app.get('/mail-campaigns/:id', async (req, res) => {
   try {
     const campaignId = req.params.id;
     if (!campaignId ) {
@@ -122,7 +94,46 @@ app.get('/fetchTestMailCampaignMetaData/:id', async (req, res, next) => {
     }
 
     const campaignData = await getCampaignData(campaignId);
-    res.send({ body: campaignData });
+    res.send({
+      data: {
+        type: 'mail-campaign',
+        id: campaignData.campaignId, // TODO is this correct?
+        attributes: {
+          createTime: campaignData.create_time,
+        }
+      }
+    });
+  } catch (error) {
+    console.log(`A problem occured when getting campaign content for campaign id ${campaignId} in Mailchimp.`);
+    if (error.response) {
+      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
+    } else {
+      console.log(error);
+    }
+    res.status(500).send(error);
+  }
+});
+
+/**
+ * Get campaign content
+ */
+app.get('/mail-campaign/:id/content', async (req, res) => {
+  try {
+    const campaignId = req.params.id;
+    if (!campaignId ) {
+      throw new Error('Request parameter id can not be null.');
+    }
+
+    const campaignHtml = await getCampaignContent(campaignId);
+    res.send({
+      data: {
+        type: 'mail-campaign-content',
+        id: campaignId,
+        attributes: {
+          html: campaignHtml.html
+        }
+      }
+    });
   } catch (error) {
     console.log(`A problem occured when getting campaign content for campaign id ${campaignId} in Mailchimp.`);
     if (error.response) {
@@ -132,30 +143,20 @@ app.get('/fetchTestMailCampaignMetaData/:id', async (req, res, next) => {
     }
     next(error);
   }
-
-  const campaign_id = req.params.id;
-  try {
-    console.time('FETCH CAMPAIGN METADATA');
-    const campaignHTML = await mailchimp.get({
-      path: `/campaigns/${campaign_id}`
-    });
-    console.timeEnd('FETCH CAMPAIGN METADATA');
-    res.send({ body: campaignHTML });
-  } catch (error) {
-    next(error);
-  }
 });
 
-app.delete('/deleteMailCampaign/:id', async (req, res) => {
+/**
+ * Delete campaign from Mailchimp
+ */
+app.delete('/mail-campaigns/:id', async (req, res) => {
   try {
     const campaignId = req.params.id;
     if (!campaignId ) {
       throw new Error('Request parameter id can not be null.');
     }
 
-    const deleteCampaignResult = await deleteCampaign(campaignId);
-    // TODO check what deleted contains. According to mailchimp API, a succesfull delete contains an empty response
-    res.send({ deleteCampaignResult });
+    await deleteCampaign(campaignId);
+    res.status(204).send();
   } catch (error) {
     console.log(`A problem occured when deleting campaign ${campaignId} in Mailchimp.`);
     if (error.response) {
@@ -163,15 +164,59 @@ app.delete('/deleteMailCampaign/:id', async (req, res) => {
     } else {
       console.log(error);
     }
-    next(error);
+    res.status(500).send(error);
   }
 });
 
-app.get('/xml-newsletter/:agenda_id', async (req, res) => {
-  let agendaId = req.params.agenda_id;
-  if (!agendaId) {
-    throw new Error('No agenda_id provided.');
+/**
+ * Send newsletter to Belga
+ */
+app.post('/belga-newsletters', async (req, res) => {
+  const meetingId = req.body.data.meetingId;
+  if (!meetingId) {
+    throw new Error('Mandatory parameter meetingId not found.');
   }
-  const generatedXMLPath = await service.generateXML(agendaId);
-  res.download(generatedXMLPath); // Set disposition and send it.
+  try {
+    const belgaNewsletter = await belgaService.generateXML(meetingId, true);
+    res.status(201).send({
+      data: {
+        id: belgaNewsletter.name,
+        type: 'belga-newsletter'
+      },
+      relationships: {
+        meeting: {
+          data: {
+            type: "meeting",
+            id: meetingId
+          }
+        }
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({
+      errors: [{
+        status: 500,
+        title: 'Send to Belga failed.',
+        detail: (err.message || 'Something went wrong while sending to Belga.')
+      }]
+    });
+  }
+});
+
+app.get('/belga-newsletters/:id', async (req, res) => {
+  let meetingId = req.params.id;
+  try {
+    const belgaNewsletter = await belgaService.generateXML(meetingId);
+    res.download(belgaNewsletter);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({
+      errors: [{
+        status: 500,
+        title: 'Get XML failed.',
+        detail: (err.message || 'Something went wrong while downloading the XML.')
+      }]
+    });
+  }
 });

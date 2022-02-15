@@ -1,5 +1,5 @@
 import mailchimpConnection from '@mailchimp/mailchimp_marketing';
-const { createNewsLetter } = require('../html-renderer/NewsLetter');
+const { createNewsLetter } = require('../util/html');
 
 const requiredEnvironmentVariables = [
   'MAILCHIMP_API',
@@ -12,6 +12,7 @@ const requiredEnvironmentVariables = [
   'BELGA_FTP_PASSWORD'
 ];
 
+/*
 requiredEnvironmentVariables.forEach((key) => {
   if (!process.env[key]) {
     console.log('---------------------------------------------------------------');
@@ -19,7 +20,7 @@ requiredEnvironmentVariables.forEach((key) => {
     console.log('---------------------------------------------------------------');
     process.exit(1);
   }
-});
+});*/
 
 const MAILCHIMP_API = process.env.MAILCHIMP_API;
 const MAILCHIMP_SERVER = process.env.MAILCHIMP_SERVER || "us3";
@@ -193,11 +194,11 @@ export async function prepareCampaign(agendaInformationForNewsLetter) {
   const mailTitle = `beslissingen van ${agendaInformationForNewsLetter.formattedStart}`;
   const htmlContent = getNewsItemsHtml(agendaInformationForNewsLetter.agendaURI);
 
-  agendaInformationForNewsLetter = {
+ /* agendaInformationForNewsLetter = {
     mailTitle: mailTitle,
     htmlContent: htmlContent,
-    ...agendaInformationForNewsLetter
-  }
+    ...agendaInformationForNewsLetter,
+  }*/
 
   const templateId = await mailchimp.createTemplate(agendaInformationForNewsLetter);
   const campaign = await mailchimp.createNewCampaign(templateId, agendaInformationForNewsLetter);

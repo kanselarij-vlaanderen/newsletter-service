@@ -1,11 +1,44 @@
 import { query } from "express";
-import helper from '../repository/helpers';
+import helper from '../util/newsletter-helper';
 import moment from 'moment';
 import 'moment-timezone';
-const { getNewsItem } = require('../html-renderer/NewsItem');
+const { getNewsItem } = require('../util/query-helper');
 
-export async function getAgendaInformationForNewsletter(graph, agendaId) {
-  const agendaInformation = await getAgendaInformation(graph, agendaId);
+moment.locale('nl');
+moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
+
+const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
+const electronicKindURI = 'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/406F2ECA-524D-47DC-B889-651893135456';
+const specialKindURI = 'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/7D8E35BE-E5D1-494F-B5F9-51B07875B96F';
+const vlaamseVeerkrachtURI = 'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/1d16cb70-0ae9-489e-bf97-c74897222e3c';
+
+
+/**
+ *  Fetches all date information from an agenda.
+ *  @param meetingId:string
+ *  @returns an object: {
+ *  formattedStart,           --> Formatted start date of a meeting | DD MMMM  YYYY
+ *  formattedDocumentDate,    --> Formatted document release date   | DD MMMM YYYY [om] HH:mm
+ *  formattedPublicationDate, --> Formatted publication date        | MMMM Do YYYY
+ *  publication_date          --> non-formatted (raw) publication date
+ *  agendaURI                 --> URI of the agenda (use this instead of id to speed up queries)
+ *  procedureText             --> Text that should be added to the title of the newsletter
+ *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter
+ *  }
+ */
+export async function getAgendaInformationForNewsletter(meetingId) {
+  const meetingURI = await getMeetingURI(meetingId);
+  const latestAgendaURI = await getLastestAgenda(meetingURI)
+
+  const agendaInformation = await getAgendaInformation(latestAgendaURI);
+  if (!agendaInformation || !agendaInformation[0]) {
+    throw new Error('No agenda Information was found');
+  }
+
+  const {planned_start, publication_date, data_docs, kind} = agendaInformation[0];
+  if (!data_docs) {
+    throw new Error('This agenda has no Nota Documents');
+  }
 
   const formattedStart = moment(planned_start).tz('Europe/Berlin').format('DD MMMM YYYY');
   const formattedDocumentDate = moment(data_docs).tz('Europe/Berlin').format('DD MMMM YYYY [om] HH:mm');
@@ -33,8 +66,8 @@ export async function getAgendaInformationForNewsletter(graph, agendaId) {
     formattedStart,
     formattedDocumentDate,
     formattedPublicationDate,
-    publication_date: agendaInformation.publication_date,
-    agendaURI: agendaInformation.agenda,
+    publication_date: publication_date,
+    agendaURI: latestAgendaURI,
     procedureText,
     kindOfMeeting,
     mailSubjectPrefix,
@@ -68,7 +101,52 @@ export async function getNewsItemsHtml(agendaURI) {
   return news_items_HTML;
 }
 
-async function getAgendaInformation(graph, agendaId) {
+async function getMeetingURI (meetingId) {
+  const meetingUriQuery = await query(`
+  PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
+  PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+  SELECT DISTINCT ?meeting WHERE {
+    GRAPH <${targetGraph}> {
+      ?meeting a besluit:Vergaderactiviteit ;
+        mu:uuid ${sparqlEscapeString(meetingId)} .
+    }
+  }`);
+
+  if (meetingUriQuery.results.bindings.length) {
+    return meetingUriQuery.results.bindings[0].meeting.value;
+  }
+
+  throw new Error(`Meeting with id ${meetingId} not found`);
+
+};
+/**
+ * Gets the latest agenda from the given meeting, regardless of the agenda status
+ *
+ * @param {uri} meetingURI
+ * @returns {*} agendaURI
+ */
+async function getLastestAgenda (meetingURI) {
+  const latestAgendaQuery = await query(`
+    PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
+    PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
+    SELECT DISTINCT ?agenda
+    WHERE {
+      GRAPH <${targetGraph}> {
+        ${sparqlEscapeUri(meetingURI)} a besluit:Vergaderactiviteit .
+        ?agenda besluitvorming:isAgendaVoor ${sparqlEscapeUri(meetingURI)} ;
+          a besluitvorming:Agenda ;
+          besluitvorming:volgnummer ?serialnumber .
+      } ORDER BY DESC(?serialnumber) LIMIT 1
+    }`);
+
+  if (latestAgendaQuery.results.bindings.length) {
+    return latestAgendaQuery.results.bindings[0].agenda.value;
+  }
+  // should be unreachable, a meeting without agendas shouldn't exist
+  throw new Error(`No agendas found for meeting ${meetingURI}`);
+}
+
+async function getAgendaInformation(latestAgendaURI) {
   const agendaInformation = await query(`
     PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
@@ -77,16 +155,15 @@ async function getAgendaInformation(graph, agendaId) {
     PREFIX dct: <http://purl.org/dc/terms/>
 
     SELECT DISTINCT ?agenda ?planned_start ?data_docs ?publication_date ?kind WHERE {
-        GRAPH <${graph}> {
-          ?agenda a besluitvorming:Agenda .
-          ?agenda mu:uuid ${sparqlEscapeString(agendaId)} .
-          ?agenda besluitvorming:isAgendaVoor ?meeting .
-          ?meeting besluit:geplandeStart ?planned_start .
-          OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
-          OPTIONAL { ?meeting dct:type ?kind }
-          OPTIONAL { ?newsletter ext:issuedDocDate ?data_docs . }
-          OPTIONAL { ?newsletter dct:issued ?publication_date . }
-          }
+      GRAPH <${targetGraph}> {
+        ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda ;
+          besluitvorming:isAgendaVoor ?meeting .
+        ?meeting besluit:geplandeStart ?planned_start .
+        OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
+        OPTIONAL { ?meeting dct:type ?kind }
+        OPTIONAL { ?newsletter ext:issuedDocDate ?data_docs . }
+        OPTIONAL { ?newsletter dct:issued ?publication_date . }
+        }
     }`);
   return parseSparqlResults(agendaInformation)[0];
 };
