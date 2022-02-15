@@ -1,11 +1,5 @@
-const {createNewsLetter} = require('../html-renderer/NewsLetter');
-const {getNewsItem} = require('../html-renderer/NewsItem');
-import {ok} from 'assert';
-
-const repository = require('./index.js');
-const moment = require('moment');
-const Mailchimp = require('mailchimp-api-v3');
-const helper = require('../repository/helpers');
+import mailchimpConnection from '@mailchimp/mailchimp_marketing';
+const { createNewsLetter } = require('../html-renderer/NewsLetter');
 
 const requiredEnvironmentVariables = [
   'MAILCHIMP_API',
@@ -27,7 +21,8 @@ requiredEnvironmentVariables.forEach((key) => {
   }
 });
 
-const mailchimp = new Mailchimp(process.env.MAILCHIMP_API);
+const MAILCHIMP_API = process.env.MAILCHIMP_API;
+const MAILCHIMP_SERVER = process.env.MAILCHIMP_SERVER || "us3";
 const FROM_NAME = process.env.MAILCHIMP_FROM_NAME;
 const REPLY_TO = process.env.MAILCHIMP_REPLY_TO;
 const LIST_ID = process.env.MAILCHIMP_LIST_ID;
@@ -36,182 +31,191 @@ const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID;
 
 const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel persberichten als beslissingen'];
 
-moment.locale('nl');
+class Mailchimp {
+  constructor() {
+    mailchimpConnection.setConfig(
+      {
+        apiKey: `${MAILCHIMP_API}`,
+        server: `${MAILCHIMP_SERVER}`
+      });
+  }
 
-const createCampaign = async (req, res) => {
-  try {
-    const agendaId = req.query.agendaId;
-    if (!agendaId) {
-      throw new Error('Request parameter agendaId can not be null');
-    }
+  async createTemplate(agendaInformationForNewsLetter) {
+    console.log(`Creating Mailchimp template...`);
+
     const {
+      mailTitle,
+      htmlContent,
       formattedStart,
       formattedDocumentDate,
-      agendaURI,
       procedureText,
-      kindOfMeeting,
-      mailSubjectPrefix,
-    } = await repository.getAgendaNewsletterInformation(agendaId);
+      kindOfMeeting
+    } = agendaInformationForNewsLetter;
 
-    let newsletter = await repository.getNewsLetterByAgendaId(agendaURI);
-    if (!newsletter || !newsletter[0]) {
-      throw new Error('No newsletters present!');
-    }
-
-    const reducedNewsletters = helper.reduceNewslettersToMandateesByPriority(newsletter);
-    let allThemesOfNewsletter = [];
-    const news_items_HTML = reducedNewsletters.map((item) => {
-      let segmentConstraint = {begin: '', end: ''};
-      if (item && item.themes) {
-        let uniqueThemes = [...new Set(item.themes.split(','))];
-        allThemesOfNewsletter.push(...uniqueThemes);
-
-        segmentConstraint = {
-          begin: createBeginSegment(uniqueThemes.join(',')),
-          end: createEndSegment()
-        };
-      }
-      console.log('PRIORITY:', item.groupPriority);
-      return getNewsItem(item, segmentConstraint);
-    });
-    let html = await createNewsLetter(news_items_HTML, formattedStart, formattedDocumentDate, procedureText, kindOfMeeting);
+    const html = await createNewsLetter(htmlContent, formattedStart, formattedDocumentDate, procedureText, kindOfMeeting);
 
     const template = {
-      name: `Beslissingen van ${formattedStart}`,
-      html
-    };
-    console.time('CREATE MAILCHIMP TEMPLATE TIME');
-    const created_template = await mailchimp.post({
-      path: '/templates',
-      body: template
-    });
-    console.timeEnd('CREATE MAILCHIMP TEMPLATE TIME');
+      name: mailTitle,
+      html: html
+    }
+    const templateResponse = await mailchimpConnection.templates.create(template);
 
-    const campaign = await createNewCampaignObject(created_template, formattedStart, allThemesOfNewsletter, mailSubjectPrefix);
-    console.time('CREATE MAILCHIMP CAMPAIGN TIME');
-    const createdCampagne = await mailchimp.post({
-      path: '/campaigns',
-      body: campaign
-    });
-    console.timeEnd('CREATE MAILCHIMP CAMPAIGN TIME');
+    const templateId = templateResponse['id']
 
-    console.time('DELETE MAILCHIMP TEMPLATE TIME');
-    await mailchimp.delete({
-      path: `/templates/${created_template.id}`
-    }).catch((error) => {
-      console.log(`[MAILCHIMP] Failed to delete template`, error)
-    });
-    console.timeEnd('DELETE MAILCHIMP TEMPLATE TIME');
-
-    const {web_id, archive_url} = createdCampagne;
-    console.log(`Successfully created mailchimp-campaign with id:${web_id}`);
-    res.send({
-      status: ok,
-      statusCode: 200,
-      body: {
-        campaign_id: createdCampagne.id,
-        campaign_web_id: web_id,
-        archive_url
-      }
-    });
-  } catch (error) {
-    console.log(`CREATE_CAMPAIGN_ERROR:`, error);
-    res.status(500).send(error);
+    console.log(`templateResponse template id: ${templateId}`);
+    return templateId;
   }
-};
 
-const deleteCampaign = (id) => {
-  return mailchimp.delete({
-    path: `/campaigns/${id}`
-  });
-};
+  async createNewCampaign(templateId, agendaInformationForNewsLetter) {
 
-/** This function creates the beginning of a merge-tag-block.
- * https://mailchimp.com/help/use-conditional-merge-tag-blocks/#Use_Groups_with_Conditional_Merge_Tag_Blocks
- */
-const createBeginSegment = (themesString, segmentPrefix = "Thema's") => {
-  return `*|INTERESTED:${segmentPrefix}:${themesString}|*`;
-};
+    const { mailSubjectPrefix, mailTitle } = agendaInformationForNewsLetter;
 
-const createEndSegment = () => {
-  return `*|END:INTERESTED|*`;
-};
+    const themeCondition = await this.createThemesCondition(pressReleaseData.themes);  // allThemesOfNewsletter
+    const kindCondition = await this.createKindCondition();
 
-export {deleteCampaign, createCampaign};
-
-const createThemesCondition = async (allThemesOfNewsletter) => {
-  const allUniqueThemesOfNewsletter = [...new Set(allThemesOfNewsletter)];
-  const interests = await fetchInterestsByIdFromLists(INTEREST_CATEGORY_ID);
-  const interestMapping = interests.filter((theme) => {
-    if (allUniqueThemesOfNewsletter.includes(theme.name)) {
-      return theme;
-    }
-  });
-  return {
-    condition_type: 'Interests',
-    field: `interests-${INTEREST_CATEGORY_ID}`,
-    op: 'interestcontains',
-    value: interestMapping.map((item) => item.id)
-  };
-};
-
-const createKindCondition = async () => {
-  const interestedKinds = await fetchInterestsByIdFromLists(KIND_CATEGORY_ID);
-  const interestKindMapping = interestedKinds.filter((interest) => {
-    if (DECISION_STRINGS.includes(interest.name)) {
-      return interest;
-    }
-  });
-  return {
-    condition_type: 'Interests',
-    field: `interests-${KIND_CATEGORY_ID}`,
-    op: 'interestcontains',
-    value: interestKindMapping.map((item) => item.id)
-  };
-};
-
-const createNewCampaignObject = async (created_template, formattedStart, allThemesOfNewsletter, mailSubjectPrefix) => {
-  const {id} = created_template;
-  console.time('FETCH MAILCHIMP CONFIG TIME');
-  const themeCondition = await createThemesCondition(allThemesOfNewsletter);
-  const kindCondition = await createKindCondition();
-  console.timeEnd('FETCH MAILCHIMP CONFIG TIME');
-  console.log('CONDITIONS_USED:', JSON.stringify([themeCondition, kindCondition]));
-  // mailSubjectPrefix is the kind of meeting
-  const campaign = {
-    type: 'regular',
-    recipients: {
-      list_id: LIST_ID,
-      segment_opts: {
-        match: 'all',
-        conditions: [themeCondition, kindCondition]
+    const campaign = {
+      type: "regular",
+      recipients: {
+        list_id: LIST_ID,
+        segment_opts: {
+          match: 'all',
+          conditions: [themeCondition, kindCondition]
+        }
+      },
+      settings: {
+        subject_line: `${mailSubjectPrefix}: ${mailTitle}`,
+        preview_text: `${mailSubjectPrefix}: ${mailTitle}`,
+        title: `${mailSubjectPrefix}: ${mailTitle}`,
+        from_name: FROM_NAME,
+        reply_to: REPLY_TO,
+        inline_css: true,
+        template_id: templateId,
       }
-    },
-    settings: {
-      subject_line: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
-      preview_text: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
-      title: `${mailSubjectPrefix}: beslissingen van ${formattedStart}`,
-      from_name: FROM_NAME,
-      reply_to: REPLY_TO,
-      inline_css: true,
-      template_id: id
     }
+    const campaignResponse = await mailchimpConnection.campaigns.create(campaign)
+
+    console.log(`campaignResponse campaign id: ${campaignResponse['id']}`);
+
+    return {
+      campaignId: campaignResponse['id'],
+      webId: campaignResponse['web_id'],
+      archiveUrl: campaignResponse['archive_url']
+    };
+  }
+
+  async sendCampaign(campaignId) {
+    await mailchimpConnection.campaigns.send(campaignId);
+  }
+
+  async deleteCampaign(campaignId) {
+    console.log(`Deleting Mailchimp campaign ${campaignId}...`);
+
+    // TODO is this necessary? For press releases the delete was done right after sending
+    // in which case a retry could be necessary. In this case there is more time between
+    // sending and deleting
+    await this.retryDeleteCampaign(campaignId, 4, 2000);
+
+    console.log(`Deleting Mailchimp campaign ${campaignId} DONE`);
+  }
+
+  async retryDeleteCampaign(campaignId, numberOfTries, timeout) {
+    console.log(numberOfTries);
+    if (numberOfTries <= 0) {
+      console.log(`Could not delete Mailchimp campaign ${campaignId}`);
+      return;
+    }
+    try {
+      const result = await mailchimpConnection.campaigns.remove(campaignId);
+
+      if (result && result.status === 200) {
+        return result;
+      }
+    }
+    catch (error) {
+      await this.wait(timeout);
+      return this.retryDeleteCampaign(campaignId, numberOfTries - 1, timeout);
+    }
+  }
+
+  async createThemesCondition (allThemesOfNewsletter) {
+    const allUniqueThemesOfNewsletter = [...new Set(allThemesOfNewsletter)];
+    const interests = await fetchInterestsByIdFromLists(INTEREST_CATEGORY_ID);
+    const interestMapping = interests.filter((theme) => {
+      if (allUniqueThemesOfNewsletter.includes(theme.name)) {
+        return theme;
+      }
+    });
+    return {
+      condition_type: 'Interests',
+      field: `interests-${INTEREST_CATEGORY_ID}`,
+      op: 'interestcontains',
+      value: interestMapping.map((item) => item.id)
+    };
   };
 
-  console.log('CREATING CAMPAIGN WITH CONFIG', JSON.stringify(campaign));
-  return campaign;
-};
+  async createKindCondition () {
+    const interestedKinds = await fetchInterestsByIdFromLists(KIND_CATEGORY_ID);
+    const interestKindMapping = interestedKinds.filter((interest) => {
+      if (DECISION_STRINGS.includes(interest.name)) {
+        return interest;
+      }
+    });
+    return {
+      condition_type: 'Interests',
+      field: `interests-${KIND_CATEGORY_ID}`,
+      op: 'interestcontains',
+      value: interestKindMapping.map((item) => item.id)
+    };
+  };
 
-/**
- * This function fetches all interests from the mailchimp API
- * By defined LIST_ID and INTEREST_CATEGORY_ID we create a possibility to
- * use the same code for all environments based on these defined env-variables.
- * Returns [{id: string, name: string}]
- * optional parameter ?count:integer default:100
- */
-const fetchInterestsByIdFromLists = async (category_id, count = 100) => {
-  const interests = await mailchimp.get({
-    path: `lists/${LIST_ID}/interest-categories/${category_id}/interests?count=${count}`
-  });
-  return interests.interests;
-};
+  /**
+   * This function fetches all interests from the mailchimp API
+   * By defined LIST_ID and INTEREST_CATEGORY_ID we create a possibility to
+   * use the same code for all environments based on these defined env-variables.
+   * Returns [{id: string, name: string}]
+   * optional parameter ?count:integer default:100
+   */
+  async fetchInterestsByIdFromLists (category_id, count = 100) {
+    const interests = await mailchimp.get({
+      path: `lists/${LIST_ID}/interest-categories/${category_id}/interests?count=${count}`
+    });
+    return interests.interests;
+  };
+}
+
+const mailchimp = new Mailchimp();
+
+export async function prepareCampaign(agendaInformationForNewsLetter) {
+  console.log("Prepairing new campaign in Mailchimp...");
+
+  await mailchimp.ping();
+
+  const mailTitle = `beslissingen van ${agendaInformationForNewsLetter.formattedStart}`;
+  const htmlContent = getNewsItemsHtml(agendaInformationForNewsLetter.agendaURI);
+
+  agendaInformationForNewsLetter = {
+    mailTitle: mailTitle,
+    htmlContent: htmlContent,
+    ...agendaInformationForNewsLetter
+  }
+
+  const templateId = await mailchimp.createTemplate(agendaInformationForNewsLetter);
+  const campaign = await mailchimp.createNewCampaign(templateId, agendaInformationForNewsLetter);
+
+  await mailchimp.deleteTemplate(templateId);
+
+  return campaign;
+}
+
+export async function sendCampaign(campaignId) {
+  console.log(`Sending campaign ${campaignId} in Mailchimp...`);
+
+ await mailchimp.sendCampaign(campaignId);
+}
+
+export async function deleteCampaign(campaignId) {
+  console.log(`Deleting campaign ${campaignId} in Mailchimp...`);
+
+  await mailchimp.deleteCampaign(campaignId);
+}
+

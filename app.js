@@ -1,13 +1,15 @@
 import mu from 'mu';
 import BelgaService from './repository/BelgaFTPService.js';
 const app = mu.app;
-const Mailchimp = require('mailchimp-api-v3');
-const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
+
+import { prepareCampaign, sendCampaign, deleteCampaign } from './repository/MailchimpService';
+import { ok } from 'assert';
 const bodyParser = require('body-parser');
-const mailchimpService = require('./repository/MailchimpService.js');
+
+const dotenv = require('dotenv');
+
 const repository = require('./repository/index.js');
 const cors = require('cors');
-const dotenv = require('dotenv');
 
 dotenv.config();
 app.use(bodyParser.json({ type: 'application/*+json' }));
@@ -25,7 +27,31 @@ const belgaConfig = {
 const service = new BelgaService(belgaConfig);
 
 app.post('/createCampaign', (req, res) => {
-  return mailchimpService.createCampaign(req, res);
+  try {
+    const agendaId = req.query.agendaId;
+    if (!agendaId) {
+      throw new Error('Mandatory parameter agendaId not found.');
+    }
+    const agendaInformationForNewsLetter = await getAgendaInformationForNewsletter(agendaId);
+    const campaign = await prepareCampaign(agendaInformationForNewsLetter);
+    res.send({
+      status: ok,
+      statusCode: 200,
+      body: {
+        campaign_id: campaign.campaignId,
+        campaign_web_id: campaign.webId,
+        archive_url: campaign.archiveUrl
+      }
+    });
+  } catch (error) {
+    console.log("A problem occured when prepairing a campaign in Mailchimp.");
+    if (error.response) {
+      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
+    } else {
+      console.log(error);
+    }
+    res.status(500).send(error);
+  }
 });
 
 app.get('/', (req, res) => {
@@ -33,18 +59,21 @@ app.get('/', (req, res) => {
 });
 
 app.post('/sendMailCampaign/:id', async (req, res, next) => {
-  const campaign_id = req.params.id;
-  if (!campaign_id ) {
-    throw new Error('No campaign id.');
-  }
   try {
-    console.time('SEND MAILCHIMP CAMPAIGN TIME');
-    const sendCampaign = await mailchimp.post({
-      path: `/campaigns/${campaign_id}/actions/send`
-    });
-    console.timeEnd('SEND MAILCHIMP CAMPAIGN TIME');
-    res.send({ sendCampaign });
+    const campaignId = req.params.id;
+    if (!campaignId ) {
+      throw new Error('Request parameter id can not be null.');
+    }
+
+    const sendCampaignResult = await sendCampaign(campaignId);
+    res.send({ sendCampaignResult });
   } catch (error) {
+    console.log(`A problem occured when sending campaign ${campaignId} in Mailchimp.`);
+    if (error.response) {
+      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
+    } else {
+      console.log(error);
+    }
     next(error);
   }
 });
@@ -66,20 +95,44 @@ app.post('/sendToBelga/:id', async (req, res, next) => {
 
 
 app.get('/fetchTestMailCampaign/:id', async (req, res, next) => {
-  const campaign_id = req.params.id;
   try {
-    console.time('FETCH CAMPAIGN PREVIEW');
-    const campaignHTML = await mailchimp.get({
-      path: `/campaigns/${campaign_id}/content`
-    });
-    console.timeEnd('FETCH CAMPAIGN PREVIEW');
-    res.send({ body: campaignHTML.html });
+    const campaignId = req.params.id;
+    if (!campaignId ) {
+      throw new Error('Request parameter id can not be null.');
+    }
+
+    const campaignHtml = await getCampaignContent(campaignId);
+    res.send({ body: campaignHtml.html });
   } catch (error) {
+    console.log(`A problem occured when getting campaign content for campaign id ${campaignId} in Mailchimp.`);
+    if (error.response) {
+      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
+    } else {
+      console.log(error);
+    }
     next(error);
   }
 });
 
 app.get('/fetchTestMailCampaignMetaData/:id', async (req, res, next) => {
+  try {
+    const campaignId = req.params.id;
+    if (!campaignId ) {
+      throw new Error('Request parameter id can not be null.');
+    }
+
+    const campaignData = await getCampaignData(campaignId);
+    res.send({ body: campaignData });
+  } catch (error) {
+    console.log(`A problem occured when getting campaign content for campaign id ${campaignId} in Mailchimp.`);
+    if (error.response) {
+      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
+    } else {
+      console.log(error);
+    }
+    next(error);
+  }
+
   const campaign_id = req.params.id;
   try {
     console.time('FETCH CAMPAIGN METADATA');
@@ -94,12 +147,24 @@ app.get('/fetchTestMailCampaignMetaData/:id', async (req, res, next) => {
 });
 
 app.delete('/deleteMailCampaign/:id', async (req, res) => {
-  const campaign_id = req.params.id;
-  if (!campaign_id) {
-    throw new Error('Request parameter campaign_id can not be null');
+  try {
+    const campaignId = req.params.id;
+    if (!campaignId ) {
+      throw new Error('Request parameter id can not be null.');
+    }
+
+    const deleteCampaignResult = await deleteCampaign(campaignId);
+    // TODO check what deleted contains. According to mailchimp API, a succesfull delete contains an empty response
+    res.send({ deleteCampaignResult });
+  } catch (error) {
+    console.log(`A problem occured when deleting campaign ${campaignId} in Mailchimp.`);
+    if (error.response) {
+      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
+    } else {
+      console.log(error);
+    }
+    next(error);
   }
-  const deleted = await mailchimpService.deleteCampaign(campaign_id);
-  res.send({ deleted });
 });
 
 app.get('/xml-newsletter/:agenda_id', async (req, res) => {
