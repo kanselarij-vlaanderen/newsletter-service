@@ -7,6 +7,27 @@ const user = process.env.BELGA_FTP_USERNAME;
 const password = process.env.BELGA_FTP_PASSWORD;
 const host = process.env.BELGA_FTP_HOST;
 
+const requiredEnvironmentVariables = [
+  'MAILCHIMP_API',
+  'MAILCHIMP_FROM_NAME',
+  'MAILCHIMP_REPLY_TO',
+  'MAILCHIMP_LIST_ID',
+  'MAILCHIMP_INTEREST_CATEGORY_ID',
+  'MAILCHIMP_KIND_CATEGORY_ID',
+  'BELGA_FTP_USERNAME',
+  'BELGA_FTP_PASSWORD'
+];
+
+
+requiredEnvironmentVariables.forEach((key) => {
+  if (!process.env[key]) {
+    console.log('---------------------------------------------------------------');
+    console.log(`[ERROR]:Environment variable ${key} must be configured`);
+    console.log('---------------------------------------------------------------');
+    process.exit(1);
+  }
+});
+
 const belgaConfig = {
   user,
   password,
@@ -23,13 +44,15 @@ app.post('/mail-campaigns', async function (req, res) {
     if (!meetingId) {
       throw new Error('Mandatory parameter meetingId not found.');
     }
+    console.log(`Preparing new MailChimp campaign for meeting ${meetingId}`);
+
     const agendaInformationForNewsLetter = await getAgendaInformationForNewsletter(meetingId);
     const campaign = await prepareCampaign(agendaInformationForNewsLetter);
 
     res.status(201).send({
       data: {
         type: 'mail-campaign',
-        id: campaign.campaignId, // TODO check if this exists
+        id: campaign.campaignId,
         attributes: {
           webId: campaign.webId,
           archiveUrl: campaign.archiveUrl
@@ -64,12 +87,12 @@ app.post('/mail-campaigns/:id/send', async (req, res) => {
     if (!campaignId ) {
       throw new Error('Request parameter id can not be null.');
     }
-
-    const sendCampaignResult = await sendCampaign(campaignId);
+    console.log(`Sending MailChimp campaign ${campaignId}`);
+    await sendCampaign(campaignId);
     res.status(201).send({
       data: {
         type: 'mail-campaign',
-        id: sendCampaignResult.campaignId // TODO is this correct?
+        id: campaignId
       }
     });
   } catch (error) {
@@ -92,19 +115,20 @@ app.get('/mail-campaigns/:id', async (req, res) => {
     if (!campaignId ) {
       throw new Error('Request parameter id can not be null.');
     }
+    console.log(`Get meta data for MailChimp campaign ${campaignId}`);
 
     const campaignData = await getCampaignData(campaignId);
     res.send({
       data: {
         type: 'mail-campaign',
-        id: campaignData.campaignId, // TODO is this correct?
+        id: campaignData.id,
         attributes: {
           createTime: campaignData.create_time,
         }
       }
     });
   } catch (error) {
-    console.log(`A problem occured when getting campaign content for campaign id ${campaignId} in Mailchimp.`);
+   // console.log(`A problem occured when getting campaign content for campaign id ${campaignId} in Mailchimp.`);
     if (error.response) {
       console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
     } else {
@@ -123,6 +147,7 @@ app.get('/mail-campaign/:id/content', async (req, res) => {
     if (!campaignId ) {
       throw new Error('Request parameter id can not be null.');
     }
+    console.log(`Get content for MailChimp campaign ${campaignId}`);
 
     const campaignHtml = await getCampaignContent(campaignId);
     res.send({

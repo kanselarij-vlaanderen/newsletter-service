@@ -1,8 +1,10 @@
-import { query } from "express";
 import helper from '../util/newsletter-helper';
 import moment from 'moment';
 import 'moment-timezone';
-const { getNewsItem } = require('../util/query-helper');
+import { getNewsItem } from './html';
+import { reduceNewslettersToMandateesByPriority } from '../util/newsletter-helper';
+
+import { sparqlEscapeString, sparqlEscapeUri, query } from 'mu';
 
 moment.locale('nl');
 moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
@@ -74,14 +76,14 @@ export async function getAgendaInformationForNewsletter(meetingId) {
   };
 }
 
-export async function getNewsItemsHtml(agendaURI) {
+export async function getNewsItemInfo(agendaURI) {
   let newsletter = await getNewsletterByAgendaId(agendaURI);
 
   if (!newsletter || !newsletter[0]) {
     throw new Error('No newsletters present!');
   }
 
-  const reducedNewsletters = helper.reduceNewslettersToMandateesByPriority(newsletter);
+  const reducedNewsletters = reduceNewslettersToMandateesByPriority(newsletter);
   let allThemesOfNewsletter = [];
   const news_items_HTML = reducedNewsletters.map((item) => {
     let segmentConstraint = {begin: '', end: ''};
@@ -98,10 +100,11 @@ export async function getNewsItemsHtml(agendaURI) {
     return getNewsItem(item, segmentConstraint);
   });
 
-  return news_items_HTML;
+  return { htmlContent: news_items_HTML, newsletterThemees: allThemesOfNewsletter } ;
 }
 
 async function getMeetingURI (meetingId) {
+  console.log(`Get meetingURI for meeting ${meetingId}`);
   const meetingUriQuery = await query(`
   PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
   PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
@@ -126,6 +129,7 @@ async function getMeetingURI (meetingId) {
  * @returns {*} agendaURI
  */
 async function getLastestAgenda (meetingURI) {
+  console.log(`Get latest agenda for meetingURI ${meetingURI}`);
   const latestAgendaQuery = await query(`
     PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
     PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
@@ -136,8 +140,8 @@ async function getLastestAgenda (meetingURI) {
         ?agenda besluitvorming:isAgendaVoor ${sparqlEscapeUri(meetingURI)} ;
           a besluitvorming:Agenda ;
           besluitvorming:volgnummer ?serialnumber .
-      } ORDER BY DESC(?serialnumber) LIMIT 1
-    }`);
+      }
+    } ORDER BY DESC(?serialnumber) LIMIT 1`);
 
   if (latestAgendaQuery.results.bindings.length) {
     return latestAgendaQuery.results.bindings[0].agenda.value;
@@ -147,6 +151,8 @@ async function getLastestAgenda (meetingURI) {
 }
 
 async function getAgendaInformation(latestAgendaURI) {
+  console.log(`Get agenda information for agendaURI ${latestAgendaURI}`);
+
   const agendaInformation = await query(`
     PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
@@ -154,7 +160,7 @@ async function getAgendaInformation(latestAgendaURI) {
     PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
     PREFIX dct: <http://purl.org/dc/terms/>
 
-    SELECT DISTINCT ?agenda ?planned_start ?data_docs ?publication_date ?kind WHERE {
+    SELECT DISTINCT ?planned_start ?data_docs ?publication_date ?kind WHERE {
       GRAPH <${targetGraph}> {
         ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda ;
           besluitvorming:isAgendaVoor ?meeting .
@@ -165,7 +171,10 @@ async function getAgendaInformation(latestAgendaURI) {
         OPTIONAL { ?newsletter dct:issued ?publication_date . }
         }
     }`);
-  return parseSparqlResults(agendaInformation)[0];
+
+  console.log("agendaInformation", agendaInformation);
+
+  return parseSparqlResults(agendaInformation);
 };
 
 async function getNewsletterByAgendaId(agendaUri) {
@@ -208,7 +217,7 @@ async function getNewsletterByAgendaId(agendaUri) {
     GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
     ORDER BY ASC(?mandateePriority)`);
 
-  return parseSparqlResults(newsletterInformation)[0];
+  return parseSparqlResults(newsletterInformation);
 }
 
 const parseSparqlResults = (data) => {
