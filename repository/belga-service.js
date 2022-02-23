@@ -1,8 +1,7 @@
-import {createXMLConfig} from "../util/xml-renderer";
 import moment from 'moment';
-import {createNewsletterString} from "../util/newsletter-helper";
-import {escapeHtml} from "../util/html";
-
+import { createXMLConfig } from "../util/xml-renderer";
+import { createNewsletterString } from "../util/newsletter-helper";
+import { escapeHtml } from "../util/html";
 import { getNewsletterByAgendaId, getAgendaInformationForNewsletter } from '../util/query-helper';
 
 const ftpClient = require('ftp');

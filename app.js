@@ -1,7 +1,7 @@
 import { app } from 'mu';
-import { prepareCampaign, sendCampaign, deleteCampaign, getCampaignContent, getCampaignData } from './repository/mailchimp-service';
 import { getAgendaInformationForNewsletter } from './util/query-helper';
 import BelgaService from './repository/belga-service';
+import MailchimpService from './repository/mailchimp-service';
 
 const user = process.env.BELGA_FTP_USERNAME;
 const password = process.env.BELGA_FTP_PASSWORD;
@@ -34,6 +34,7 @@ const belgaConfig = {
   host
 };
 const belgaService = new BelgaService(belgaConfig);
+const mailchimpService = new MailchimpService();
 
 /**
  * Prepare new MailChimp campaign
@@ -47,7 +48,7 @@ app.post('/mail-campaigns', async function (req, res) {
     console.log(`Preparing new MailChimp campaign for meeting ${meetingId}`);
 
     const agendaInformationForNewsLetter = await getAgendaInformationForNewsletter(meetingId);
-    const campaign = await prepareCampaign(agendaInformationForNewsLetter);
+    const campaign = await mailchimpService.prepareCampaign(agendaInformationForNewsLetter);
 
     res.status(201).send({
       data: {
@@ -88,7 +89,7 @@ app.post('/mail-campaigns/:id/send', async (req, res) => {
       throw new Error('Request parameter id can not be null.');
     }
     console.log(`Sending MailChimp campaign ${campaignId}`);
-    await sendCampaign(campaignId);
+    await mailchimpService.sendCampaign(campaignId);
     res.status(201).send({
       data: {
         type: 'mail-campaign',
@@ -117,7 +118,7 @@ app.get('/mail-campaigns/:id', async (req, res) => {
     }
     console.log(`Getting meta data for MailChimp campaign ${campaignId}`);
 
-    const campaignData = await getCampaignData(campaignId);
+    const campaignData = await mailchimpService.getCampaignData(campaignId);
     res.status(200).send({
       data: {
         type: 'mail-campaign',
@@ -149,7 +150,7 @@ app.get('/mail-campaign/:id/content', async (req, res) => {
     }
     console.log(`Get content for MailChimp campaign ${campaignId}`);
 
-    const campaignHtml = await getCampaignContent(campaignId);
+    const campaignHtml = await mailchimpService.getCampaignContent(campaignId);
     res.send({
       data: {
         type: 'mail-campaign-content',
@@ -180,7 +181,7 @@ app.delete('/mail-campaigns/:id', async (req, res) => {
       throw new Error('Request parameter id can not be null.');
     }
 
-    await deleteCampaign(campaignId);
+    await mailchimpService.deleteCampaign(campaignId);
     res.status(204).send();
   } catch (error) {
     console.log(`A problem occured when deleting campaign ${campaignId} in Mailchimp.`);

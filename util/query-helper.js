@@ -1,9 +1,7 @@
-import helper from '../util/newsletter-helper';
 import moment from 'moment';
 import 'moment-timezone';
 import { getNewsItem } from './html';
 import { reduceNewslettersToMandateesByPriority } from '../util/newsletter-helper';
-
 import { sparqlEscapeString, sparqlEscapeUri, query } from 'mu';
 
 moment.locale('nl');

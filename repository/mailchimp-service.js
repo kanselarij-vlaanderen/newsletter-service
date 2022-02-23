@@ -12,13 +12,35 @@ const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID;
 
 const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel persberichten als beslissingen'];
 
-class Mailchimp {
+export default class MailchimpService {
+
   constructor() {
     mailchimpConnection.setConfig(
       {
         apiKey: `${MAILCHIMP_API}`,
         server: `${MAILCHIMP_SERVER}`
       });
+  }
+
+
+  async prepareCampaign(agendaInformationForNewsLetter) {
+    console.log("Prepairing new campaign in Mailchimp...");
+
+    await this.ping();
+
+    const mailTitle = `beslissingen van ${agendaInformationForNewsLetter.formattedStart}`;
+    const newsItemInfo = await getNewsItemInfo(agendaInformationForNewsLetter.agendaURI);
+
+    agendaInformationForNewsLetter.mailTitle = mailTitle;
+    agendaInformationForNewsLetter.htmlContent = newsItemInfo.htmlContent;
+
+    const templateId = await this.createTemplate(agendaInformationForNewsLetter);
+
+    const campaign = await this.createNewCampaign(templateId, agendaInformationForNewsLetter, newsItemInfo.newsletterThemes);
+
+    await this.deleteTemplate(templateId);
+
+    return campaign;
   }
 
   async ping() {
@@ -194,40 +216,3 @@ class Mailchimp {
   }
 }
 
-const mailchimp = new Mailchimp();
-
-export async function prepareCampaign(agendaInformationForNewsLetter) {
-  console.log("Prepairing new campaign in Mailchimp...");
-
-  await mailchimp.ping();
-
-  const mailTitle = `beslissingen van ${agendaInformationForNewsLetter.formattedStart}`;
-  const newsItemInfo = await getNewsItemInfo(agendaInformationForNewsLetter.agendaURI);
-
-  agendaInformationForNewsLetter.mailTitle = mailTitle;
-  agendaInformationForNewsLetter.htmlContent = newsItemInfo.htmlContent;
-
-  const templateId = await mailchimp.createTemplate(agendaInformationForNewsLetter);
-
-  const campaign = await mailchimp.createNewCampaign(templateId, agendaInformationForNewsLetter, newsItemInfo.newsletterThemes);
-
-  await mailchimp.deleteTemplate(templateId);
-
-  return campaign;
-}
-
-export async function sendCampaign(campaignId) {
-  await mailchimp.sendCampaign(campaignId);
-}
-
-export async function deleteCampaign(campaignId) {
-  await mailchimp.deleteCampaign(campaignId);
-}
-
-export async function getCampaignData(campaignId) {
-  return await mailchimp.getCampaignData(campaignId);
-}
-
-export async function getCampaignContent(campaignId) {
-  return await mailchimp.getCampaignContent(campaignId);
-}
