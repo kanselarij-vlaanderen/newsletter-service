@@ -3,12 +3,13 @@ import moment from 'moment';
 import {createNewsletterString} from "../util/newsletter-helper";
 import {escapeHtml} from "../util/html";
 
+import { getNewsletterByAgendaId, getAgendaInformationForNewsletter } from '../util/query-helper';
+
 const ftpClient = require('ftp');
 const fs = require('fs');
 const xml = require('xml');
 
 const client = new ftpClient();
-let repository = null; // We need to do this to make it possible to test this service
 
 let config = null;
 
@@ -18,8 +19,7 @@ export default class BelgaService {
     config = belgaConfig;
   }
 
-  async generateXML(agendaId, transferToFtp = false) {
-    repository = require('./index.js');
+  async generateXML(meetingId, transferToFtp = false) {
     console.time('FETCH BELGA INFORMATION TIME');
     const {
       procedureText,
@@ -27,11 +27,11 @@ export default class BelgaService {
       formattedStart,
       publication_date,
       agendaURI
-    } = await repository.getAgendaNewsletterInformation(agendaId);
+    } = await getAgendaInformationForNewsletter(meetingId);
 
     const kindOfmeetingLowerCase = kindOfMeeting.toLowerCase().replace('vlaamse veerkracht', 'Vlaamse Veerkracht');
     const title = `Beslissingen van de ${kindOfmeetingLowerCase} van ${formattedStart}`;
-    const data = await repository.getNewsLetterByAgendaId(agendaURI);
+    const data = await getNewsletterByAgendaId(agendaURI);
     const content = createNewsletterString(data);
 
     console.timeEnd('FETCH BELGA INFORMATION TIME');
@@ -57,6 +57,8 @@ export default class BelgaService {
       await this.openConnection();
       await this.moveFileToFTP(path, name);
       await this.closeConnection();
+
+      return { name: name };
     } else {
       return new Promise((resolve, reject) => {
         output.on('open', function (fd) {

@@ -84,6 +84,7 @@ export async function getNewsItemInfo(agendaURI) {
   }
 
   const reducedNewsletters = reduceNewslettersToMandateesByPriority(newsletter);
+
   let allThemesOfNewsletter = [];
   const news_items_HTML = reducedNewsletters.map((item) => {
     let segmentConstraint = {begin: '', end: ''};
@@ -100,7 +101,50 @@ export async function getNewsItemInfo(agendaURI) {
     return getNewsItem(item, segmentConstraint);
   });
 
-  return { htmlContent: news_items_HTML, newsletterThemees: allThemesOfNewsletter } ;
+  return { htmlContent: news_items_HTML, newsletterThemes: allThemesOfNewsletter } ;
+}
+
+export async function getNewsletterByAgendaId(agendaUri) {
+  const newsletterInformation = await query(`
+    PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
+    PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
+    PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
+
+    SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
+    WHERE {
+      GRAPH ${sparqlEscapeUri(targetGraph)} {
+        ${sparqlEscapeUri(agendaUri)} a besluitvorming:Agenda ;
+          dct:hasPart ?agendaitem .
+        ?agendaitem a besluit:Agendapunt ;
+          ext:wordtGetoondAlsMededeling "false"^^xsd:boolean ;
+          ext:prioriteit ?agendaitemPrio .
+        ?treatment a besluit:BehandelingVanAgendapunt ;
+          besluitvorming:heeftOnderwerp ?agendaitem ;
+          prov:generated ?newsletter .
+        ?newsletter a besluitvorming:NieuwsbriefInfo ;
+          ext:inNieuwsbrief "true"^^xsd:boolean .
+        OPTIONAL {
+          ?agendaitem ext:heeftBevoegdeVoorAgendapunt ?mandatee .
+          ?mandatee dct:title ?mandateeTitle .
+          ?mandatee mandaat:rangorde ?mandateePriority .
+          ?mandatee ext:nieuwsbriefTitel ?mandateeName .
+        }
+        OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
+        OPTIONAL { ?newsletter dct:title ?title . }
+      }
+      OPTIONAL {
+        ?newsletter dct:subject ?themeURI .
+        ?themeURI ext:mailchimpId ?label .
+      }
+    }
+    GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
+    ORDER BY ASC(?mandateePriority)`);
+
+  return parseSparqlResults(newsletterInformation);
 }
 
 async function getMeetingURI (meetingId) {
@@ -172,53 +216,8 @@ async function getAgendaInformation(latestAgendaURI) {
         }
     }`);
 
-  console.log("agendaInformation", agendaInformation);
-
   return parseSparqlResults(agendaInformation);
 };
-
-async function getNewsletterByAgendaId(agendaUri) {
-  const newsletterInformation = await query(`
-    PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
-    PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
-    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
-    PREFIX dct: <http://purl.org/dc/terms/>
-    PREFIX prov: <http://www.w3.org/ns/prov#>
-    PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
-    PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
-
-    SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
-    WHERE {
-      GRAPH ${sparqlEscapeUri(targetGraph)} {
-        ${sparqlEscapeUri(agendaUri)} a besluitvorming:Agenda ;
-          dct:hasPart ?agendaitem .
-        ?agendaitem a besluit:Agendapunt ;
-          ext:wordtGetoondAlsMededeling "false"^^xsd:boolean ;
-          ext:prioriteit ?agendaitemPrio .
-        ?treatment a besluit:BehandelingVanAgendapunt ;
-          besluitvorming:heeftOnderwerp ?agendaitem ;
-          prov:generated ?newsletter .
-        ?newsletter a besluitvorming:NieuwsbriefInfo ;
-          ext:inNieuwsbrief "true"^^xsd:boolean .
-        OPTIONAL {
-          ?agendaitem ext:heeftBevoegdeVoorAgendapunt ?mandatee .
-          ?mandatee dct:title ?mandateeTitle .
-          ?mandatee mandaat:rangorde ?mandateePriority .
-          ?mandatee ext:nieuwsbriefTitel ?mandateeName .
-        }
-        OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
-        OPTIONAL { ?newsletter dct:title ?title . }
-      }
-      OPTIONAL {
-        ?newsletter dct:subject ?themeURI .
-        ?themeURI ext:mailchimpId ?label .
-      }
-    }
-    GROUP BY ?title ?richtext ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
-    ORDER BY ASC(?mandateePriority)`);
-
-  return parseSparqlResults(newsletterInformation);
-}
 
 const parseSparqlResults = (data) => {
   const vars = data.head.vars;

@@ -68,7 +68,7 @@ app.post('/mail-campaigns', async function (req, res) {
       }
     });
   } catch (error) {
-    console.log("A problem occured when prepairing a campaign in Mailchimp.");
+    console.log("A problem occured when prepairing campaign in Mailchimp.");
     if (error.response) {
       console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
     } else {
@@ -96,7 +96,7 @@ app.post('/mail-campaigns/:id/send', async (req, res) => {
       }
     });
   } catch (error) {
-    console.log(`A problem occured when sending campaign ${campaignId} in Mailchimp.`);
+    console.log(`A problem occured when sending campaign in Mailchimp.`);
     if (error.response) {
       console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
     } else {
@@ -115,10 +115,10 @@ app.get('/mail-campaigns/:id', async (req, res) => {
     if (!campaignId ) {
       throw new Error('Request parameter id can not be null.');
     }
-    console.log(`Get meta data for MailChimp campaign ${campaignId}`);
+    console.log(`Getting meta data for MailChimp campaign ${campaignId}`);
 
     const campaignData = await getCampaignData(campaignId);
-    res.send({
+    res.status(200).send({
       data: {
         type: 'mail-campaign',
         id: campaignData.id,
@@ -128,7 +128,7 @@ app.get('/mail-campaigns/:id', async (req, res) => {
       }
     });
   } catch (error) {
-   // console.log(`A problem occured when getting campaign content for campaign id ${campaignId} in Mailchimp.`);
+    console.log(`A problem occured when getting campaign content for in Mailchimp.`);
     if (error.response) {
       console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
     } else {
@@ -160,7 +160,7 @@ app.get('/mail-campaign/:id/content', async (req, res) => {
       }
     });
   } catch (error) {
-    console.log(`A problem occured when getting campaign content for campaign id ${campaignId} in Mailchimp.`);
+    console.log(`A problem occured when getting campaign content in Mailchimp.`);
     if (error.response) {
       console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
     } else {

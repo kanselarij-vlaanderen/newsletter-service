@@ -54,7 +54,6 @@ class Mailchimp {
 
     const templateId = templateResponse['id']
 
-    console.log(`templateResponse template id: ${templateId}`);
     return templateId;
   }
 
@@ -115,9 +114,7 @@ class Mailchimp {
   async deleteCampaign(campaignId) {
     console.log(`Deleting Mailchimp campaign ${campaignId}...`);
 
-    // TODO is this necessary? For press releases the delete was done right after sending
-    // in which case a retry could be necessary. In this case there is more time between
-    // sending and deleting
+    // delete action is blocked by Mailchimp if the campaign is still sending
     await this.retryDeleteCampaign(campaignId, 4, 2000);
 
     console.log(`Deleting Mailchimp campaign ${campaignId} DONE`);
@@ -142,11 +139,11 @@ class Mailchimp {
     }
   }
 
-  async createThemesCondition (allThemesOfNewsletter) {
-    const allUniqueThemesOfNewsletter = [...new Set(allThemesOfNewsletter)];
+  async createThemesCondition (newsletterThemes) {
+    const uniqueNewsletterThemes = [...new Set(newsletterThemes)];
     const interests = await this.fetchInterestsByCategoryIdFromLists(INTEREST_CATEGORY_ID);
     const interestMapping = interests.filter((theme) => {
-      if (allUniqueThemesOfNewsletter.includes(theme.name)) {
+      if (uniqueNewsletterThemes.includes(theme.name)) {
         return theme;
       }
     });
@@ -187,7 +184,7 @@ class Mailchimp {
   }
 
   async getCampaignData(campaignId) {
-  console.log(`Get campaign data for campaign ${campaignId}`);
+    console.log(`Get campaign data for campaign ${campaignId}`);
     return await mailchimpConnection.campaigns.get(campaignId);
   }
 
@@ -220,17 +217,7 @@ export async function prepareCampaign(agendaInformationForNewsLetter) {
 }
 
 export async function sendCampaign(campaignId) {
-  try {
-    await mailchimp.sendCampaign(campaignId);
-  } catch (error) {
-    console.log(`A problem occured when sending campaign ${campaignId} in Mailchimp.`);
-    if (error.response) {
-      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
-    } else {
-      console.log(error);
-    }
-    throw(error);
-  }
+  await mailchimp.sendCampaign(campaignId);
 }
 
 export async function deleteCampaign(campaignId) {
