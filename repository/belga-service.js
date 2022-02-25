@@ -3,23 +3,83 @@ import { createXMLConfig } from "../util/xml-renderer";
 import { createNewsletterString } from "../util/newsletter-helper";
 import { escapeHtml } from "../util/html";
 import { getNewsletterByAgendaId, getAgendaInformationForNewsletter } from '../util/query-helper';
+import ftpClient from 'ftp';
+import fs from 'fs';
+import xml from 'xml';
 
-const ftpClient = require('ftp');
-const fs = require('fs');
-const xml = require('xml');
-
-const client = new ftpClient();
-
-let config = null;
+const user = process.env.BELGA_FTP_USERNAME;
+const password = process.env.BELGA_FTP_PASSWORD;
+const host = process.env.BELGA_FTP_HOST;
 
 export default class BelgaService {
 
-  constructor(belgaConfig) {
-    config = belgaConfig;
+  constructor() {
+    this.ftpClient = new ftpClient();
+
+    this.connectionConfig = {
+      user,
+      password,
+      host
+    };
   }
 
-  async generateXML(meetingId, transferToFtp = false) {
-    console.time('FETCH BELGA INFORMATION TIME');
+  async publishToBelga(filePath) {
+    console.log("Publishing xml to Belga...");
+
+    await this.openConnection();
+    await this.moveFileToFTP(filePath);
+    await this.closeConnection();
+    console.log("Publishing xml to Belga done.");
+
+    return filePath;
+  }
+
+  openConnection() {
+    console.log('OPEN Belga FTP connection');
+    return new Promise((resolve, reject) => {
+      this.ftpClient.on('ready', (err) => {
+        if (err) return reject(new Error(`Error opening the ftp connection.`));
+        console.log('Belga FTP connection opened.');
+        resolve('connection opened');
+      });
+      this.ftpClient.connect(this.connectionConfig);
+    });
+  }
+
+  closeConnection() {
+    console.log('CLOSE Belga FTP connection');
+    return new Promise((resolve, reject) => {
+      this.ftpClient.on('end', (err) => {
+        if (err) return reject(new Error(`Error closing the ftp connection`));
+        console.log('Belga FTP connection closed.');
+        resolve();
+      });
+      this.ftpClient.end();
+    });
+  }
+
+  moveFileToFTP(filePath) {
+    console.log(`Moving file to FTP ${filePath.localPath}`);
+    return new Promise((resolve, reject) => {
+      this.ftpClient.put(filePath.localPath, filePath.name, (err) => {
+        if (err) {
+          return reject(new Error(`Error moving the file from directory.`));
+        }
+        resolve(filePath.name);
+      });
+    })
+      .then((result) => {
+        console.log(`XML has successfully been uploaded to Belga - ${result}`);
+        return result;
+      })
+      .catch((error) => {
+        console.log(`XML has not been uploaded to Belga - ${filePath.localPath}`);
+        return error;
+      });
+  }
+
+  async createBelgaNewsletterXML(meetingId) {
+    console.log('Generating Belga XML ');
     const {
       procedureText,
       kindOfMeeting,
@@ -33,11 +93,7 @@ export default class BelgaService {
     const data = await getNewsletterByAgendaId(agendaURI);
     const content = createNewsletterString(data);
 
-    console.timeEnd('FETCH BELGA INFORMATION TIME');
-    const sentAt = moment
-      .utc()
-      .utcOffset('+02:00')
-      .format('YYYYMMDDTHHmmssZZ');
+    const sentAt = moment.tz('Europe/Brussels').format('YYYYMMDDTHHmmssZZ');
 
     const escapedContent = escapeHtml(`<![CDATA[ ${content} ]]>`);
     const identicationDate = moment(publication_date).format('YYYYMMDD');
@@ -52,92 +108,32 @@ export default class BelgaService {
     const output = fs.createWriteStream(path);
     output.write(xmlString);
 
-    if (transferToFtp) {
-      await this.openConnection();
-      await this.moveFileToFTP(path, name);
-      await this.closeConnection();
+    console.log(`Generated xml file ${path}`);
 
-      return { name: name };
-    } else {
-      return new Promise((resolve, reject) => {
-        output.on('open', function (fd) {
-          console.log('file is open!');
-          console.log('fd: ' + fd);
-          resolve(path);
-        });
-
-        output.on('error', function (err) {
-          reject(err);
-        });
-      });
-    }
-
+    return { localPath: path, name: name };
   }
 
+  // only used for automated testing
   listFTPServerDirectory() {
-    console.time('LISTING BELGA-FTP DIRECTORY');
+    console.log('Listing Belga FTP directory');
     return new Promise((resolve, reject) => {
-      client.list((err, list) => {
+      this.ftpClient.list((err, list) => {
         if (err) {
           return reject(new Error(`Error listing the file from directory.`));
         }
-        console.timeEnd('LISTING BELGA-FTP DIRECTORY');
         resolve(list);
       });
     });
   }
 
-  openConnection() {
-    console.time('OPENING BELGA-FTP CONNECTION');
-    return new Promise((resolve, reject) => {
-      client.on('ready', (err) => {
-        if (err) return reject(new Error(`Error opening the ftp connection.`));
-        console.timeEnd('OPENING BELGA-FTP CONNECTION');
-        resolve('connection opened');
-      });
-      client.connect(config);
-    });
-  }
-
-  closeConnection() {
-    console.time('CLOSING BELGA-FTP CONNECTION');
-    return new Promise((resolve, reject) => {
-      client.on('end', (err) => {
-        if (err) return reject(new Error(`Error closing the ftp connection`));
-        console.timeEnd('CLOSING BELGA-FTP CONNECTION');
-        resolve();
-      });
-      client.end();
-    });
-  }
-
-  moveFileToFTP(localPath, pathName) {
-    return new Promise((resolve, reject) => {
-      client.put(localPath, pathName, (err) => {
-        if (err) {
-          return reject(new Error(`Error moving the file from directory.`));
-        }
-        resolve(pathName);
-      });
-    })
-      .then((result) => {
-        console.log(`XML HAS SUCCESSFULLY BEEN UPLOADED TO BELGA - ${result}`);
-        return result;
-      })
-      .catch((error) => {
-        console.log(`XML HAS NOT BEEN UPLOADED TO BELGA - ${pathName}`);
-        return error;
-      });
-  }
-
+  // only used for automated testing
   deleteFileFromServer(filePath) {
-    console.time('DELETING FILE FROM BELGA');
+    console.log('Deleting file from Belga');
     return new Promise((resolve, reject) => {
-      client.delete(filePath, (err) => {
+      this.ftpClient.delete(filePath, (err) => {
         if (err) {
           return reject(new Error(`Error deleting the file from directory.`));
         }
-        console.timeEnd('DELETING FILE FROM BELGA');
         resolve(filePath);
       });
     });

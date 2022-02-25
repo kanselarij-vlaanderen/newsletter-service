@@ -22,27 +22,6 @@ export default class MailchimpService {
       });
   }
 
-
-  async prepareCampaign(agendaInformationForNewsLetter) {
-    console.log("Prepairing new campaign in Mailchimp...");
-
-    await this.ping();
-
-    const mailTitle = `beslissingen van ${agendaInformationForNewsLetter.formattedStart}`;
-    const newsItemInfo = await getNewsItemInfo(agendaInformationForNewsLetter.agendaURI);
-
-    agendaInformationForNewsLetter.mailTitle = mailTitle;
-    agendaInformationForNewsLetter.htmlContent = newsItemInfo.htmlContent;
-
-    const templateId = await this.createTemplate(agendaInformationForNewsLetter);
-
-    const campaign = await this.createNewCampaign(templateId, agendaInformationForNewsLetter, newsItemInfo.newsletterThemes);
-
-    await this.deleteTemplate(templateId);
-
-    return campaign;
-  }
-
   async ping() {
     const response = await mailchimpConnection.ping.get();
 
@@ -52,6 +31,29 @@ export default class MailchimpService {
       console.log("Could not connect to Mailchimp.", response);
       throw (response);
     }
+  }
+
+  async prepareCampaign(agendaInformationForNewsLetter) {
+    console.log("Prepairing new campaign in Mailchimp...");
+
+    await this.ping();
+
+    const mailTitle = `beslissingen van ${agendaInformationForNewsLetter.formattedStart}`;
+    const newsItemInfo = await getNewsItemInfo(agendaInformationForNewsLetter.agendaURI);
+
+    agendaInformationForNewsLetter = {
+      mailTitle: mailTitle,
+      htmlContent: newsItemInfo.htmlContent,
+      ...agendaInformationForNewsLetter
+    }
+
+    const templateId = await this.createTemplate(agendaInformationForNewsLetter);
+
+    const campaign = await this.createNewCampaign(templateId, agendaInformationForNewsLetter, newsItemInfo.newsletterThemes);
+
+    await this.deleteTemplate(templateId);
+
+    return campaign;
   }
 
   async createTemplate(agendaInformationForNewsLetter) {
@@ -111,8 +113,9 @@ export default class MailchimpService {
 
     return {
       campaignId: campaignResponse['id'],
-      webId: campaignResponse['web_id'],
-      archiveUrl: campaignResponse['archive_url']
+      web_id: campaignResponse['web_id'],
+      archive_url: campaignResponse['archive_url'],
+      create_time: campaignResponse['create_time']
     };
   }
 
