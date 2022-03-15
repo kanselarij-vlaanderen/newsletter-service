@@ -26,6 +26,14 @@ requiredEnvironmentVariables.forEach((key) => {
 const belgaService = new BelgaService();
 const mailchimpService = new MailchimpService();
 
+function logErrorResponse (error) {
+  if (error.response) {
+    console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
+  } else {
+    console.log(error);
+  }
+}
+
 /**
  * Prepare new MailChimp campaign
  */
@@ -59,13 +67,8 @@ app.post('/mail-campaigns', async function (req, res, next) {
       }
     });
   } catch (error) {
-    console.log('A problem occured when prepairing campaign in Mailchimp.');
-
-    if (error.response) {
-      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
-    } else {
-      console.log(error);
-    }
+    console.log('A problem occured when preparing campaign in Mailchimp.');
+    logErrorResponse(error);
     next(error);
   }
 });
@@ -86,11 +89,7 @@ app.post('/mail-campaigns/:id/send', async (req, res, next) => {
     res.status(204).send();
   } catch (error) {
     console.log(`A problem occured when sending campaign in Mailchimp.`);
-    if (error.response) {
-      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
-    } else {
-      console.log(error);
-    }
+    logErrorResponse(error);
     next(error);
   }
 });
@@ -113,7 +112,7 @@ app.get('/mail-campaigns/:id', async (req, res, next) => {
 
     if (getHtml) {
       const campaignHtml = await mailchimpService.getCampaignContent(campaignId);
-      res.send({
+      res.status(200).send({
         data: {
           type: 'mail-campaigns',
           id: campaignId,
@@ -139,11 +138,7 @@ app.get('/mail-campaigns/:id', async (req, res, next) => {
     }
   } catch (error) {
     console.log(`A problem occured when getting campaign content for in Mailchimp.`);
-    if (error.response) {
-      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
-    } else {
-      console.log(error);
-    }
+    logErrorResponse(error);
     next(error);
   }
 });
@@ -165,11 +160,7 @@ app.delete('/mail-campaigns/:id', async (req, res, next) => {
     res.status(204).send();
   } catch (error) {
     console.log(`A problem occured when deleting campaign ${campaignId} in Mailchimp.`);
-    if (error.response) {
-      console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
-    } else {
-      console.log(error);
-    }
+    logErrorResponse(error);
     next(error);
   }
 });

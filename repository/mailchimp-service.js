@@ -34,7 +34,7 @@ export default class MailchimpService {
   }
 
   async prepareCampaign(agendaInformationForNewsLetter) {
-    console.log("Prepairing new campaign in Mailchimp...");
+    console.log("Preparing new campaign in Mailchimp...");
 
     await this.ping();
 

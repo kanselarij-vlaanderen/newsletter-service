@@ -13,7 +13,7 @@ function uuidv4() {
   });
 }
 
-const createXMLConfig = (htmlContent, sentAt, identicationDate, title) => {
+const createXMLConfig = (htmlContent, sentAt, identificationDate, title) => {
   const randomUuid = uuidv4();
   return [
     {
@@ -105,7 +105,7 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate, title) => {
                     {
                       ProviderId: 'nieuws.vlaanderen.be',
                     },
-                    {DateId: identicationDate},
+                    {DateId: identificationDate},
                     {NewsItemId: randomUuid},
                     {
                       RevisionId: [
@@ -120,7 +120,7 @@ const createXMLConfig = (htmlContent, sentAt, identicationDate, title) => {
                     },
                     {
                       PublicIdentifier:
-                        `urn:newsml:nieuws.vlaanderen.be:${identicationDate}:${randomUuid}:11N`,
+                        `urn:newsml:nieuws.vlaanderen.be:${identificationDate}:${randomUuid}:11N`,
                     },
                   ],
                 },

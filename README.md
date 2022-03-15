@@ -21,11 +21,11 @@ The following environment variables have to be configured:
 |--------------------------------|--------|--------------------------------------------------------------|
 | MAILCHIMP_API                  | string | api key to connect to mailchimp                              |
 | MAILCHIMP_REPLY_TO             | string | mail address to be used as sender address                    |
-| MAILCHIMP_FROM_NAME            | string | name to be used as sender details                            |
+| MAILCHIMP_FROM_NAME            | string | name to be used as sender details (should be validated domain, to be set on the mailchimp interface)                             |
 | MAILCHIMP_LIST_ID              | string | the list containing the subscribers                          |
 | MAILCHIMP_INTEREST_CATEGORY_ID | string | the list of interest categories (themes) linked to the list  |
 | MAILCHIMP_KIND_CATEGORY_ID     | string | the list of kind categories linked to the list               |
-| MAILCHIMP_SERVER               | string | the Mailchimp server to connect to. Default value 'us3'        |
+| MAILCHIMP_SERVER               | string | the Mailchimp server to connect to. Default value 'us3'      |
 | BELGA_FTP_USERNAME             | string | the username to login to the Belga server                    |
 | BELGA_FTP_PASSWORD             | string | the password to login to the Belga server                    |
 | BELGA_FTP_HOST                 | string | the Belga server to connect to. Default value 'ftp.belga.be' |
@@ -49,6 +49,8 @@ Example request body:
 #### POST /mail-campaigns/:id/send
 
 Send out the campaign to Mailchimp
+
+Note: this request will fail if no mails are sent (e.g. no subscribers for the selected theme)
 
 #### GET /mail-campaigns/:id
 

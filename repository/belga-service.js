@@ -9,13 +9,11 @@ import xml from 'xml';
 
 const user = process.env.BELGA_FTP_USERNAME;
 const password = process.env.BELGA_FTP_PASSWORD;
-const host = process.env.BELGA_FTP_HOST;
+const host = process.env.BELGA_FTP_HOST || 'ftp.belga.be';
 
 export default class BelgaService {
 
   constructor() {
-    this.ftpClient = new ftpClient();
-
     this.connectionConfig = {
       user,
       password,
@@ -25,6 +23,8 @@ export default class BelgaService {
 
   async publishToBelga(filePath) {
     console.log("Publishing xml to Belga...");
+
+    this.ftpClient = new ftpClient();
 
     await this.openConnection();
     await this.moveFileToFTP(filePath);
@@ -37,12 +37,19 @@ export default class BelgaService {
   openConnection() {
     console.log('OPEN Belga FTP connection');
     return new Promise((resolve, reject) => {
-      this.ftpClient.on('ready', (err) => {
+      try {
+        this.ftpClient.on('ready', (err) => {
         if (err) return reject(new Error(`Error opening the ftp connection.`));
         console.log('Belga FTP connection opened.');
         resolve('connection opened');
-      });
-      this.ftpClient.connect(this.connectionConfig);
+        });
+        this.ftpClient.on('error', (err) => {
+          if (err) return reject(new Error(`Error opening the ftp connection.`));
+        });
+        this.ftpClient.connect(this.connectionConfig);
+      } catch (error) {
+        throw new Error('A problem occured opening the connection to Belga.');
+      }
     });
   }
 
@@ -50,12 +57,16 @@ export default class BelgaService {
     console.log('CLOSE Belga FTP connection');
     return new Promise((resolve, reject) => {
       this.ftpClient.on('end', (err) => {
-        if (err) return reject(new Error(`Error closing the ftp connection`));
+        if (err) return reject(new Error(`Error closing the ftp connection.`));
         console.log('Belga FTP connection closed.');
         resolve();
       });
       this.ftpClient.end();
-    });
+    })
+    .catch((error) => {
+      console.log(`A problem occured when closing the connection to Belga.`);
+      return error;
+    });;
   }
 
   moveFileToFTP(filePath) {
@@ -96,8 +107,8 @@ export default class BelgaService {
     const sentAt = moment.tz('Europe/Brussels').format('YYYYMMDDTHHmmssZZ');
 
     const escapedContent = escapeHtml(`<![CDATA[ ${content} ]]>`);
-    const identicationDate = moment(publication_date).format('YYYYMMDD');
-    const xmlConfig = createXMLConfig(escapedContent, sentAt, identicationDate, title);
+    const identificationDate = moment(publication_date).format('YYYYMMDD');
+    const xmlConfig = createXMLConfig(escapedContent, sentAt, identificationDate, title);
 
     const xmlString = xml(xmlConfig, {declaration: true});
     const name = `Beslissingen_van_de_${kindOfmeetingLowerCase}_${procedureText || 'van'}_${formattedStart}.xml`
