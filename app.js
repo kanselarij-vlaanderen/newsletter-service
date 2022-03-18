@@ -1,112 +1,213 @@
-import mu from 'mu';
-import BelgaService from './repository/BelgaFTPService.js';
-const app = mu.app;
-const Mailchimp = require('mailchimp-api-v3');
-const mailchimp = new Mailchimp(process.env.MAILCHIMP_API || '');
-const bodyParser = require('body-parser');
-const mailchimpService = require('./repository/MailchimpService.js');
-const repository = require('./repository/index.js');
-const cors = require('cors');
-const dotenv = require('dotenv');
+import { app, errorHandler } from 'mu';
+import { getAgendaInformationForNewsletter } from './util/query-helper';
+import BelgaService from './repository/belga-service';
+import MailchimpService from './repository/mailchimp-service';
 
-dotenv.config();
-app.use(bodyParser.json({ type: 'application/*+json' }));
-app.use(cors());
+const requiredEnvironmentVariables = [
+  'MAILCHIMP_API',
+  'MAILCHIMP_FROM_NAME',
+  'MAILCHIMP_REPLY_TO',
+  'MAILCHIMP_LIST_ID',
+  'MAILCHIMP_INTEREST_CATEGORY_ID',
+  'MAILCHIMP_KIND_CATEGORY_ID',
+  'BELGA_FTP_USERNAME',
+  'BELGA_FTP_PASSWORD'
+];
 
-const user = process.env.BELGA_FTP_USERNAME;
-const password = process.env.BELGA_FTP_PASSWORD;
-const host = 'ftp.belga.be';
-
-const belgaConfig = {
-  user,
-  password,
-  host
-};
-const service = new BelgaService(belgaConfig);
-
-app.post('/createCampaign', (req, res) => {
-  return mailchimpService.createCampaign(req, res);
-});
-
-app.get('/', (req, res) => {
-  return repository.getMostRecentNewsletter(req, res);
-});
-
-app.post('/sendMailCampaign/:id', async (req, res, next) => {
-  const campaign_id = req.params.id;
-  if (!campaign_id ) {
-    throw new Error('No campaign id.');
+requiredEnvironmentVariables.forEach((key) => {
+  if (!process.env[key]) {
+    console.log('---------------------------------------------------------------');
+    console.log(`[ERROR]:Environment variable ${key} must be configured`);
+    console.log('---------------------------------------------------------------');
+    process.exit(1);
   }
+});
+
+const belgaService = new BelgaService();
+const mailchimpService = new MailchimpService();
+
+function logErrorResponse (error) {
+  if (error.response) {
+    console.log(`${error.status} ${error.response.body.title}: ${error.response.body.detail}`);
+  } else {
+    console.log(error);
+  }
+}
+
+/**
+ * Prepare new MailChimp campaign
+ */
+app.post('/mail-campaigns', async function (req, res, next) {
   try {
-    console.time('SEND MAILCHIMP CAMPAIGN TIME');
-    const sendCampaign = await mailchimp.post({
-      path: `/campaigns/${campaign_id}/actions/send`
+    const meetingId = req.body?.data?.relationships?.meeting?.data?.id;
+    if (!meetingId) {
+      const error = new Error('Mandatory parameter meeting-id not found.');
+      error.status = 400;
+      return next(error);
+    }
+    console.log(`Preparing new MailChimp campaign for meeting ${meetingId}`);
+
+    const agendaInformationForNewsLetter = await getAgendaInformationForNewsletter(meetingId);
+    const campaign = await mailchimpService.prepareCampaign(agendaInformationForNewsLetter);
+
+    res.status(201).send({
+      data: {
+        type: 'mail-campaigns',
+        id: campaign.campaignId,
+        attributes: {
+          'create-time': campaign.create_time,
+          'web-id': campaign.web_id,
+          'archive-url': campaign.archive_url
+        }
+      },
+      relationships: {
+        meeting: {
+          data: { type: 'meetings', id: meetingId }
+        }
+      }
     });
-    console.timeEnd('SEND MAILCHIMP CAMPAIGN TIME');
-    res.send({ sendCampaign });
   } catch (error) {
+    console.log('A problem occured when preparing campaign in Mailchimp.');
+    logErrorResponse(error);
     next(error);
   }
 });
 
-app.post('/sendToBelga/:id', async (req, res, next) => {
-  const agendaId = req.params.id;
-  if (!agendaId) {
-    throw new Error('No agenda id.');
-  }
+/**
+ * Send campaign from Mailchimp
+ */
+app.post('/mail-campaigns/:id/send', async (req, res, next) => {
   try {
-    console.time('SEND BELGA CAMPAIGN TIME');
-    await service.generateXML(agendaId, true);
-    console.timeEnd('SEND BELGA CAMPAIGN TIME');
-    res.status(200).send({status: 200, title: 'Sending to Belga succeeded'});
+    const campaignId = req.params.id;
+    if (!campaignId ) {
+      const error = new Error('Mandatory parameter campaign-id not found.');
+      error.status = 400;
+      return next(error);
+    }
+    console.log(`Sending MailChimp campaign ${campaignId}`);
+    await mailchimpService.sendCampaign(campaignId);
+    res.status(204).send();
   } catch (error) {
+    console.log(`A problem occured when sending campaign in Mailchimp.`);
+    logErrorResponse(error);
+    next(error);
+  }
+});
+
+/**
+ * Get campaign data. Defining the field 'html' in the fieldset returns the html content of the campaign
+ */
+app.get('/mail-campaigns/:id', async (req, res, next) => {
+  try {
+    const campaignId = req.params.id;
+    if (!campaignId ) {
+      const error = new Error('Mandatory parameter campaign-id not found.');
+      error.status = 400;
+      return next(error);
+    }
+    console.log(`Getting campaign data for MailChimp campaign ${campaignId}`);
+
+    const queryParams = req.query;
+    const getHtml = queryParams.fields && queryParams.fields['mail-campaigns'] && queryParams.fields['mail-campaigns'] === 'html';
+
+    if (getHtml) {
+      const campaignHtml = await mailchimpService.getCampaignContent(campaignId);
+      res.status(200).send({
+        data: {
+          type: 'mail-campaigns',
+          id: campaignId,
+          attributes: {
+            html: campaignHtml.html
+          }
+        }
+      });
+    } else {
+      const campaignData = await mailchimpService.getCampaignData(campaignId);
+
+      res.status(200).send({
+        data: {
+          type: 'mail-campaigns',
+          id: campaignData.id,
+          attributes: {
+            'create-time': campaignData.create_time,
+            'web-id': campaignData.web_id,
+            'archive-url': campaignData.archive_url
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.log(`A problem occured when getting campaign content for in Mailchimp.`);
+    logErrorResponse(error);
     next(error);
   }
 });
 
 
-app.get('/fetchTestMailCampaign/:id', async (req, res, next) => {
-  const campaign_id = req.params.id;
+/**
+ * Delete campaign from Mailchimp
+ */
+app.delete('/mail-campaigns/:id', async (req, res, next) => {
   try {
-    console.time('FETCH CAMPAIGN PREVIEW');
-    const campaignHTML = await mailchimp.get({
-      path: `/campaigns/${campaign_id}/content`
+    const campaignId = req.params.id;
+    if (!campaignId ) {
+      const error = new Error('Mandatory parameter campaign-id not found.');
+      error.status = 400;
+      return next(error);
+    }
+
+    await mailchimpService.deleteCampaign(campaignId);
+    res.status(204).send();
+  } catch (error) {
+    console.log(`A problem occured when deleting campaign ${campaignId} in Mailchimp.`);
+    logErrorResponse(error);
+    next(error);
+  }
+});
+
+/**
+ * Send newsletter to Belga
+ */
+app.post('/belga-newsletters', async (req, res, next) => {
+  const meetingId = req.body?.data?.relationships?.meeting?.data?.id;
+  if (!meetingId) {
+    const error = new Error('Mandatory parameter meeting-id not found.');
+    error.status = 400;
+    return next(error);
+  }
+  try {
+    const filePath = await belgaService.createBelgaNewsletterXML(meetingId);
+    const belgaNewsletter = await belgaService.publishToBelga(filePath);
+
+      res.status(201).send({
+      data: {
+        id: belgaNewsletter.name,
+        type: 'belga-newsletters'
+      },
+      relationships: {
+        meeting: {
+          data: {
+            type: 'meetings',
+            id: meetingId
+          }
+        }
+      }
     });
-    console.timeEnd('FETCH CAMPAIGN PREVIEW');
-    res.send({ body: campaignHTML.html });
   } catch (error) {
+    console.log(`A problem occured when sending to Belga: ${error.message}`);
     next(error);
   }
 });
 
-app.get('/fetchTestMailCampaignMetaData/:id', async (req, res, next) => {
-  const campaign_id = req.params.id;
+app.get('/belga-newsletters/:id/download', async (req, res) => {
+  let meetingId = req.params.id;
   try {
-    console.time('FETCH CAMPAIGN METADATA');
-    const campaignHTML = await mailchimp.get({
-      path: `/campaigns/${campaign_id}`
-    });
-    console.timeEnd('FETCH CAMPAIGN METADATA');
-    res.send({ body: campaignHTML });
-  } catch (error) {
+    const belgaNewsletter = await belgaService.generateXML(meetingId);
+    res.download(belgaNewsletter);
+  } catch (err) {
+    console.log(`A problem occured when downloading Belga XML: ${err.message}`);
     next(error);
   }
 });
 
-app.delete('/deleteMailCampaign/:id', async (req, res) => {
-  const campaign_id = req.params.id;
-  if (!campaign_id) {
-    throw new Error('Request parameter campaign_id can not be null');
-  }
-  const deleted = await mailchimpService.deleteCampaign(campaign_id);
-  res.send({ deleted });
-});
-
-app.get('/xml-newsletter/:agenda_id', async (req, res) => {
-  let agendaId = req.params.agenda_id;
-  if (!agendaId) {
-    throw new Error('No agenda_id provided.');
-  }
-  const generatedXMLPath = await service.generateXML(agendaId);
-  res.download(generatedXMLPath); // Set disposition and send it.
-});
+app.use(errorHandler);

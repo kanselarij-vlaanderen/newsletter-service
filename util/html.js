@@ -1,4 +1,38 @@
 /**
+ * This function generates a html table to add to the newsletter for publication.
+ * @param {title: string, proposal: string, richtext: string, newsletter:uri(string)} NewsItem
+ * @param {begin: string, end: string} segmentConstraint
+ */
+const getNewsItem = ({title, proposalText, richtext, newsletter}, segmentConstraint) => {
+  console.log(`CREATING NEWSITEM URI: ${newsletter}`);
+  console.log(`USING SEGMENT: ${segmentConstraint.begin} CONTENT ${segmentConstraint.end}`);
+  return `
+    ${segmentConstraint.begin}
+    <table mc:repeatable="content" mc:variant="Tekstblok met introtekst" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td height="30" style="height:30px;line-height:0;">
+         </td>
+      </tr>
+      <tr>
+        <td style="padding:5px 0 15px 0;">
+          <font style="color:#333332;font-family:Calibri, Arial, sans-serif;font-size:26px;font-weight:600;line-height:26px;">${title ||
+  ''}</font>
+          <p class="intro-text" style="color:#666666;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;margin-top:5px;margin-bottom:0;">
+            ${proposalText || ''}
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="color:#666666;font-family:Calibri, Arial, sans-serif;font-size:17px;line-height:26px;">
+          ${richtext || ''}
+        </td>
+      </tr>
+    </table>
+    ${segmentConstraint.end}
+  `;
+};
+
+/**
  * Creates a mailchimp html-template for the mailchimp service
  * based on a list of newsitems (./NewsItem.js).
  * @param [NewsItem] decisionNewsItems
@@ -7,7 +41,7 @@
  * @param string procedure used to add to the title of the newsletter
  * @param string kindOfMeeting used to display the kind of meeting the newsletter
  */
-export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure = "", kindOfMeeting) => {
+const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure = "", kindOfMeeting) => {
   const kindOfMeetingLowerCase = kindOfMeeting.toLowerCase().replace('vlaamse veerkracht', 'Vlaamse Veerkracht');
   return `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -15,7 +49,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 	<head>
 	  <meta http-equiv="content-type" content="text/html; charset=utf-8">
 	  <title>*|MC:SUBJECT|*</title>
-	
+
 	  <style type="text/css">
 	    .ExternalClass *{
 	      line-height:100%;
@@ -89,77 +123,77 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 	      table[class=full-table]{
 	        width:100% !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .no-mobile{
 	        display:none !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .header-text{
 	        padding:30px 20px !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .header-image{
 	        width:100% !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .footer-sublogo{
 	        width:100% !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .footer-text{
 	        width:auto !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .footer-container{
 	        padding:15px !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .content-container{
 	        padding:20px 20px 40px !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .item-text-container{
 	        width:auto !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .item-image{
 	        width:90px !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .item-title{
 	        width:calc(100% - 100px) !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .item-text{
 	        padding:20px 0 0 !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .section-title-border{
 	        width:100px !important;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .word-break{
 	        word-break:break-word;
 	      }
-	
+
 	    }\t@media only screen and (max-width: 660px){
 	      .thumbnail-image{
 	        width:90px !important;
 	      }
-	
+
 	    }</style></head>
 	<body bgcolor="#e8ebee">
 	<!-- wrapper table -->
@@ -178,7 +212,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 	        </tr>
 	        <tr>
 	          <td colspan="2" style="border-bottom:3px solid #ffe615;line-height:0;">
-	
+
 	          </td>
 	        </tr>
 	        <tr>
@@ -294,7 +328,7 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 	              </table>
 	              <!-- end infoblock -->
 	              <!-- textblock with introtext -->
-						
+
 						${decisionNewsItems.join('')}
 						*|END:INTERESTED|*
 
@@ -356,3 +390,10 @@ export const createNewsLetter = (decisionNewsItems, planned_start, data_docs, pr
 </html>
 `;
 };
+
+function escapeHtml(unsafe) {
+  return unsafe.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+
+export {createNewsLetter, getNewsItem, escapeHtml};
