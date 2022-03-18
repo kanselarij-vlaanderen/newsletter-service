@@ -6,7 +6,7 @@ Microservice that publishes newsletters from Kaleidos to Belga or Mailchimp.
 Add the following snippet to your `docker-compose.yml`:
 ```yml
   newsletter-service:
-    image: kanselarij/newsletter-service:2.5.0
+    image: kanselarij/newsletter-service
     logging: *default-logging
     restart: always
     labels:
