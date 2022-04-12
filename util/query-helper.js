@@ -111,6 +111,7 @@ export async function getNewsletterByAgendaId(agendaUri) {
     PREFIX prov: <http://www.w3.org/ns/prov#>
     PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
     PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
+    PREFIX schema: <http://schema.org/>
 
     SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
     WHERE {
@@ -119,7 +120,7 @@ export async function getNewsletterByAgendaId(agendaUri) {
           dct:hasPart ?agendaitem .
         ?agendaitem a besluit:Agendapunt ;
           ext:wordtGetoondAlsMededeling "false"^^xsd:boolean ;
-          ext:prioriteit ?agendaitemPrio .
+          schema:position ?agendaitemPrio .
         ?treatment a besluit:BehandelingVanAgendapunt ;
           besluitvorming:heeftOnderwerp ?agendaitem ;
           prov:generated ?newsletter .
