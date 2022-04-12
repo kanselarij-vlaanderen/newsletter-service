@@ -34,7 +34,7 @@ The service will fail if the environment variables are not defined properly.
 
 ### API
 
-####POST /mail-campaigns
+#### POST /mail-campaigns
 
 Create the mail campaign in Mailchimp
 
@@ -42,7 +42,13 @@ Example request body:
 ```javascript
 {
   "data": {
-    "meetingId": "1"
+    "relationships": {
+      "meeting": {
+        "data": {
+          "id": "8648c98f-fce0-444a-a7c9-0c63156f869c"
+        }
+      }
+    }
   }
 }
 ```
@@ -50,15 +56,13 @@ Example request body:
 
 Send out the campaign to Mailchimp
 
-Note: this request will fail if no mails are sent (e.g. no subscribers for the selected theme)
+_Note: this request will fail if no mails are sent (e.g. no subscribers for the selected theme)_
 
 #### GET /mail-campaigns/:id
 
-Get the creation time of a mail campaign in Mailchimp
+Get details of the given mail campaign.
 
-#### GET /mail-campaigns/:id/content
-
-Get the HTML content of a mail campaign in Mailchimp
+Optionally `fields['mail-campaigns']=html` can be passed as query param to get the HTML content of the mail campaign.
 
 #### DELETE /mail-campaigns/:id
 
@@ -72,11 +76,17 @@ Example request body:
 ```javascript
 {
   "data": {
-    "meetingId": "1"
+    "relationships": {
+      "meeting": {
+        "data": {
+          "id": "8648c98f-fce0-444a-a7c9-0c63156f869c"
+        }
+      }
+    }
   }
 }
 ```
 
-#### GET /belga-newsletters/:id
+#### GET /belga-newsletters/:id/download
 
 Download the XML file that is used to send to Belga
