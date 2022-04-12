@@ -148,16 +148,16 @@ app.get('/mail-campaigns/:id', async (req, res, next) => {
  * Delete campaign from Mailchimp
  */
 app.delete('/mail-campaigns/:id', async (req, res, next) => {
+  const campaignId = req.params.id;
   try {
-    const campaignId = req.params.id;
-    if (!campaignId ) {
+    if (!campaignId) {
       const error = new Error('Mandatory parameter campaign-id not found.');
       error.status = 400;
-      return next(error);
+      next(error);
+    } else {
+      await mailchimpService.deleteCampaign(campaignId);
+      res.status(204).send();
     }
-
-    await mailchimpService.deleteCampaign(campaignId);
-    res.status(204).send();
   } catch (error) {
     console.log(`A problem occured when deleting campaign ${campaignId} in Mailchimp.`);
     logErrorResponse(error);
@@ -173,40 +173,41 @@ app.post('/belga-newsletters', async (req, res, next) => {
   if (!meetingId) {
     const error = new Error('Mandatory parameter meeting-id not found.');
     error.status = 400;
-    return next(error);
-  }
-  try {
-    const filePath = await belgaService.createBelgaNewsletterXML(meetingId);
-    const belgaNewsletter = await belgaService.publishToBelga(filePath);
+    next(error);
+  } else {
+    try {
+      const filePath = await belgaService.createBelgaNewsletterXML(meetingId);
+      const belgaNewsletter = await belgaService.publishToBelga(filePath);
 
       res.status(201).send({
-      data: {
-        id: belgaNewsletter.name,
-        type: 'belga-newsletters'
-      },
-      relationships: {
-        meeting: {
-          data: {
-            type: 'meetings',
-            id: meetingId
+        data: {
+          id: belgaNewsletter.name,
+          type: 'belga-newsletters'
+        },
+        relationships: {
+          meeting: {
+            data: {
+              type: 'meetings',
+              id: meetingId
+            }
           }
         }
-      }
-    });
-  } catch (error) {
-    console.log(`A problem occured when sending to Belga: ${error.message}`);
-    next(error);
+      });
+    } catch (error) {
+      console.log(`A problem occured when sending to Belga: ${error.message}`);
+      next(error);
+    }
   }
 });
 
-app.get('/belga-newsletters/:id/download', async (req, res) => {
-  let meetingId = req.params.id;
+app.get('/belga-newsletters/:id/download', async (req, res, next) => {
+  const meetingId = req.params.id;
   try {
     const belgaNewsletter = await belgaService.generateXML(meetingId);
     res.download(belgaNewsletter);
   } catch (err) {
     console.log(`A problem occured when downloading Belga XML: ${err.message}`);
-    next(error);
+    next(err);
   }
 });
 
