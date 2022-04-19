@@ -1,18 +1,14 @@
 {
   "name": "newsletter-service",
-  "version": "1.0.0",
+  "version": "3.1.0",
   "description": "",
   "main": "app.js",
   "dependencies": {
-    "body-parser": "^1.18.3",
-    "cors": "^2.8.5",
-    "dotenv": "^8.0.0",
-    "express": "^4.16.4",
-    "ftp": "^0.3.10",
-    "mailchimp-api-v3": "^1.13.0",
+    "@mailchimp/mailchimp_marketing": "^3.0.59",
     "moment": "^2.23.0",
     "moment-timezone": "^0.5.27",
-    "node-fetch": "^2.3.0",
+    "ftp": "^0.3.10",
+    "node-fetch": "^2.6.1",
     "xml": "^1.0.1"
   },
   "devDependencies": {
@@ -23,5 +19,5 @@
     "test": "jest"
   },
   "author": "",
-  "license": "ISC"
+  "license": "MIT"
 }
