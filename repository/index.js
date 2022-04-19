@@ -3,9 +3,9 @@ import {ok} from 'assert';
 
 const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
 const electronicKindURI =
-  'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/406F2ECA-524D-47DC-B889-651893135456';
+  'http://themis.vlaanderen.be/id/concept/vergaderactiviteit-type/2387564a-0897-4a62-9b9a-d1755eece7af';
 const specialKindURI =
-  'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/7D8E35BE-E5D1-494F-B5F9-51B07875B96F';
+  'http://themis.vlaanderen.be/id/concept/vergaderactiviteit-type/62a0a3c3-44ed-4f35-8b46-1d50616ad42c';
 
 import moment from 'moment';
 import 'moment-timezone';
