@@ -8,9 +8,9 @@ moment.locale('nl');
 moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
 
 const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
-const electronicKindURI = 'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/406F2ECA-524D-47DC-B889-651893135456';
-const specialKindURI = 'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/7D8E35BE-E5D1-494F-B5F9-51B07875B96F';
-const vlaamseVeerkrachtURI = 'http://kanselarij.vo.data.gift/id/concept/ministerraad-type-codes/1d16cb70-0ae9-489e-bf97-c74897222e3c';
+const electronicKindURI = 'http://themis.vlaanderen.be/id/concept/vergaderactiviteit-type/2387564a-0897-4a62-9b9a-d1755eece7af';
+const specialKindURI = 'http://themis.vlaanderen.be/id/concept/vergaderactiviteit-type/62a0a3c3-44ed-4f35-8b46-1d50616ad42c';
+const vlaamseVeerkrachtURI = 'http://themis.vlaanderen.be/id/concept/vergaderactiviteit-type/9b4701f8-a136-4009-94c6-d64fdc96b9a2';
 
 
 /**
