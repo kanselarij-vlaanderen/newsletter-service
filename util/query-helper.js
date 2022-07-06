@@ -202,17 +202,33 @@ async function getAgendaInformation(latestAgendaURI) {
     PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
     PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
     PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX generiek:  <https://data.vlaanderen.be/ns/generiek#>
 
     SELECT DISTINCT ?planned_start ?data_docs ?publication_date ?kind WHERE {
       GRAPH <${targetGraph}> {
         ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda ;
           besluitvorming:isAgendaVoor ?meeting .
         ?meeting besluit:geplandeStart ?planned_start .
-        OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
         OPTIONAL { ?meeting dct:type ?kind }
-        OPTIONAL { ?newsletter ext:issuedDocDate ?data_docs . }
-        OPTIONAL { ?newsletter dct:issued ?publication_date . }
+        OPTIONAL {
+          SELECT ?meeting MIN(?publicationTime) AS ?publication_date WHERE {
+            ?meeting a besluit:Vergaderactiviteit .
+            ?meeting ^prov:used ?themisPublicationActivity .
+            ?themisPublicationActivity a ext:ThemisPublicationActivity .
+            OPTIONAL { ?themisPublicationActivity generiek:geplandeStart ?plannedPublicationTime . }
+            ?themisPublicationActivity ext:onbevestigdePublicatietijd ?unconfirmedPublicationTime .
+            BIND (COALESCE(?plannedPublicationTime, ?unconfirmedPublicationTime) AS ?publicationTime)
+
+            ?themisPublicationActivity ext:scope 'newsitems' . 
+          } GROUP BY ?meeting
         }
+        OPTIONAL {
+          ?meeting ext:internalDocumentPublicationActivityUsed ?internalDocumentPublicationActivity .
+          ?internalDocumentPublicationActivity a ext:InternalDocumentPublicationActivity .
+          ?internalDocumentPublicationActivity generiek:geplandeStart ?data_docs . 
+        }
+      }
     }`);
 
   return parseSparqlResults(agendaInformation);
