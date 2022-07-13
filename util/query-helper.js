@@ -196,6 +196,11 @@ async function getLastestAgenda (meetingURI) {
 async function getAgendaInformation(latestAgendaURI) {
   console.log(`Get agenda information for agendaURI ${latestAgendaURI}`);
 
+  // TODO KAS-3431 themis or ext:issuedDocDate?
+  // Both are valid and should be equal at all times, but could there be multiple themis-publications with different dates?
+  // normally at the time of this newsletter release, there should only be 1 with documents in scope
+  // newsletter is normally not "released again" should there be a withdrawal of a themis publication
+  // At that point in time, the mails have been sent so any incorrect info in newsletters is already "public" anyway
   const agendaInformation = await query(`
     PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
@@ -210,23 +215,14 @@ async function getAgendaInformation(latestAgendaURI) {
         ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda ;
           besluitvorming:isAgendaVoor ?meeting .
         ?meeting besluit:geplandeStart ?planned_start .
-        OPTIONAL { ?meeting dct:type ?kind }
+        OPTIONAL { ?meeting dct:type ?kind . }
+        OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
+        OPTIONAL { ?newsletter dct:issued ?publication_date . }
         OPTIONAL {
-          SELECT ?meeting MIN(?publicationTime) AS ?publication_date WHERE {
-            ?meeting a besluit:Vergaderactiviteit .
-            ?meeting ^prov:used ?themisPublicationActivity .
-            ?themisPublicationActivity a ext:ThemisPublicationActivity .
-            OPTIONAL { ?themisPublicationActivity generiek:geplandeStart ?plannedPublicationTime . }
-            ?themisPublicationActivity ext:onbevestigdePublicatietijd ?unconfirmedPublicationTime .
-            BIND (COALESCE(?plannedPublicationTime, ?unconfirmedPublicationTime) AS ?publicationTime)
-
-            ?themisPublicationActivity ext:scope 'newsitems' . 
-          } GROUP BY ?meeting
-        }
-        OPTIONAL {
-          ?meeting ext:internalDocumentPublicationActivityUsed ?internalDocumentPublicationActivity .
-          ?internalDocumentPublicationActivity a ext:InternalDocumentPublicationActivity .
-          ?internalDocumentPublicationActivity generiek:geplandeStart ?data_docs . 
+          ?themisPublicationActivity a ext:ThemisPublicationActivity ;
+            prov:used ?meeting ;
+            ext:scope 'documents' ;
+            generiek:geplandeStart ?data_docs . 
         }
       }
     }`);
