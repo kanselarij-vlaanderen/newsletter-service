@@ -19,8 +19,7 @@ const vlaamseVeerkrachtURI = 'http://themis.vlaanderen.be/id/concept/vergaderact
  *  @returns an object: {
  *  formattedStart,           --> Formatted start date of a meeting | DD MMMM  YYYY
  *  formattedDocumentDate,    --> Formatted document release date   | DD MMMM YYYY [om] HH:mm
- *  formattedPublicationDate, --> Formatted publication date        | MMMM Do YYYY
- *  publication_date          --> non-formatted (raw) publication date
+ *  planned_start             --> non-formatted (raw) planned start date
  *  agendaURI                 --> URI of the agenda (use this instead of id to speed up queries)
  *  procedureText             --> Text that should be added to the title of the newsletter
  *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter
@@ -35,14 +34,13 @@ export async function getAgendaInformationForNewsletter(meetingId) {
     throw new Error('No agenda Information was found');
   }
 
-  const {planned_start, publication_date, data_docs, kind} = agendaInformation[0];
-  if (!data_docs) {
+  const {planned_start, document_publication_date, kind} = agendaInformation[0];
+  if (!document_publication_date) {
     throw new Error('This agenda has no Nota Documents');
   }
 
   const formattedStart = moment(planned_start).tz('Europe/Berlin').format('DD MMMM YYYY');
-  const formattedDocumentDate = moment(data_docs).tz('Europe/Berlin').format('DD MMMM YYYY [om] HH:mm');
-  const formattedPublicationDate = moment(publication_date).tz('Europe/Berlin').format('MMMM Do YYYY');
+  const formattedDocumentDate = moment(document_publication_date).tz('Europe/Berlin').format('DD MMMM YYYY [om] HH:mm');
 
   let procedureText = '';
   let kindOfMeeting = 'Ministerraad';
@@ -65,8 +63,7 @@ export async function getAgendaInformationForNewsletter(meetingId) {
   return {
     formattedStart,
     formattedDocumentDate,
-    formattedPublicationDate,
-    publication_date: publication_date,
+    planned_start: planned_start,
     agendaURI: latestAgendaURI,
     procedureText,
     kindOfMeeting,
@@ -196,11 +193,6 @@ async function getLastestAgenda (meetingURI) {
 async function getAgendaInformation(latestAgendaURI) {
   console.log(`Get agenda information for agendaURI ${latestAgendaURI}`);
 
-  // TODO KAS-3431 themis or ext:issuedDocDate?
-  // Both are valid and should be equal at all times, but could there be multiple themis-publications with different dates?
-  // normally at the time of this newsletter release, there should only be 1 with documents in scope
-  // newsletter is normally not "released again" should there be a withdrawal of a themis publication
-  // At that point in time, the mails have been sent so any incorrect info in newsletters is already "public" anyway
   const agendaInformation = await query(`
     PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
@@ -210,19 +202,17 @@ async function getAgendaInformation(latestAgendaURI) {
     PREFIX prov: <http://www.w3.org/ns/prov#>
     PREFIX generiek:  <https://data.vlaanderen.be/ns/generiek#>
 
-    SELECT DISTINCT ?planned_start ?data_docs ?publication_date ?kind WHERE {
+    SELECT DISTINCT ?planned_start ?document_publication_date ?kind WHERE {
       GRAPH <${targetGraph}> {
         ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda ;
           besluitvorming:isAgendaVoor ?meeting .
         ?meeting besluit:geplandeStart ?planned_start .
         OPTIONAL { ?meeting dct:type ?kind . }
-        OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
-        OPTIONAL { ?newsletter dct:issued ?publication_date . }
         OPTIONAL {
           ?themisPublicationActivity a ext:ThemisPublicationActivity ;
             prov:used ?meeting ;
             ext:scope 'documents' ;
-            generiek:geplandeStart ?data_docs . 
+            generiek:geplandeStart ?document_publication_date . 
         }
       }
     }`);

@@ -37,11 +37,11 @@ const getNewsItem = ({title, proposalText, richtext, newsletter}, segmentConstra
  * based on a list of newsitems (./NewsItem.js).
  * @param [NewsItem] decisionNewsItems
  * @param datestring planned_start
- * @param datestring data_docs
+ * @param datestring document_publication_date
  * @param string procedure used to add to the title of the newsletter
  * @param string kindOfMeeting used to display the kind of meeting the newsletter
  */
-const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure = "", kindOfMeeting) => {
+const createNewsLetter = (decisionNewsItems, planned_start, document_publication_date, procedure = "", kindOfMeeting) => {
   const kindOfMeetingLowerCase = kindOfMeeting.toLowerCase().replace('vlaamse veerkracht', 'Vlaamse Veerkracht');
   return `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -316,7 +316,7 @@ const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure
 	                        </td>
 	                        <td valign="top" style="padding:15px;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;color:#666666;">
 	                          <font>
-	                            De documenten van deze ${kindOfMeetingLowerCase} zullen beschikbaar zijn vanaf ${data_docs}
+	                            De documenten van deze ${kindOfMeetingLowerCase} zullen beschikbaar zijn vanaf ${document_publication_date}
 	                            <br>
 	                            De documenten worden beschikbaar gesteld op <a href="https://beslissingenvlaamseregering.vlaanderen.be">https://beslissingenvlaamseregering.vlaanderen.be</a>
 	                          </font>
