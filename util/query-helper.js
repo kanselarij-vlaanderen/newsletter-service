@@ -19,7 +19,7 @@ const vlaamseVeerkrachtURI = 'http://themis.vlaanderen.be/id/concept/vergaderact
  *  @returns an object: {
  *  formattedStart,           --> Formatted start date of a meeting | DD MMMM  YYYY
  *  formattedDocumentDate,    --> Formatted document release date   | DD MMMM YYYY [om] HH:mm
- *  planned_start             --> non-formatted (raw) planned start date
+ *  meetingDate               --> non-formatted (raw) planned start date of the meeting
  *  agendaURI                 --> URI of the agenda (use this instead of id to speed up queries)
  *  procedureText             --> Text that should be added to the title of the newsletter
  *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter
@@ -27,19 +27,19 @@ const vlaamseVeerkrachtURI = 'http://themis.vlaanderen.be/id/concept/vergaderact
  */
 export async function getAgendaInformationForNewsletter(meetingId) {
   const meetingURI = await getMeetingURI(meetingId);
-  const latestAgendaURI = await getLastestAgenda(meetingURI)
+  const latestAgendaURI = await getLastestAgenda(meetingURI);
 
   const agendaInformation = await getAgendaInformation(latestAgendaURI);
   if (!agendaInformation || !agendaInformation[0]) {
     throw new Error('No agenda Information was found');
   }
 
-  const {planned_start, document_publication_date, kind} = agendaInformation[0];
+  const {meetingDate, document_publication_date, kind} = agendaInformation[0];
   if (!document_publication_date) {
     throw new Error('This agenda has no Nota Documents');
   }
 
-  const formattedStart = moment(planned_start).tz('Europe/Berlin').format('DD MMMM YYYY');
+  const formattedStart = moment(meetingDate).tz('Europe/Berlin').format('DD MMMM YYYY');
   const formattedDocumentDate = moment(document_publication_date).tz('Europe/Berlin').format('DD MMMM YYYY [om] HH:mm');
 
   let procedureText = '';
@@ -63,7 +63,7 @@ export async function getAgendaInformationForNewsletter(meetingId) {
   return {
     formattedStart,
     formattedDocumentDate,
-    planned_start: planned_start,
+    meetingDate: meetingDate,
     agendaURI: latestAgendaURI,
     procedureText,
     kindOfMeeting,
@@ -202,17 +202,17 @@ async function getAgendaInformation(latestAgendaURI) {
     PREFIX prov: <http://www.w3.org/ns/prov#>
     PREFIX generiek:  <https://data.vlaanderen.be/ns/generiek#>
 
-    SELECT DISTINCT ?planned_start ?document_publication_date ?kind WHERE {
+    SELECT DISTINCT ?meetingDate ?document_publication_date ?kind WHERE {
       GRAPH <${targetGraph}> {
         ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda ;
           besluitvorming:isAgendaVoor ?meeting .
-        ?meeting besluit:geplandeStart ?planned_start .
+        ?meeting besluit:geplandeStart ?meetingDate .
         OPTIONAL { ?meeting dct:type ?kind . }
         OPTIONAL {
           ?themisPublicationActivity a ext:ThemisPublicationActivity ;
             prov:used ?meeting ;
             ext:scope 'documents' ;
-            generiek:geplandeStart ?document_publication_date . 
+            generiek:geplandeStart ?document_publication_date .
         }
       }
     }`);
