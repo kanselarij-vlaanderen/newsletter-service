@@ -34,13 +34,13 @@ export async function getAgendaInformationForNewsletter(meetingId) {
     throw new Error('No agenda Information was found');
   }
 
-  const {meetingDate, document_publication_date, kind} = agendaInformation[0];
-  if (!document_publication_date) {
+  const {meetingDate, documentPublicationDate, kind} = agendaInformation[0];
+  if (!documentPublicationDate) {
     throw new Error('This agenda has no Nota Documents');
   }
 
   const formattedStart = moment(meetingDate).tz('Europe/Berlin').format('DD MMMM YYYY');
-  const formattedDocumentDate = moment(document_publication_date).tz('Europe/Berlin').format('DD MMMM YYYY [om] HH:mm');
+  const formattedDocumentDate = moment(documentPublicationDate).tz('Europe/Berlin').format('DD MMMM YYYY [om] HH:mm');
 
   let procedureText = '';
   let kindOfMeeting = 'Ministerraad';
@@ -202,7 +202,7 @@ async function getAgendaInformation(latestAgendaURI) {
     PREFIX prov: <http://www.w3.org/ns/prov#>
     PREFIX generiek:  <https://data.vlaanderen.be/ns/generiek#>
 
-    SELECT DISTINCT ?meetingDate ?document_publication_date ?kind WHERE {
+    SELECT DISTINCT ?meetingDate ?documentPublicationDate ?kind WHERE {
       GRAPH <${targetGraph}> {
         ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda ;
           besluitvorming:isAgendaVoor ?meeting .
@@ -212,7 +212,7 @@ async function getAgendaInformation(latestAgendaURI) {
           ?themisPublicationActivity a ext:ThemisPublicationActivity ;
             prov:used ?meeting ;
             ext:scope 'documents' ;
-            generiek:geplandeStart ?document_publication_date .
+            generiek:geplandeStart ?documentPublicationDate .
         }
       }
     }`);
