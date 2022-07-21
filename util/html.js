@@ -36,12 +36,12 @@ const getNewsItem = ({title, proposalText, richtext, newsletter}, segmentConstra
  * Creates a mailchimp html-template for the mailchimp service
  * based on a list of newsitems (./NewsItem.js).
  * @param [NewsItem] decisionNewsItems
- * @param datestring planned_start
- * @param datestring data_docs
+ * @param datestring meetingDate
+ * @param datestring documentPublicationDate
  * @param string procedure used to add to the title of the newsletter
  * @param string kindOfMeeting used to display the kind of meeting the newsletter
  */
-const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure = "", kindOfMeeting) => {
+const createNewsLetter = (decisionNewsItems, meetingDate, documentPublicationDate, procedure = "", kindOfMeeting) => {
   const kindOfMeetingLowerCase = kindOfMeeting.toLowerCase().replace('vlaamse veerkracht', 'Vlaamse Veerkracht');
   return `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -241,7 +241,7 @@ const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure
 										<font style="font-family: Calibri, Arial, sans-serif; font-weight: 600; font-size: 22px; line-height: 22px; color: #333332; text-transform: uppercase;">Beslissingen van de Vlaamse Regering</font>
 										<br>
 										<font style="font-family: Calibri, Arial, sans-serif; font-size: 18px; line-height: 18px; color: #333332;">
-											${kindOfMeeting} ${procedure}van ${planned_start}
+											${kindOfMeeting} ${procedure}van ${meetingDate}
 										</font>
 									</td>
 				*|END:INTERESTED|*
@@ -253,7 +253,7 @@ const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure
 	                          </font>
 	                          <br>
 	                          <font style="font-family:Calibri, Arial, sans-serif;font-size:18px;line-height:18px;color:#333332;">
-															${planned_start}
+															${meetingDate}
 	                          </font>
 													</td>
 							*|END:INTERESTED|*
@@ -289,7 +289,7 @@ const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure
                       <tr>
                         <td width="100%" colspan="2">
                           <h2 class="section-title" style="color:#333332;font-family:Calibri, Arial, sans-serif;font-weight:600;font-size:22px;text-transform:uppercase;margin:0;">
-                            Beslissingen van de Vlaamse Regering - ${kindOfMeeting} ${procedure}van ${planned_start}
+                            Beslissingen van de Vlaamse Regering - ${kindOfMeeting} ${procedure}van ${meetingDate}
                           </h2>
                         </td>
 											</tr>
@@ -316,7 +316,7 @@ const createNewsLetter = (decisionNewsItems, planned_start, data_docs, procedure
 	                        </td>
 	                        <td valign="top" style="padding:15px;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;color:#666666;">
 	                          <font>
-	                            De documenten van deze ${kindOfMeetingLowerCase} zullen beschikbaar zijn vanaf ${data_docs}
+	                            De documenten van deze ${kindOfMeetingLowerCase} zullen beschikbaar zijn vanaf ${documentPublicationDate}
 	                            <br>
 	                            De documenten worden beschikbaar gesteld op <a href="https://beslissingenvlaamseregering.vlaanderen.be">https://beslissingenvlaamseregering.vlaanderen.be</a>
 	                          </font>

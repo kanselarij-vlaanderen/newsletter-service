@@ -19,8 +19,7 @@ const vlaamseVeerkrachtURI = 'http://themis.vlaanderen.be/id/concept/vergaderact
  *  @returns an object: {
  *  formattedStart,           --> Formatted start date of a meeting | DD MMMM  YYYY
  *  formattedDocumentDate,    --> Formatted document release date   | DD MMMM YYYY [om] HH:mm
- *  formattedPublicationDate, --> Formatted publication date        | MMMM Do YYYY
- *  publication_date          --> non-formatted (raw) publication date
+ *  meetingDate               --> non-formatted (raw) planned start date of the meeting
  *  agendaURI                 --> URI of the agenda (use this instead of id to speed up queries)
  *  procedureText             --> Text that should be added to the title of the newsletter
  *  kindOfMeeting             --> The kind of meeting to display in the title of the newsletter
@@ -28,21 +27,20 @@ const vlaamseVeerkrachtURI = 'http://themis.vlaanderen.be/id/concept/vergaderact
  */
 export async function getAgendaInformationForNewsletter(meetingId) {
   const meetingURI = await getMeetingURI(meetingId);
-  const latestAgendaURI = await getLastestAgenda(meetingURI)
+  const latestAgendaURI = await getLastestAgenda(meetingURI);
 
   const agendaInformation = await getAgendaInformation(latestAgendaURI);
   if (!agendaInformation || !agendaInformation[0]) {
     throw new Error('No agenda Information was found');
   }
 
-  const {planned_start, publication_date, data_docs, kind} = agendaInformation[0];
-  if (!data_docs) {
+  const {meetingDate, documentPublicationDate, kind} = agendaInformation[0];
+  if (!documentPublicationDate) {
     throw new Error('This agenda has no Nota Documents');
   }
 
-  const formattedStart = moment(planned_start).tz('Europe/Berlin').format('DD MMMM YYYY');
-  const formattedDocumentDate = moment(data_docs).tz('Europe/Berlin').format('DD MMMM YYYY [om] HH:mm');
-  const formattedPublicationDate = moment(publication_date).tz('Europe/Berlin').format('MMMM Do YYYY');
+  const formattedStart = moment(meetingDate).tz('Europe/Berlin').format('DD MMMM YYYY');
+  const formattedDocumentDate = moment(documentPublicationDate).tz('Europe/Berlin').format('DD MMMM YYYY [om] HH:mm');
 
   let procedureText = '';
   let kindOfMeeting = 'Ministerraad';
@@ -65,8 +63,7 @@ export async function getAgendaInformationForNewsletter(meetingId) {
   return {
     formattedStart,
     formattedDocumentDate,
-    formattedPublicationDate,
-    publication_date: publication_date,
+    meetingDate: meetingDate,
     agendaURI: latestAgendaURI,
     procedureText,
     kindOfMeeting,
@@ -202,17 +199,22 @@ async function getAgendaInformation(latestAgendaURI) {
     PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
     PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
     PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX generiek:  <https://data.vlaanderen.be/ns/generiek#>
 
-    SELECT DISTINCT ?planned_start ?data_docs ?publication_date ?kind WHERE {
+    SELECT DISTINCT ?meetingDate ?documentPublicationDate ?kind WHERE {
       GRAPH <${targetGraph}> {
         ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda ;
           besluitvorming:isAgendaVoor ?meeting .
-        ?meeting besluit:geplandeStart ?planned_start .
-        OPTIONAL { ?meeting ext:algemeneNieuwsbrief ?newsletter . }
-        OPTIONAL { ?meeting dct:type ?kind }
-        OPTIONAL { ?newsletter ext:issuedDocDate ?data_docs . }
-        OPTIONAL { ?newsletter dct:issued ?publication_date . }
+        ?meeting besluit:geplandeStart ?meetingDate .
+        OPTIONAL { ?meeting dct:type ?kind . }
+        OPTIONAL {
+          ?themisPublicationActivity a ext:ThemisPublicationActivity ;
+            prov:used ?meeting ;
+            ext:scope 'documents' ;
+            generiek:geplandeStart ?documentPublicationDate .
         }
+      }
     }`);
 
   return parseSparqlResults(agendaInformation);

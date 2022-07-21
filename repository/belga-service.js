@@ -95,7 +95,7 @@ export default class BelgaService {
       procedureText,
       kindOfMeeting,
       formattedStart,
-      publication_date,
+      meetingDate,
       agendaURI
     } = await getAgendaInformationForNewsletter(meetingId);
 
@@ -107,7 +107,7 @@ export default class BelgaService {
     const sentAt = moment.tz('Europe/Brussels').format('YYYYMMDDTHHmmssZZ');
 
     const escapedContent = escapeHtml(`<![CDATA[ ${content} ]]>`);
-    const identificationDate = moment(publication_date).format('YYYYMMDD');
+    const identificationDate = moment(meetingDate).format('YYYYMMDD');
     const xmlConfig = createXMLConfig(escapedContent, sentAt, identificationDate, title);
 
     const xmlString = xml(xmlConfig, {declaration: true});
@@ -149,7 +149,3 @@ export default class BelgaService {
     });
   }
 }
-
-
-
-
