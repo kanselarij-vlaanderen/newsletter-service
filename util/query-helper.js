@@ -215,7 +215,7 @@ async function getAgendaInformation(latestAgendaURI) {
             generiek:geplandeStart ?documentPublicationDate .
         }
       }
-    }`);
+    } ORDER BY ?documentPublicationDate ?meetingDate LIMIT 1`);
 
   return parseSparqlResults(agendaInformation);
 };
