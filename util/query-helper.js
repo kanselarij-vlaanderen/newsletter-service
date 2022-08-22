@@ -116,7 +116,7 @@ export async function getNewsletterByAgendaId(agendaUri) {
         ${sparqlEscapeUri(agendaUri)} a besluitvorming:Agenda ;
           dct:hasPart ?agendaitem .
         ?agendaitem a besluit:Agendapunt ;
-          ext:wordtGetoondAlsMededeling "false"^^xsd:boolean ;
+          dct:type <http://themis.vlaanderen.be/id/concept/agendapunt-type/dd47a8f8-3ad2-4d5a-8318-66fc02fe80fd> ;
           schema:position ?agendaitemPrio .
         ?treatment a besluit:BehandelingVanAgendapunt ;
           besluitvorming:heeftOnderwerp ?agendaitem ;
