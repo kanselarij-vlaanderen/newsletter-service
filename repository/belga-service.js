@@ -114,7 +114,7 @@ export default class BelgaService {
     const name = `Beslissingen_van_de_${kindOfmeetingLowerCase}_${procedureText || 'van'}_${formattedStart}.xml`
       .split(' ')
       .join('_');
-    const path = `/app/generated-xmls/${name}`;
+    const path = `/data/generated-xmls/${name}`;
 
     fs.writeFileSync(path, xmlString);
 
