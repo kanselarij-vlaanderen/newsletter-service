@@ -119,7 +119,7 @@ export async function getNewsletterByAgendaId(agendaUri) {
           dct:type <http://themis.vlaanderen.be/id/concept/agendapunt-type/dd47a8f8-3ad2-4d5a-8318-66fc02fe80fd> ;
           schema:position ?agendaitemPrio .
         ?treatment a besluit:BehandelingVanAgendapunt ;
-          besluitvorming:heeftOnderwerp ?agendaitem ;
+          dct:subject ?agendaitem ;
           prov:generated ?newsletter .
         ?newsletter a besluitvorming:NieuwsbriefInfo ;
           ext:inNieuwsbrief "true"^^xsd:boolean .
