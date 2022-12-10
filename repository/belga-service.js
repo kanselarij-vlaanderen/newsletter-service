@@ -10,7 +10,7 @@ import xml from 'xml';
 const user = process.env.BELGA_FTP_USERNAME;
 const password = process.env.BELGA_FTP_PASSWORD;
 const host = process.env.BELGA_FTP_HOST || 'ftp.belga.be';
-const STORAGE_PATH = process.env.XML_STORAGE_PATH || `/share`;
+const STORAGE_PATH = process.env.XML_STORAGE_PATH || `/data`;
 
 export default class BelgaService {
 
