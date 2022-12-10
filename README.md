@@ -7,6 +7,8 @@ Add the following snippet to your `docker-compose.yml`:
 ```yml
   newsletter-service:
     image: kanselarij/newsletter-service
+    volumes:
+      - ./data/generated-xmls:/data
     logging: *default-logging
     restart: always
     labels:
@@ -29,6 +31,7 @@ The following environment variables have to be configured:
 | BELGA_FTP_USERNAME             | string | the username to login to the Belga server                    |
 | BELGA_FTP_PASSWORD             | string | the password to login to the Belga server                    |
 | BELGA_FTP_HOST                 | string | the Belga server to connect to. Default value 'ftp.belga.be' |
+| XML_STORAGE_PATH               | string | storage location of Belga xmls. Default value '/data'       |
 
 The service will fail if the environment variables are not defined properly.
 
