@@ -109,6 +109,7 @@ export async function getNewsletterByAgendaId(agendaUri) {
     PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
     PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
     PREFIX schema: <http://schema.org/>
+    PREFIX nie: <http://www.semanticdesktop.org/ontologies/2007/01/19/nie#>
 
     SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
     WHERE {
@@ -119,9 +120,9 @@ export async function getNewsletterByAgendaId(agendaUri) {
           dct:type <http://themis.vlaanderen.be/id/concept/agendapunt-type/dd47a8f8-3ad2-4d5a-8318-66fc02fe80fd> ;
           schema:position ?agendaitemPrio .
         ?treatment a besluit:BehandelingVanAgendapunt ;
-          dct:subject ?agendaitem ;
-          prov:generated ?newsletter .
-        ?newsletter a besluitvorming:NieuwsbriefInfo ;
+          dct:subject ?agendaitem .
+        ?newsletter a ext:Nieuwsbericht ;
+          prov:wasDerivedFrom ?treatment ;
           ext:inNieuwsbrief "true"^^xsd:boolean .
         OPTIONAL {
           ?agendaitem ext:heeftBevoegdeVoorAgendapunt ?mandatee .
@@ -129,7 +130,7 @@ export async function getNewsletterByAgendaId(agendaUri) {
           ?mandatee mandaat:rangorde ?mandateePriority .
           ?mandatee ext:nieuwsbriefTitel ?mandateeName .
         }
-        OPTIONAL { ?newsletter ext:htmlInhoud ?richtext . }
+        OPTIONAL { ?newsletter nie:htmlContent ?richtext . }
         OPTIONAL { ?newsletter dct:title ?title . }
       }
       OPTIONAL {
