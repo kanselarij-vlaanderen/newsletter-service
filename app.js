@@ -1,5 +1,8 @@
 import { app, errorHandler } from 'mu';
-import { getAgendaInformationForNewsletter } from './util/query-helper';
+import {
+  createMailCampaign,
+  getAgendaInformationForNewsletter,
+} from './util/query-helper';
 import BelgaService from './repository/belga-service';
 import MailchimpService from './repository/mailchimp-service';
 
@@ -50,14 +53,16 @@ app.post('/mail-campaigns', async function (req, res, next) {
     const agendaInformationForNewsLetter = await getAgendaInformationForNewsletter(meetingId);
     const campaign = await mailchimpService.prepareCampaign(agendaInformationForNewsLetter);
 
+    const campaignUuid = await createMailCampaign(agendaInformationForNewsLetter.meetingURI, campaign);
+
     res.status(201).send({
       data: {
         type: 'mail-campaigns',
-        id: campaign.campaignId,
+        id: campaignUuid,
         attributes: {
-          'create-time': campaign.create_time,
           'web-id': campaign.web_id,
-          'archive-url': campaign.archive_url
+          'archive-url': campaign.archive_url,
+          'campaign-id': campaign.campaignId,
         }
       },
       relationships: {
