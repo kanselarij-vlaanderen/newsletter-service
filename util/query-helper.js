@@ -192,6 +192,20 @@ export async function updateMailCampaignSentTime(mailCampaignId, sentTime) {
     }`);
 }
 
+export async function deleteMailCampaign(mailCampaignId) {
+  console.log(`Deleting mail campaign with id ${mailCampaignId}`);
+
+  return await update(`
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+
+    DELETE WHERE {
+      ?mailCampaign a ext:MailCampagne ;
+        ext:campagneId ${sparqlEscapeString(mailCampaignId)} ;
+        ?p ?o .
+      ?s ?pp ?mailCampaign .
+    }`);
+}
+
 async function getMeetingURI (meetingId) {
   console.log(`Get meetingURI for meeting ${meetingId}`);
   const meetingUriQuery = await query(`

@@ -1,6 +1,7 @@
 import { app, errorHandler } from 'mu';
 import {
   createMailCampaign,
+  deleteMailCampaign,
   getAgendaInformationForNewsletter,
   updateMailCampaignSentTime,
 } from './util/query-helper';
@@ -163,6 +164,7 @@ app.delete('/mail-campaigns/:id', async (req, res, next) => {
       next(error);
     } else {
       await mailchimpService.deleteCampaign(campaignId);
+      await deleteMailCampaign(campaignId);
       res.status(204).send();
     }
   } catch (error) {
