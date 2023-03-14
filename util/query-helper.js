@@ -5,6 +5,7 @@ import { reduceNewslettersToMandateesByPriority } from '../util/newsletter-helpe
 import {
   sparqlEscapeString,
   sparqlEscapeUri,
+  sparqlEscapeDateTime,
   query,
   update,
   uuid,
@@ -176,6 +177,19 @@ export async function createMailCampaign(meetingUri, mailCampaign) {
         ext:voorbeeldUrl ${sparqlEscapeString(archiveUrl)} .
     }`);
   return id;
+}
+
+export async function updateMailCampaignSentTime(mailCampaignId, sentTime) {
+  console.log(`Updating mail campaign sent time with id ${mailCampaignId}`);
+
+  return await update(`
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+
+    INSERT { ?mailCampaign ext:isVerstuurdOp ${sparqlEscapeDateTime(sentTime)} }
+    WHERE {
+      ?mailCampaign a ext:MailCampagne ;
+        ext:campagneId ${sparqlEscapeString(mailCampaignId)} .
+    }`);
 }
 
 async function getMeetingURI (meetingId) {

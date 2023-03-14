@@ -2,6 +2,7 @@ import { app, errorHandler } from 'mu';
 import {
   createMailCampaign,
   getAgendaInformationForNewsletter,
+  updateMailCampaignSentTime,
 } from './util/query-helper';
 import BelgaService from './repository/belga-service';
 import MailchimpService from './repository/mailchimp-service';
@@ -91,6 +92,7 @@ app.post('/mail-campaigns/:id/send', async (req, res, next) => {
     }
     console.log(`Sending MailChimp campaign ${campaignId}`);
     await mailchimpService.sendCampaign(campaignId);
+    await updateMailCampaignSentTime(campaignId, new Date());
     res.status(204).send();
   } catch (error) {
     console.log(`A problem occured when sending campaign in Mailchimp.`);
