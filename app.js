@@ -8,6 +8,7 @@ import {
 import BelgaService from './repository/belga-service';
 import MailchimpService from './repository/mailchimp-service';
 
+const cacheClearTimeout = 2000;
 const requiredEnvironmentVariables = [
   'MAILCHIMP_API',
   'MAILCHIMP_FROM_NAME',
@@ -94,7 +95,9 @@ app.post('/mail-campaigns/:id/send', async (req, res, next) => {
     console.log(`Sending MailChimp campaign ${campaignId}`);
     await mailchimpService.sendCampaign(campaignId);
     await updateMailCampaignSentTime(campaignId, new Date());
-    res.status(204).send();
+    setTimeout(() => {
+      res.status(204).send();
+    }, cacheClearTimeout);
   } catch (error) {
     console.log(`A problem occured when sending campaign in Mailchimp.`);
     logErrorResponse(error);
@@ -165,7 +168,9 @@ app.delete('/mail-campaigns/:id', async (req, res, next) => {
     } else {
       await mailchimpService.deleteCampaign(campaignId);
       await deleteMailCampaign(campaignId);
-      res.status(204).send();
+      setTimeout(() => {
+        res.status(204).send();
+      }, cacheClearTimeout);
     }
   } catch (error) {
     console.log(`A problem occured when deleting campaign ${campaignId} in Mailchimp.`);
