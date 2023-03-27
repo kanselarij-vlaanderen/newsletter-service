@@ -2,7 +2,14 @@ import moment from 'moment';
 import 'moment-timezone';
 import { getNewsItem } from './html';
 import { reduceNewslettersToMandateesByPriority } from '../util/newsletter-helper';
-import { sparqlEscapeString, sparqlEscapeUri, query } from 'mu';
+import {
+  sparqlEscapeString,
+  sparqlEscapeUri,
+  sparqlEscapeDateTime,
+  query,
+  update,
+  uuid,
+} from 'mu';
 
 moment.locale('nl');
 moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
@@ -61,6 +68,7 @@ export async function getAgendaInformationForNewsletter(meetingId) {
   }
 
   return {
+    meetingURI,
     formattedStart,
     formattedDocumentDate,
     meetingDate: meetingDate,
@@ -142,6 +150,60 @@ export async function getNewsletterByAgendaId(agendaUri) {
     ORDER BY ASC(?mandateePriority)`);
 
   return parseSparqlResults(newsletterInformation);
+}
+
+export async function createMailCampaign(meetingUri, mailCampaign) {
+  const {
+    campaignId,
+    web_id: webId,
+    archive_url: archiveUrl,
+  } = mailCampaign;
+  const id = uuid();
+
+  console.log(`Create mail campaign with id ${id} for meetingUri ${meetingUri}`);
+
+  const mailCampaignUri = `http://themis.vlaanderen.be/id/mailcampagne/${id}`;
+
+  await update(`
+    PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+
+    INSERT DATA {
+      ${sparqlEscapeUri(meetingUri)} ext:heeftMailCampagnes ${sparqlEscapeUri(mailCampaignUri)} .
+      ${sparqlEscapeUri(mailCampaignUri)} a ext:MailCampagne ;
+        mu:uuid ${sparqlEscapeString(id)} ;
+        ext:campagneId ${sparqlEscapeString(campaignId)} ;
+        ext:campagneWebId ${sparqlEscapeString(String(webId))} ;
+        ext:voorbeeldUrl ${sparqlEscapeString(archiveUrl)} .
+    }`);
+  return id;
+}
+
+export async function updateMailCampaignSentTime(mailCampaignId, sentTime) {
+  console.log(`Updating mail campaign sent time with id ${mailCampaignId}`);
+
+  return await update(`
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+
+    INSERT { ?mailCampaign ext:isVerstuurdOp ${sparqlEscapeDateTime(sentTime)} }
+    WHERE {
+      ?mailCampaign a ext:MailCampagne ;
+        ext:campagneId ${sparqlEscapeString(mailCampaignId)} .
+    }`);
+}
+
+export async function deleteMailCampaign(mailCampaignId) {
+  console.log(`Deleting mail campaign with id ${mailCampaignId}`);
+
+  return await update(`
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+
+    DELETE WHERE {
+      ?mailCampaign a ext:MailCampagne ;
+        ext:campagneId ${sparqlEscapeString(mailCampaignId)} ;
+        ?p ?o .
+      ?s ?pp ?mailCampaign .
+    }`);
 }
 
 async function getMeetingURI (meetingId) {

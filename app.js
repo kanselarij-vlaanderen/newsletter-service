@@ -1,8 +1,14 @@
 import { app, errorHandler } from 'mu';
-import { getAgendaInformationForNewsletter } from './util/query-helper';
+import {
+  createMailCampaign,
+  deleteMailCampaign,
+  getAgendaInformationForNewsletter,
+  updateMailCampaignSentTime,
+} from './util/query-helper';
 import BelgaService from './repository/belga-service';
 import MailchimpService from './repository/mailchimp-service';
 
+const cacheClearTimeout = 2000;
 const requiredEnvironmentVariables = [
   'MAILCHIMP_API',
   'MAILCHIMP_FROM_NAME',
@@ -50,14 +56,16 @@ app.post('/mail-campaigns', async function (req, res, next) {
     const agendaInformationForNewsLetter = await getAgendaInformationForNewsletter(meetingId);
     const campaign = await mailchimpService.prepareCampaign(agendaInformationForNewsLetter);
 
+    const campaignUuid = await createMailCampaign(agendaInformationForNewsLetter.meetingURI, campaign);
+
     res.status(201).send({
       data: {
         type: 'mail-campaigns',
-        id: campaign.campaignId,
+        id: campaignUuid,
         attributes: {
-          'create-time': campaign.create_time,
           'web-id': campaign.web_id,
-          'archive-url': campaign.archive_url
+          'archive-url': campaign.archive_url,
+          'campaign-id': campaign.campaignId,
         }
       },
       relationships: {
@@ -86,7 +94,10 @@ app.post('/mail-campaigns/:id/send', async (req, res, next) => {
     }
     console.log(`Sending MailChimp campaign ${campaignId}`);
     await mailchimpService.sendCampaign(campaignId);
-    res.status(204).send();
+    await updateMailCampaignSentTime(campaignId, new Date());
+    setTimeout(() => {
+      res.status(204).send();
+    }, cacheClearTimeout);
   } catch (error) {
     console.log(`A problem occured when sending campaign in Mailchimp.`);
     logErrorResponse(error);
@@ -156,7 +167,10 @@ app.delete('/mail-campaigns/:id', async (req, res, next) => {
       next(error);
     } else {
       await mailchimpService.deleteCampaign(campaignId);
-      res.status(204).send();
+      await deleteMailCampaign(campaignId);
+      setTimeout(() => {
+        res.status(204).send();
+      }, cacheClearTimeout);
     }
   } catch (error) {
     console.log(`A problem occured when deleting campaign ${campaignId} in Mailchimp.`);

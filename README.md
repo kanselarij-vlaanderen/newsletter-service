@@ -39,7 +39,7 @@ The service will fail if the environment variables are not defined properly.
 
 #### POST /mail-campaigns
 
-Create the mail campaign in Mailchimp
+Create the mail campaign in Mailchimp and create a corresponding mail-campaign resource in the triplestore.
 
 Example request body:
 ```javascript
@@ -55,9 +55,28 @@ Example request body:
   }
 }
 ```
+
+Example response body:
+
+``` javascript
+{
+  "data": {
+    "type": "mail-campaigns",
+    "id": "newly-generated-uuid",
+    "attributes": {
+      "web-id": 123456,
+      "archive-url": "http://archive-url",
+      "campaign-id": "campaign-id-from-mailchimp"
+    }
+  }
+}
+```
+
 #### POST /mail-campaigns/:id/send
 
-Send out the campaign to Mailchimp
+Send out the campaign to Mailchimp and set the sent-time in the database.
+
+_Note: this request expects Mailchimp's campaignId to be passed as ID, not the resource's UUID._
 
 _Note: this request will fail if no mails are sent (e.g. no subscribers for the selected theme)_
 
@@ -67,9 +86,40 @@ Get details of the given mail campaign.
 
 Optionally `fields['mail-campaigns']=html` can be passed as query param to get the HTML content of the mail campaign.
 
+_Note: this request expects Mailchimp's campaignId to be passed as ID, not the resource's UUID._
+
+Example response body:
+
+``` javascript
+// If fields['mail-campaigns']=html is set as query param
+{
+  "data": {
+    "type": "mail-campaigns",
+    "id": "campaign-id-from-mailchimp",
+    "attributes": {
+      "html": "<p>The full html content goes here</p>"
+    }
+  }
+}
+// If fields['mail-campaigns']=html is NOT set as query param
+{
+  "data": {
+    "type": "mail-campaigns",
+    "id": "campaign-id-from-mailchimp",
+    "attributes": {
+      "create-time": "2023-03-14T10:00:00Z"
+      "web-id": 123456,
+      "archive-url": "http://archive-url",
+    }
+  }
+}
+```
+
 #### DELETE /mail-campaigns/:id
 
-Delete a mail-campaign in Mailchimp
+Delete a mail-campaign in Mailchimp and from the database.
+
+_Note: this request expects Mailchimp's campaignId to be passed as ID, not the resource's UUID._
 
 #### POST /belga-newsletters
 

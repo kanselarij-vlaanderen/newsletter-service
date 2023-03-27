@@ -22,6 +22,10 @@ export default class MailchimpService {
       });
   }
 
+  async wait(durationInMs) {
+    return new Promise(resolve => setTimeout(resolve, durationInMs));
+  }
+
   async ping() {
     const response = await mailchimpConnection.ping.get();
 
