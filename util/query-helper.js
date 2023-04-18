@@ -110,7 +110,7 @@ export async function getNewsItemInfo(agendaURI) {
 export async function getNewsletterByAgendaId(agendaUri) {
   const newsletterInformation = await query(`
     PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
-    PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
+    PREFIX besluitvorming: <https://data.vlaanderen.be/ns/besluitvorming#>
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
     PREFIX dct: <http://purl.org/dc/terms/>
     PREFIX prov: <http://www.w3.org/ns/prov#>
@@ -235,7 +235,7 @@ async function getLastestAgenda (meetingURI) {
   console.log(`Get latest agenda for meetingURI ${meetingURI}`);
   const latestAgendaQuery = await query(`
     PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
-    PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
+    PREFIX besluitvorming: <https://data.vlaanderen.be/ns/besluitvorming#>
     SELECT DISTINCT ?agenda
     WHERE {
       GRAPH <${targetGraph}> {
@@ -260,7 +260,7 @@ async function getAgendaInformation(latestAgendaURI) {
     PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
     PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
-    PREFIX besluitvorming: <http://data.vlaanderen.be/ns/besluitvorming#>
+    PREFIX besluitvorming: <https://data.vlaanderen.be/ns/besluitvorming#>
     PREFIX dct: <http://purl.org/dc/terms/>
     PREFIX prov: <http://www.w3.org/ns/prov#>
     PREFIX generiek:  <https://data.vlaanderen.be/ns/generiek#>
