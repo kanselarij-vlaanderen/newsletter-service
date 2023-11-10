@@ -79,7 +79,7 @@ export default class MailchimpService {
       html: html
     }
     const templateResponse = await mailchimpConnection.templates.create(template);
-    console.log('templateResponse', templateResponse);
+    console.log('Template Mailchimp created');
 
     const templateId = templateResponse['id']
 
@@ -87,15 +87,11 @@ export default class MailchimpService {
   }
 
   async createNewCampaign(templateId, agendaInformationForNewsLetter, newsletterThemes) {
-
+    console.log(`Creating Mailchimp campaign...`);
     const { mailSubjectPrefix, mailTitle } = agendaInformationForNewsLetter;
 
-    console.log('going to get interests')
     const themeCondition = await this.createThemesCondition(newsletterThemes);
     // const kindCondition = await this.createKindCondition(); // TODO GONE ON PROD!!
-
-    console.log('themeCondition', themeCondition)
-    // console.log('kindCondition', kindCondition)
 
     const campaign = {
       type: "regular",
@@ -116,9 +112,8 @@ export default class MailchimpService {
         template_id: templateId,
       }
     }
-    console.log('campaign to create', campaign)
-    const campaignResponse = await mailchimpConnection.campaigns.create(campaign)
-    console.log('campaignResponse', campaignResponse)
+    const campaignResponse = await mailchimpConnection.campaigns.create(campaign);
+    console.log('Campagin Mailchimp created');
 
     console.log(`campaignResponse campaign id: ${campaignResponse['id']}`);
 
@@ -176,9 +171,10 @@ export default class MailchimpService {
   }
 
   async createThemesCondition (newsletterThemes) {
+    console.log('Fetching theme interests');
     const uniqueNewsletterThemes = [...new Set(newsletterThemes)];
     const interests = await this.fetchInterestsByCategoryIdFromLists(INTEREST_CATEGORY_ID);
-    console.log('interests themes', interests)
+    console.log('Done fetching theme interests');
     const interestMapping = interests.filter((theme) => {
       if (uniqueNewsletterThemes.includes(theme.name)) {
         return theme;
@@ -195,7 +191,6 @@ export default class MailchimpService {
   // TODO removed kind interest on prod
   // async createKindCondition () {
   //   const interestedKinds = await this.fetchInterestsByCategoryIdFromLists(KIND_CATEGORY_ID);
-  //   console.log('interestedKinds', interestedKinds)
   //   const interestKindMapping = interestedKinds.filter((interest) => {
   //     if (DECISION_STRINGS.includes(interest.name)) {
   //       return interest;
