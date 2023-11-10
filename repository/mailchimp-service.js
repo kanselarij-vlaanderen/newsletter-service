@@ -113,7 +113,7 @@ export default class MailchimpService {
       }
     }
     const campaignResponse = await mailchimpConnection.campaigns.create(campaign);
-    console.log('Campagin Mailchimp created');
+    console.log('Campaign Mailchimp created');
 
     console.log(`campaignResponse campaign id: ${campaignResponse['id']}`);
 
