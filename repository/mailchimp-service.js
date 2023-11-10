@@ -7,7 +7,7 @@ const MAILCHIMP_SERVER = process.env.MAILCHIMP_SERVER || "us3";
 const FROM_NAME = process.env.MAILCHIMP_FROM_NAME;
 const REPLY_TO = process.env.MAILCHIMP_REPLY_TO;
 const LIST_ID = process.env.MAILCHIMP_LIST_ID;
-const INTEREST_CATEGORY_ID = process.env.F;
+const INTEREST_CATEGORY_ID = process.env.MAILCHIMP_INTEREST_CATEGORY_ID;
 // const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID;
 
 const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel persberichten als beslissingen'];
