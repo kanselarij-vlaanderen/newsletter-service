@@ -90,6 +90,7 @@ export default class MailchimpService {
 
     const { mailSubjectPrefix, mailTitle } = agendaInformationForNewsLetter;
 
+    console.log('going to get interests')
     const themeCondition = await this.createThemesCondition(newsletterThemes);
     const kindCondition = await this.createKindCondition();
 
@@ -177,6 +178,7 @@ export default class MailchimpService {
   async createThemesCondition (newsletterThemes) {
     const uniqueNewsletterThemes = [...new Set(newsletterThemes)];
     const interests = await this.fetchInterestsByCategoryIdFromLists(INTEREST_CATEGORY_ID);
+    console.log('interests themes', interests)
     const interestMapping = interests.filter((theme) => {
       if (uniqueNewsletterThemes.includes(theme.name)) {
         return theme;
@@ -192,6 +194,7 @@ export default class MailchimpService {
 
   async createKindCondition () {
     const interestedKinds = await this.fetchInterestsByCategoryIdFromLists(KIND_CATEGORY_ID);
+    console.log('interestedKinds', interestedKinds)
     const interestKindMapping = interestedKinds.filter((interest) => {
       if (DECISION_STRINGS.includes(interest.name)) {
         return interest;
