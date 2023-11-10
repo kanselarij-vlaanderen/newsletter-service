@@ -79,6 +79,7 @@ export default class MailchimpService {
       html: html
     }
     const templateResponse = await mailchimpConnection.templates.create(template);
+    console.log('templateResponse', templateResponse);
 
     const templateId = templateResponse['id']
 
@@ -91,6 +92,9 @@ export default class MailchimpService {
 
     const themeCondition = await this.createThemesCondition(newsletterThemes);
     const kindCondition = await this.createKindCondition();
+
+    console.log('themeCondition', themeCondition)
+    console.log('kindCondition', kindCondition)
 
     const campaign = {
       type: "regular",
@@ -111,7 +115,9 @@ export default class MailchimpService {
         template_id: templateId,
       }
     }
+    console.log('campaign to create', campaign)
     const campaignResponse = await mailchimpConnection.campaigns.create(campaign)
+    console.log('campaignResponse', campaignResponse)
 
     console.log(`campaignResponse campaign id: ${campaignResponse['id']}`);
 
