@@ -7,8 +7,8 @@ const MAILCHIMP_SERVER = process.env.MAILCHIMP_SERVER || "us3";
 const FROM_NAME = process.env.MAILCHIMP_FROM_NAME;
 const REPLY_TO = process.env.MAILCHIMP_REPLY_TO;
 const LIST_ID = process.env.MAILCHIMP_LIST_ID;
-const INTEREST_CATEGORY_ID = process.env.MAILCHIMP_INTEREST_CATEGORY_ID;
-const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID;
+const INTEREST_CATEGORY_ID = process.env.F;
+// const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID;
 
 const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel persberichten als beslissingen'];
 
@@ -92,10 +92,10 @@ export default class MailchimpService {
 
     console.log('going to get interests')
     const themeCondition = await this.createThemesCondition(newsletterThemes);
-    const kindCondition = await this.createKindCondition();
+    // const kindCondition = await this.createKindCondition(); // TODO GONE ON PROD!!
 
     console.log('themeCondition', themeCondition)
-    console.log('kindCondition', kindCondition)
+    // console.log('kindCondition', kindCondition)
 
     const campaign = {
       type: "regular",
@@ -103,7 +103,7 @@ export default class MailchimpService {
         list_id: LIST_ID,
         segment_opts: {
           match: 'all',
-          conditions: [themeCondition, kindCondition]
+          conditions: [themeCondition]
         }
       },
       settings: {
@@ -192,21 +192,22 @@ export default class MailchimpService {
     };
   };
 
-  async createKindCondition () {
-    const interestedKinds = await this.fetchInterestsByCategoryIdFromLists(KIND_CATEGORY_ID);
-    console.log('interestedKinds', interestedKinds)
-    const interestKindMapping = interestedKinds.filter((interest) => {
-      if (DECISION_STRINGS.includes(interest.name)) {
-        return interest;
-      }
-    });
-    return {
-      condition_type: 'Interests',
-      field: `interests-${KIND_CATEGORY_ID}`,
-      op: 'interestcontains',
-      value: interestKindMapping.map((item) => item.id)
-    };
-  };
+  // TODO removed kind interest on prod
+  // async createKindCondition () {
+  //   const interestedKinds = await this.fetchInterestsByCategoryIdFromLists(KIND_CATEGORY_ID);
+  //   console.log('interestedKinds', interestedKinds)
+  //   const interestKindMapping = interestedKinds.filter((interest) => {
+  //     if (DECISION_STRINGS.includes(interest.name)) {
+  //       return interest;
+  //     }
+  //   });
+  //   return {
+  //     condition_type: 'Interests',
+  //     field: `interests-${KIND_CATEGORY_ID}`,
+  //     op: 'interestcontains',
+  //     value: interestKindMapping.map((item) => item.id)
+  //   };
+  // };
 
   /**
    * This function fetches all interests from the mailchimp API
