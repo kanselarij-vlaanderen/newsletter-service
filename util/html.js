@@ -333,7 +333,7 @@ const createNewsLetter = (decisionNewsItems, meetingDate, documentPublicationDat
 	                        <br>
 	                        <br>
 	                        <font style="font-family:Calibri, Arial, sans-serif;font-size:13px;line-height:17px;color:#666666;">
-	                          Vlaamse overheid · Havenlaan 88 · Brussel 1000 · België
+	                          Vlaamse overheid · Simon Bolivarlaan 17 · Brussel 1000 · België
 	                        </font>
 	                      </td>
 	                    </tr>
