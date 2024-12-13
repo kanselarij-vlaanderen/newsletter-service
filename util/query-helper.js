@@ -114,7 +114,7 @@ export async function getNewsletterByAgendaId(agendaUri) {
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
     PREFIX dct: <http://purl.org/dc/terms/>
     PREFIX prov: <http://www.w3.org/ns/prov#>
-    PREFIX xsd: <http://mu.semte.ch/vocabularies/typed-literals/>
+    PREFIX tl: <http://mu.semte.ch/vocabularies/typed-literals/>
     PREFIX mandaat: <http://data.vlaanderen.be/ns/mandaat#>
     PREFIX schema: <http://schema.org/>
     PREFIX nie: <http://www.semanticdesktop.org/ontologies/2007/01/19/nie#>
@@ -131,7 +131,7 @@ export async function getNewsletterByAgendaId(agendaUri) {
           dct:subject ?agendaitem .
         ?newsletter a ext:Nieuwsbericht ;
           prov:wasDerivedFrom ?treatment ;
-          ext:inNieuwsbrief "true"^^xsd:boolean .
+          ext:inNieuwsbrief "true"^^tl:boolean .
         OPTIONAL {
           ?agendaitem ext:heeftBevoegdeVoorAgendapunt ?mandatee .
           ?mandatee dct:title ?mandateeTitle .
