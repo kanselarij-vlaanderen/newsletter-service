@@ -7,6 +7,7 @@ import {
 } from './util/query-helper';
 import BelgaService from './repository/belga-service';
 import MailchimpService from './repository/mailchimp-service';
+import { sessionIsAuthorized } from './util/session';
 
 const cacheClearTimeout = 2000;
 const requiredEnvironmentVariables = [
@@ -46,11 +47,18 @@ function logErrorResponse (error) {
 app.post('/mail-campaigns', async function (req, res, next) {
   try {
     const meetingId = req.body?.data?.relationships?.meeting?.data?.id;
+    const sessionUri = req.headers['mu-session-id'];
+
     if (!meetingId) {
       const error = new Error('Mandatory parameter meeting-id not found.');
       error.status = 400;
       return next(error);
     }
+
+    if (!(await sessionIsAuthorized(sessionUri))) {
+      return next({ message: 'You do not have the correct role to perform this operation', status: 401 });
+    }
+
     console.log(`Preparing new MailChimp campaign for meeting ${meetingId}`);
 
     const agendaInformationForNewsLetter = await getAgendaInformationForNewsletter(meetingId);
@@ -87,11 +95,18 @@ app.post('/mail-campaigns', async function (req, res, next) {
 app.post('/mail-campaigns/:id/send', async (req, res, next) => {
   try {
     const campaignId = req.params.id;
-    if (!campaignId ) {
+    const sessionUri = req.headers['mu-session-id'];
+
+    if (!campaignId) {
       const error = new Error('Mandatory parameter campaign-id not found.');
       error.status = 400;
       return next(error);
     }
+
+    if (!(await sessionIsAuthorized(sessionUri))) {
+      return next({ message: 'You do not have the correct role to perform this operation', status: 401 });
+    }
+
     console.log(`Sending MailChimp campaign ${campaignId}`);
     await mailchimpService.sendCampaign(campaignId);
     await updateMailCampaignSentTime(campaignId, new Date());
@@ -111,11 +126,18 @@ app.post('/mail-campaigns/:id/send', async (req, res, next) => {
 app.get('/mail-campaigns/:id', async (req, res, next) => {
   try {
     const campaignId = req.params.id;
+    const sessionUri = req.headers['mu-session-id'];
+
     if (!campaignId ) {
       const error = new Error('Mandatory parameter campaign-id not found.');
       error.status = 400;
       return next(error);
     }
+
+    if (!(await sessionIsAuthorized(sessionUri))) {
+      return next({ message: 'You do not have the correct role to perform this operation', status: 401 });
+    }
+
     console.log(`Getting campaign data for MailChimp campaign ${campaignId}`);
 
     const queryParams = req.query;
@@ -160,11 +182,15 @@ app.get('/mail-campaigns/:id', async (req, res, next) => {
  */
 app.delete('/mail-campaigns/:id', async (req, res, next) => {
   const campaignId = req.params.id;
+  const sessionUri = req.headers['mu-session-id'];
+
   try {
     if (!campaignId) {
       const error = new Error('Mandatory parameter campaign-id not found.');
       error.status = 400;
       next(error);
+    } else if (!(await sessionIsAuthorized(sessionUri))) {
+      next({ message: 'You do not have the correct role to perform this operation', status: 401 });
     } else {
       await mailchimpService.deleteCampaign(campaignId);
       await deleteMailCampaign(campaignId);
@@ -184,10 +210,14 @@ app.delete('/mail-campaigns/:id', async (req, res, next) => {
  */
 app.post('/belga-newsletters', async (req, res, next) => {
   const meetingId = req.body?.data?.relationships?.meeting?.data?.id;
+  const sessionUri = req.headers['mu-session-id'];
+
   if (!meetingId) {
     const error = new Error('Mandatory parameter meeting-id not found.');
     error.status = 400;
     next(error);
+  } else if (!(await sessionIsAuthorized(sessionUri))) {
+    next({ message: 'You do not have the correct role to perform this operation', status: 401 });
   } else {
     try {
       const filePath = await belgaService.createBelgaNewsletterXML(meetingId);
@@ -216,6 +246,12 @@ app.post('/belga-newsletters', async (req, res, next) => {
 
 app.get('/belga-newsletters/:id/download', async (req, res, next) => {
   const meetingId = req.params.id;
+  const sessionUri = req.headers['mu-session-id'];
+
+  if (!(await sessionIsAuthorized(sessionUri))) {
+    return next({ message: 'You do not have the correct role to perform this operation', status: 401 });
+  }
+
   try {
     const belgaNewsletter = await belgaService.generateXML(meetingId);
     res.download(belgaNewsletter);
