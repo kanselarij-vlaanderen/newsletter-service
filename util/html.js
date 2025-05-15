@@ -284,9 +284,7 @@ const createNewsLetter = (decisionNewsItems, meetingDate, documentPublicationDat
 	                        </td>
 	                        <td valign="top" style="padding:15px;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;color:#666666;">
 	                          <font>
-	                            De documenten van deze ${kindOfMeetingLowerCase} zullen beschikbaar zijn vanaf ${documentPublicationDate}
-	                            <br>
-	                            De documenten worden beschikbaar gesteld op <a href="https://beslissingenvlaamseregering.vlaanderen.be">https://beslissingenvlaamseregering.vlaanderen.be</a>
+	                            <a href="https://www.vlaanderen.be/vlaamse-regering/beslissingen-van-de-vlaamse-regering?order_publicationdate=desc" aria-label="beslissingen van de vlaamse regering">De documenten van deze ${kindOfMeetingLowerCase} zullen beschikbaar zijn vanaf ${documentPublicationDate}</a>
 	                          </font>
 	                        </td>
 	                      </tr>
