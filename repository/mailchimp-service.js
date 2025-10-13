@@ -3,7 +3,6 @@ import { getNewsItemInfo } from '../util/query-helper';
 import { createNewsLetter } from '../util/html';
 import { MAILCHIMP } from '../config';
 
-// const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel persberichten als beslissingen'];
 export default class MailchimpService {
 
   constructor() {
@@ -83,7 +82,6 @@ export default class MailchimpService {
     const { mailSubjectPrefix, mailTitle } = agendaInformationForNewsLetter;
 
     const themeCondition = await this.createThemesCondition(newsletterThemes);
-    // const kindCondition = await this.createKindCondition(); // TODO GONE ON PROD!!
 
     const campaign = {
       type: "regular",
@@ -179,22 +177,6 @@ export default class MailchimpService {
       value: interestMapping.map((item) => item.id)
     };
   };
-
-  // TODO removed kind interest on prod
-  // async createKindCondition () {
-  //   const interestedKinds = await this.fetchInterestsByCategoryIdFromLists(KIND_CATEGORY_ID);
-  //   const interestKindMapping = interestedKinds.filter((interest) => {
-  //     if (DECISION_STRINGS.includes(interest.name)) {
-  //       return interest;
-  //     }
-  //   });
-  //   return {
-  //     condition_type: 'Interests',
-  //     field: `interests-${KIND_CATEGORY_ID}`,
-  //     op: 'interestcontains',
-  //     value: interestKindMapping.map((item) => item.id)
-  //   };
-  // };
 
   /**
    * This function fetches all interests from the mailchimp API
