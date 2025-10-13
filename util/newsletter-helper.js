@@ -8,55 +8,94 @@
  *      fourth group: Mandatee1 - 1, mandatee3 - 3
  * This is different from the normal priority of the agendaitems in the agenda.
  */
-const reduceNewslettersToMandateesByPriority = (newsletter) => {
-  return setCalculatedPrioritiesOfNewsletter(
-    newsletter.reduce((uniqueNewsletters, newsItem) => {
-      const foundItem = findExistingItem(uniqueNewsletters, newsItem);
-      if (foundItem) {
-        const indexOf = uniqueNewsletters.indexOf(foundItem);
-        uniqueNewsletters[indexOf].mandatees.push({
+const reduceNewslettersToMandateesByPriority = (newsletter, announcements = false) => {
+  const reducedNewsletters = newsletter.reduce((uniqueNewsletters, newsItem) => {
+    const foundItem = findExistingItem(uniqueNewsletters, newsItem);
+    if (foundItem) {
+      const indexOf = uniqueNewsletters.indexOf(foundItem);
+      uniqueNewsletters[indexOf].mandatees.push({
+        priority: alphaNumericPriority(newsItem.mandateePriority),
+        title: newsItem.mandateeTitle,
+        nickName: newsItem.mandateeName
+      });
+    } else {
+      newsItem.mandatees = [
+        {
           priority: alphaNumericPriority(newsItem.mandateePriority),
           title: newsItem.mandateeTitle,
           nickName: newsItem.mandateeName
-        });
-      } else {
-        newsItem.mandatees = [
-          {
-            priority: alphaNumericPriority(newsItem.mandateePriority),
-            title: newsItem.mandateeTitle,
-            nickName: newsItem.mandateeName
-          }
-        ];
-        delete newsItem.mandateeTitle;
-        delete newsItem.mandateePriority;
-        uniqueNewsletters.push(newsItem);
-      }
-      return uniqueNewsletters;
-    }, [])
-  );
+        }
+      ];
+      delete newsItem.mandateeTitle;
+      delete newsItem.mandateePriority;
+      uniqueNewsletters.push(newsItem);
+    }
+    return uniqueNewsletters;
+  }, []);
+  return setCalculatedPrioritiesOfNewsletter(reducedNewsletters, announcements);
 };
 /**
  * Returns a joined list of all items formatted in a readable string
  * @param {title: string, proposal: string, richtext:string} data -> list of items
  */
-const createNewsletterString = (data) => {
-  let agendaitems = [];
-  const reducedNewsletters = reduceNewslettersToMandateesByPriority(data);
+const createNewsletterString = (data, announcementsData) => {
+  let newsletterString = '';
 
-  reducedNewsletters.map((newsletterItem) => {
-    agendaitems.push(
-      `<p>
-      ${newsletterItem.title || ''}
-      ${newsletterItem.proposalText || ''}
-      ${newsletterItem.richtext || ''}
-      </p>`
-        .replace(/^\s+|\s+$/gm, '')
-        .replace(/(?=<!--)([\s\S]*?)-->/gm, '')
-        .replace(/\n&nbsp;*/gm, '')
-        .trim()
-    );
-  });
-  return agendaitems.join(``);
+  // *note: richtext here is <div><p>htmlContent</p></div> from the rdfa editor
+
+  if (data && data[0]) {
+    let agendaitems = [];
+    const reducedNewsletters = reduceNewslettersToMandateesByPriority(data);
+
+    reducedNewsletters.map((newsletterItem) => {
+      agendaitems.push(
+        `<p>
+        ${newsletterItem.title || ''}
+        ${newsletterItem.proposalText ? `<br>${newsletterItem.proposalText}` : ''}
+        </p>
+        ${newsletterItem.richtext || ''}
+        `
+          .replace(/^\s+|\s+$/gm, '')
+          .replace(/(?=<!--)([\s\S]*?)-->/gm, '')
+          .replace(/\n&nbsp;*/gm, '')
+          .trim()
+      );
+    });
+    newsletterString = agendaitems.join(``);
+  }
+
+  if (announcementsData && announcementsData[0]) {
+    let announcements = [];
+    const reducedAnnouncements = reduceNewslettersToMandateesByPriority(announcementsData, true);
+    reducedAnnouncements.map((newsletterItem) => {
+      announcements.push(
+        `<p>
+        ${newsletterItem.title || ''}
+        ${newsletterItem.proposalText ? `<br>${newsletterItem.proposalText}` : ''}
+        </p>
+        ${newsletterItem.richtext || ''}
+        `
+          .replace(/^\s+|\s+$/gm, '')
+          .replace(/(?=<!--)([\s\S]*?)-->/gm, '')
+          .replace(/\n&nbsp;*/gm, '')
+          .trim()
+      );
+    });
+    const announcementString = announcements.join(``);
+    const announcementHeader =
+    `<p>
+       <strong>Mededelingen</strong>
+     </p>
+    `;
+
+    newsletterString = newsletterString + announcementHeader + announcementString;
+  }
+
+  if (newsletterString.length < 1) {
+    throw new Error('No newsitems found to send, prevent sending an empty XML');
+  }
+
+  return newsletterString;
 };
 
 /**
@@ -105,7 +144,7 @@ const sortNewsletterItems = (items) => {
   })
 }
 
-const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
+const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters, announcements = false) => {
   uniqueNewsletters.map((newsItemWithMandatees) => {
     const sortedMandatees = newsItemWithMandatees.mandatees.sort((a, b) => a.priority - b.priority);
     const groupName = [...new Set(sortedMandatees.map((item) => item.title))].join(",");
@@ -124,7 +163,13 @@ const setCalculatedPrioritiesOfNewsletter = (uniqueNewsletters) => {
 
     // assign new properties used for sorting.
     newsItemWithMandatees.groupName = groupName;
-    newsItemWithMandatees.groupPriority = alphaNumericPrio;
+    if (announcements) {
+      // by setting the group priority for announcements to the same, they will be sorted on agendaitemPrio instead
+      newsItemWithMandatees.groupPriority = 'ZZZZZZZ_ANNOUNCEMENT';
+    } else {
+      // use the alphaNumeric mandatees to set the group priority
+      newsItemWithMandatees.groupPriority = alphaNumericPrio;
+    }
     newsItemWithMandatees.proposalText = proposalText;
     return newsItemWithMandatees;
   });
@@ -137,7 +182,7 @@ const alphaNumericPriority = (mandateePriority) => {
     const priority = parseInt(mandateePriority);
     return alphabet[priority - 1];
   }
-  return 'ZZZZZZZZ'
+  return 'ZZZZZZZZ';
 }
 
 export {reduceNewslettersToMandateesByPriority, createNewsletterString};

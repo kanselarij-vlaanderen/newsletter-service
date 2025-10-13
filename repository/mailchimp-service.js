@@ -1,24 +1,16 @@
 import mailchimpConnection from '@mailchimp/mailchimp_marketing';
 import { getNewsItemInfo } from '../util/query-helper';
 import { createNewsLetter } from '../util/html';
+import { MAILCHIMP } from '../config';
 
-const MAILCHIMP_API = process.env.MAILCHIMP_API;
-const MAILCHIMP_SERVER = process.env.MAILCHIMP_SERVER || "us3";
-const FROM_NAME = process.env.MAILCHIMP_FROM_NAME;
-const REPLY_TO = process.env.MAILCHIMP_REPLY_TO;
-const LIST_ID = process.env.MAILCHIMP_LIST_ID;
-const INTEREST_CATEGORY_ID = process.env.MAILCHIMP_INTEREST_CATEGORY_ID;
-// const KIND_CATEGORY_ID = process.env.MAILCHIMP_KIND_CATEGORY_ID;
-
-const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel persberichten als beslissingen'];
-
+// const DECISION_STRINGS = ['Ik ontvang enkel beslissingen', 'Ik ontvang zowel persberichten als beslissingen'];
 export default class MailchimpService {
 
   constructor() {
     mailchimpConnection.setConfig(
       {
-        apiKey: `${MAILCHIMP_API}`,
-        server: `${MAILCHIMP_SERVER}`
+        apiKey: `${MAILCHIMP.API}`,
+        server: `${MAILCHIMP.SERVER}`
       });
   }
 
@@ -72,7 +64,7 @@ export default class MailchimpService {
       kindOfMeeting
     } = agendaInformationForNewsLetter;
 
-    const html = await createNewsLetter(htmlContent, formattedStart, formattedDocumentDate, procedureText, kindOfMeeting);
+    const html = createNewsLetter(htmlContent, formattedStart, formattedDocumentDate, procedureText, kindOfMeeting);
 
     const template = {
       name: mailTitle,
@@ -96,7 +88,7 @@ export default class MailchimpService {
     const campaign = {
       type: "regular",
       recipients: {
-        list_id: LIST_ID,
+        list_id: MAILCHIMP.LIST_ID,
         segment_opts: {
           match: 'all',
           conditions: [themeCondition]
@@ -106,8 +98,8 @@ export default class MailchimpService {
         subject_line: `${mailSubjectPrefix}: ${mailTitle}`,
         preview_text: `${mailSubjectPrefix}: ${mailTitle}`,
         title: `${mailSubjectPrefix}: ${mailTitle}`,
-        from_name: FROM_NAME,
-        reply_to: REPLY_TO,
+        from_name: MAILCHIMP.FROM_NAME,
+        reply_to: MAILCHIMP.REPLY_TO,
         inline_css: true,
         template_id: templateId,
       }
@@ -173,7 +165,7 @@ export default class MailchimpService {
   async createThemesCondition (newsletterThemes) {
     console.log('Fetching theme interests');
     const uniqueNewsletterThemes = [...new Set(newsletterThemes)];
-    const interests = await this.fetchInterestsByCategoryIdFromLists(INTEREST_CATEGORY_ID);
+    const interests = await this.fetchInterestsByCategoryIdFromLists(MAILCHIMP.INTEREST_CATEGORY_ID);
     console.log('Done fetching theme interests');
     const interestMapping = interests.filter((theme) => {
       if (uniqueNewsletterThemes.includes(theme.name)) {
@@ -182,7 +174,7 @@ export default class MailchimpService {
     });
     return {
       condition_type: 'Interests',
-      field: `interests-${INTEREST_CATEGORY_ID}`,
+      field: `interests-${MAILCHIMP.INTEREST_CATEGORY_ID}`,
       op: 'interestcontains',
       value: interestMapping.map((item) => item.id)
     };
@@ -212,8 +204,7 @@ export default class MailchimpService {
    * optional parameter ?count:integer default:100
    */
    async fetchInterestsByCategoryIdFromLists(categoryId) {
-    const interestsResponse = await mailchimpConnection.lists.listInterestCategoryInterests(LIST_ID, categoryId, {count: 100})
-
+    const interestsResponse = await mailchimpConnection.lists.listInterestCategoryInterests(MAILCHIMP.LIST_ID, categoryId, {count: 100})
     return interestsResponse.interests;
   }
 

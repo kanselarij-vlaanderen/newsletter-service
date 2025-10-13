@@ -6,19 +6,15 @@ import { getNewsletterByAgendaId, getAgendaInformationForNewsletter } from '../u
 import ftpClient from 'ftp';
 import fs from 'fs';
 import xml from 'xml';
-
-const user = process.env.BELGA_FTP_USERNAME;
-const password = process.env.BELGA_FTP_PASSWORD;
-const host = process.env.BELGA_FTP_HOST || 'ftp.belga.be';
-const STORAGE_PATH = process.env.XML_STORAGE_PATH || `/data`;
+import { BELGA, AGENDA_ITEM_TYPES } from '../config';
 
 export default class BelgaService {
 
   constructor() {
     this.connectionConfig = {
-      user,
-      password,
-      host
+      user: BELGA.USER,
+      password: BELGA.PASSWORD,
+      host: BELGA.HOST
     };
   }
 
@@ -102,8 +98,10 @@ export default class BelgaService {
 
     const kindOfmeetingLowerCase = kindOfMeeting.toLowerCase().replace('vlaamse veerkracht', 'Vlaamse Veerkracht');
     const title = `Beslissingen van de ${kindOfmeetingLowerCase} van ${formattedStart}`;
-    const data = await getNewsletterByAgendaId(agendaURI);
-    const content = createNewsletterString(data);
+    const data = await getNewsletterByAgendaId(agendaURI, AGENDA_ITEM_TYPES.NOTA);
+    const announcementsData = await getNewsletterByAgendaId(agendaURI, AGENDA_ITEM_TYPES.MEDEDELING);
+
+    const content = createNewsletterString(data, announcementsData);
 
     const sentAt = moment.tz('Europe/Brussels').format('YYYYMMDDTHHmmssZZ');
 
@@ -115,7 +113,7 @@ export default class BelgaService {
     const name = `Beslissingen_van_de_${kindOfmeetingLowerCase}_${procedureText || 'van'}_${formattedStart}.xml`
       .split(' ')
       .join('_');
-    const path = `${STORAGE_PATH}/${name}`;
+    const path = `${BELGA.STORAGE_PATH}/${name}`;
 
     fs.writeFileSync(path, xmlString);
 

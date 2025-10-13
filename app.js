@@ -39,6 +39,7 @@ function logErrorResponse (error) {
   } else {
     console.log(error);
   }
+  console.trace(error);
 }
 
 /**
@@ -239,6 +240,7 @@ app.post('/belga-newsletters', async (req, res, next) => {
       });
     } catch (error) {
       console.log(`A problem occured when sending to Belga: ${error.message}`);
+      logErrorResponse(error);
       next(error);
     }
   }
@@ -257,6 +259,7 @@ app.get('/belga-newsletters/:id/download', async (req, res, next) => {
     res.download(belgaNewsletter);
   } catch (err) {
     console.log(`A problem occured when downloading Belga XML: ${err.message}`);
+    logErrorResponse(err);
     next(err);
   }
 });
