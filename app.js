@@ -4,6 +4,7 @@ import {
   deleteMailCampaign,
   getAgendaInformationForNewsletter,
   updateMailCampaignSentTime,
+  createBelgaPublication,
 } from './util/query-helper';
 import BelgaService from './repository/belga-service';
 import MailchimpService from './repository/mailchimp-service';
@@ -222,6 +223,7 @@ app.post('/belga-newsletters', async (req, res, next) => {
     try {
       const filePath = await belgaService.createBelgaNewsletterXML(meetingId);
       const belgaNewsletter = await belgaService.publishToBelga(filePath);
+      await createBelgaPublication(meetingId);
 
       res.status(201).send({
         data: {

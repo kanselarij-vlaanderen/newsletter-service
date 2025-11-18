@@ -309,3 +309,38 @@ const parseSparqlResults = (data) => {
 const createEndSegment = () => {
   return `*|END:INTERESTED|*`;
 };
+
+export async function createBelgaPublication(meetingId) {
+  const meetingURI = await getMeetingURI(meetingId);
+  const id = uuid();
+
+  console.log(`Create belga publication with id ${id} for meetingUri ${meetingURI}`);
+
+  const belgaPublicationUri = `http://themis.vlaanderen.be/id/belga-publicatie/${id}`;
+
+  // TODO do we want to keep this? to allow fixes to be sent to Belga? one-to-one relation so need to delete unless we make it hasMany and sort on it
+  await update(`
+    PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+
+    DELETE WHERE {
+      ${sparqlEscapeUri(meetingURI)} ext:heeftBelgaPublicatie ?belgaPublication .
+        ?belgaPublication a ext:BelgaPublicatie ;
+        mu:uuid ?id ;
+        ext:isVerstuurdOp ?datetime .
+    }`
+  );
+
+  await update(`
+    PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+
+    INSERT DATA {
+      ${sparqlEscapeUri(meetingURI)} ext:heeftBelgaPublicatie ${sparqlEscapeUri(belgaPublicationUri)} .
+      ${sparqlEscapeUri(belgaPublicationUri)} a ext:BelgaPublicatie ;
+        mu:uuid ${sparqlEscapeString(id)} ;
+        ext:isVerstuurdOp ${sparqlEscapeDateTime(new Date())} .
+    }`
+  );
+  return id;
+}
