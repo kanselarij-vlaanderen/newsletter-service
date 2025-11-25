@@ -309,3 +309,25 @@ const parseSparqlResults = (data) => {
 const createEndSegment = () => {
   return `*|END:INTERESTED|*`;
 };
+
+export async function createBelgaPublication(meetingId) {
+  const meetingURI = await getMeetingURI(meetingId);
+  const id = uuid();
+
+  console.log(`Create belga publication with id ${id} for meetingUri ${meetingURI}`);
+
+  const belgaPublicationUri = `http://themis.vlaanderen.be/id/belga-publicatie/${id}`;
+
+  await update(`
+    PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+
+    INSERT DATA {
+      ${sparqlEscapeUri(meetingURI)} ext:heeftBelgaPublicatie ${sparqlEscapeUri(belgaPublicationUri)} .
+      ${sparqlEscapeUri(belgaPublicationUri)} a ext:BelgaPublicatie ;
+        mu:uuid ${sparqlEscapeString(id)} ;
+        ext:isVerstuurdOp ${sparqlEscapeDateTime(new Date())} .
+    }`
+  );
+  return id;
+}
