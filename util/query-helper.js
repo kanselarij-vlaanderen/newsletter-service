@@ -78,12 +78,11 @@ export async function getNewsItemInfo(agendaURI) {
   const newsletter = await getNewsletterByAgendaId(agendaURI, AGENDA_ITEM_TYPES.NOTA);
   const announcementsData = await getNewsletterByAgendaId(agendaURI, AGENDA_ITEM_TYPES.MEDEDELING);
 
-  // TODO this could have side effects like accidental sending of only announcements if no "in kort bestek" was selected for notas
   if (!newsletter || !newsletter[0]) {
     if (!announcementsData || !announcementsData[0]) {
       throw new Error('No newsletters present!');
     }
-    // only announcements found, do something?
+    // only announcements found
   }
 
   
@@ -91,7 +90,6 @@ export async function getNewsItemInfo(agendaURI) {
   let news_items_HTML = [];
   if (newsletter && newsletter[0]) {
     const reducedNewsletters = reduceNewslettersToMandateesByPriority(newsletter);
-    // This could be optional when only an announcements needs to be published
     news_items_HTML = reducedNewsletters.map((item) => {
       let segmentConstraint = {begin: '', end: ''};
       if (item && item.themes) {
