@@ -318,19 +318,6 @@ export async function createBelgaPublication(meetingId) {
 
   const belgaPublicationUri = `http://themis.vlaanderen.be/id/belga-publicatie/${id}`;
 
-  // TODO do we want to keep this? to allow fixes to be sent to Belga? one-to-one relation so need to delete unless we make it hasMany and sort on it
-  await update(`
-    PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
-    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
-
-    DELETE WHERE {
-      ${sparqlEscapeUri(meetingURI)} ext:heeftBelgaPublicatie ?belgaPublication .
-        ?belgaPublication a ext:BelgaPublicatie ;
-        mu:uuid ?id ;
-        ext:isVerstuurdOp ?datetime .
-    }`
-  );
-
   await update(`
     PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
