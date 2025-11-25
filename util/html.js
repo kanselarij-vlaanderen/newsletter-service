@@ -33,6 +33,26 @@ const getNewsItem = ({title, proposalText, richtext, newsletter}, segmentConstra
 };
 
 /**
+ * This function generates a html table for announcements to add to the newsletter for publication.
+ */
+const getAnnouncementHeader = () => {
+  console.log(`CREATING ANNOUNCEMENT HEADER`);
+  return `
+    <table mc:repeatable="content" mc:variant="Tekstblok met introtekst" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td height="30" style="height:30px;line-height:0;">
+         </td>
+      </tr>
+      <tr>
+        <td style="padding:5px 0 15px 0;">
+          <font style="color:#333332;font-family:Calibri, Arial, sans-serif;font-size:26px;font-weight:600;line-height:26px;">Mededelingen</font>
+        </td>
+      </tr>
+    </table>
+  `;
+};
+
+/**
  * Creates a mailchimp html-template for the mailchimp service
  * based on a list of newsitems (./NewsItem.js).
  * @param [NewsItem] decisionNewsItems
@@ -360,5 +380,4 @@ function escapeHtml(unsafe) {
   return unsafe.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
-
-export {createNewsLetter, getNewsItem, escapeHtml};
+export {createNewsLetter, getNewsItem, getAnnouncementHeader, escapeHtml};

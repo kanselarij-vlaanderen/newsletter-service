@@ -17,7 +17,6 @@ const requiredEnvironmentVariables = [
   'MAILCHIMP_REPLY_TO',
   'MAILCHIMP_LIST_ID',
   'MAILCHIMP_INTEREST_CATEGORY_ID',
-  'MAILCHIMP_KIND_CATEGORY_ID',
   'BELGA_FTP_USERNAME',
   'BELGA_FTP_PASSWORD'
 ];
@@ -40,6 +39,7 @@ function logErrorResponse (error) {
   } else {
     console.log(error);
   }
+  console.trace(error);
 }
 
 /**
@@ -241,6 +241,7 @@ app.post('/belga-newsletters', async (req, res, next) => {
       });
     } catch (error) {
       console.log(`A problem occured when sending to Belga: ${error.message}`);
+      logErrorResponse(error);
       next(error);
     }
   }
@@ -259,6 +260,7 @@ app.get('/belga-newsletters/:id/download', async (req, res, next) => {
     res.download(belgaNewsletter);
   } catch (err) {
     console.log(`A problem occured when downloading Belga XML: ${err.message}`);
+    logErrorResponse(err);
     next(err);
   }
 });

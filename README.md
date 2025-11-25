@@ -26,7 +26,6 @@ The following environment variables have to be configured:
 | MAILCHIMP_FROM_NAME            | string | name to be used as sender details (should be validated domain, to be set on the mailchimp interface)                             |
 | MAILCHIMP_LIST_ID              | string | the list containing the subscribers                          |
 | MAILCHIMP_INTEREST_CATEGORY_ID | string | the list of interest categories (themes) linked to the list  |
-| MAILCHIMP_KIND_CATEGORY_ID     | string | the list of kind categories linked to the list               |
 | MAILCHIMP_SERVER               | string | the Mailchimp server to connect to. Default value 'us3'      |
 | BELGA_FTP_USERNAME             | string | the username to login to the Belga server                    |
 | BELGA_FTP_PASSWORD             | string | the password to login to the Belga server                    |

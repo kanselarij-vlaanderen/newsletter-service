@@ -1,6 +1,6 @@
 import moment from 'moment';
 import 'moment-timezone';
-import { getNewsItem } from './html';
+import { getNewsItem, getAnnouncementHeader } from './html';
 import { reduceNewslettersToMandateesByPriority } from '../util/newsletter-helper';
 import {
   sparqlEscapeString,
@@ -10,15 +10,10 @@ import {
   update,
   uuid,
 } from 'mu';
+import { AGENDA_ITEM_TYPES, MEETING_KIND_TYPES } from '../config';
 
 moment.locale('nl');
 moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
-
-const targetGraph = 'http://mu.semte.ch/graphs/organizations/kanselarij';
-const electronicKindURI = 'http://themis.vlaanderen.be/id/concept/vergaderactiviteit-type/2387564a-0897-4a62-9b9a-d1755eece7af';
-const specialKindURI = 'http://themis.vlaanderen.be/id/concept/vergaderactiviteit-type/62a0a3c3-44ed-4f35-8b46-1d50616ad42c';
-const vlaamseVeerkrachtURI = 'http://themis.vlaanderen.be/id/concept/vergaderactiviteit-type/9b4701f8-a136-4009-94c6-d64fdc96b9a2';
-
 
 /**
  *  Fetches all date information from an agenda.
@@ -53,16 +48,16 @@ export async function getAgendaInformationForNewsletter(meetingId) {
   let kindOfMeeting = 'Ministerraad';
   let mailSubjectPrefix = 'Ministerraad';
 
-  if (kind === electronicKindURI) {
+  if (kind === MEETING_KIND_TYPES.EP) {
     procedureText = 'via elektronische procedure ';
     mailSubjectPrefix = `Ministerraad via elektronische procedure`;
     console.log('[PROCEDURE TEXT]:', procedureText);
   }
-  if (kind === specialKindURI) {
+  if (kind === MEETING_KIND_TYPES.BM) {
     kindOfMeeting = 'Bijzondere ministerraad'; // should this be capitalized M ?
     mailSubjectPrefix = `Bijzondere Ministerraad`;
   }
-  if (kind === vlaamseVeerkrachtURI) {
+  if (kind === MEETING_KIND_TYPES.PVV) {
     kindOfMeeting = 'Ministerraad - Plan Vlaamse Veerkracht';
     mailSubjectPrefix = `Ministerraad Vlaamse Veerkracht`;
   }
@@ -80,34 +75,64 @@ export async function getAgendaInformationForNewsletter(meetingId) {
 }
 
 export async function getNewsItemInfo(agendaURI) {
-  let newsletter = await getNewsletterByAgendaId(agendaURI);
+  const newsletter = await getNewsletterByAgendaId(agendaURI, AGENDA_ITEM_TYPES.NOTA);
+  const announcementsData = await getNewsletterByAgendaId(agendaURI, AGENDA_ITEM_TYPES.MEDEDELING);
 
+  // TODO this could have side effects like accidental sending of only announcements if no "in kort bestek" was selected for notas
   if (!newsletter || !newsletter[0]) {
-    throw new Error('No newsletters present!');
+    if (!announcementsData || !announcementsData[0]) {
+      throw new Error('No newsletters present!');
+    }
+    // only announcements found, do something?
   }
 
-  const reducedNewsletters = reduceNewslettersToMandateesByPriority(newsletter);
-
+  
   let allThemesOfNewsletter = [];
-  const news_items_HTML = reducedNewsletters.map((item) => {
-    let segmentConstraint = {begin: '', end: ''};
-    if (item && item.themes) {
-      let uniqueThemes = [...new Set(item.themes.split(','))];
-      allThemesOfNewsletter.push(...uniqueThemes);
+  let news_items_HTML = [];
+  if (newsletter && newsletter[0]) {
+    const reducedNewsletters = reduceNewslettersToMandateesByPriority(newsletter);
+    // This could be optional when only an announcements needs to be published
+    news_items_HTML = reducedNewsletters.map((item) => {
+      let segmentConstraint = {begin: '', end: ''};
+      if (item && item.themes) {
+        let uniqueThemes = [...new Set(item.themes.split(','))];
+        allThemesOfNewsletter.push(...uniqueThemes);
 
-      segmentConstraint = {
-        begin: createBeginSegment(uniqueThemes.join(',')),
-        end: createEndSegment()
-      };
-    }
-    console.log('PRIORITY:', item.groupPriority);
-    return getNewsItem(item, segmentConstraint);
-  });
+        segmentConstraint = {
+          begin: createBeginSegment(uniqueThemes.join(',')),
+          end: createEndSegment()
+        };
+      }
+      console.log('PRIORITY:', item.groupPriority);
+      return getNewsItem(item, segmentConstraint);
+    });
+  }
+
+  if (announcementsData && announcementsData[0]) {
+    const reducedAnnouncements = reduceNewslettersToMandateesByPriority(announcementsData, true);
+    const announcementHeader = getAnnouncementHeader();
+    const announcement_news_items_HTML = reducedAnnouncements.map((item) => {
+      let segmentConstraint = {begin: '', end: ''};
+      if (item && item.themes) {
+        let uniqueThemes = [...new Set(item.themes.split(','))];
+        allThemesOfNewsletter.push(...uniqueThemes);
+  
+        segmentConstraint = {
+          begin: createBeginSegment(uniqueThemes.join(',')),
+          end: createEndSegment()
+        };
+      }
+      console.log('PRIORITY:', item.groupPriority, 'POSITION', item.agendaitemPrio);
+      return getNewsItem(item, segmentConstraint);
+    });
+    
+    news_items_HTML = [...news_items_HTML, announcementHeader, ...announcement_news_items_HTML];
+  }
 
   return { htmlContent: news_items_HTML, newsletterThemes: allThemesOfNewsletter } ;
 }
 
-export async function getNewsletterByAgendaId(agendaUri) {
+export async function getNewsletterByAgendaId(agendaUri, agendaitemType) {
   const newsletterInformation = await query(`
     PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
     PREFIX besluitvorming: <https://data.vlaanderen.be/ns/besluitvorming#>
@@ -120,27 +145,27 @@ export async function getNewsletterByAgendaId(agendaUri) {
     PREFIX nie: <http://www.semanticdesktop.org/ontologies/2007/01/19/nie#>
 
     SELECT ?title ?richtext (GROUP_CONCAT(?label;separator=",") AS ?themes) ?mandateeTitle ?mandateePriority ?newsletter ?mandateeName ?agendaitemPrio
+    # FROM kanselarij
+    # FROM public
     WHERE {
-      GRAPH ${sparqlEscapeUri(targetGraph)} {
-        ${sparqlEscapeUri(agendaUri)} a besluitvorming:Agenda ;
-          dct:hasPart ?agendaitem .
-        ?agendaitem a besluit:Agendapunt ;
-          dct:type <http://themis.vlaanderen.be/id/concept/agendapunt-type/dd47a8f8-3ad2-4d5a-8318-66fc02fe80fd> ;
-          schema:position ?agendaitemPrio .
-        ?treatment a besluit:BehandelingVanAgendapunt ;
-          dct:subject ?agendaitem .
-        ?newsletter a ext:Nieuwsbericht ;
-          prov:wasDerivedFrom ?treatment ;
-          ext:inNieuwsbrief "true"^^tl:boolean .
-        OPTIONAL {
-          ?agendaitem ext:heeftBevoegdeVoorAgendapunt ?mandatee .
-          ?mandatee dct:title ?mandateeTitle .
-          ?mandatee mandaat:rangorde ?mandateePriority .
-          ?mandatee ext:nieuwsbriefTitel ?mandateeName .
-        }
-        OPTIONAL { ?newsletter nie:htmlContent ?richtext . }
-        OPTIONAL { ?newsletter dct:title ?title . }
+      ${sparqlEscapeUri(agendaUri)} a besluitvorming:Agenda ;
+        dct:hasPart ?agendaitem .
+      ?agendaitem a besluit:Agendapunt ;
+        dct:type ${sparqlEscapeUri(agendaitemType)} ;
+        schema:position ?agendaitemPrio .
+      ?treatment a besluit:BehandelingVanAgendapunt ;
+        dct:subject ?agendaitem .
+      ?newsletter a ext:Nieuwsbericht ;
+        prov:wasDerivedFrom ?treatment ;
+        ext:inNieuwsbrief "true"^^tl:boolean .
+      OPTIONAL {
+        ?agendaitem ext:heeftBevoegdeVoorAgendapunt ?mandatee .
+        ?mandatee dct:title ?mandateeTitle .
+        ?mandatee mandaat:rangorde ?mandateePriority .
+        ?mandatee ext:nieuwsbriefTitel ?mandateeName .
       }
+      OPTIONAL { ?newsletter nie:htmlContent ?richtext . }
+      OPTIONAL { ?newsletter dct:title ?title . }
       OPTIONAL {
         ?newsletter dct:subject ?themeURI .
         ?themeURI ext:mailchimpId ?label .
@@ -212,10 +237,8 @@ async function getMeetingURI (meetingId) {
   PREFIX besluit: <http://data.vlaanderen.be/ns/besluit#>
   PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
   SELECT DISTINCT ?meeting WHERE {
-    GRAPH <${targetGraph}> {
-      ?meeting a besluit:Vergaderactiviteit ;
-        mu:uuid ${sparqlEscapeString(meetingId)} .
-    }
+    ?meeting a besluit:Vergaderactiviteit ;
+      mu:uuid ${sparqlEscapeString(meetingId)} .
   }`);
 
   if (meetingUriQuery.results.bindings.length) {
@@ -238,12 +261,10 @@ async function getLastestAgenda (meetingURI) {
     PREFIX besluitvorming: <https://data.vlaanderen.be/ns/besluitvorming#>
     SELECT DISTINCT ?agenda
     WHERE {
-      GRAPH <${targetGraph}> {
-        ${sparqlEscapeUri(meetingURI)} a besluit:Vergaderactiviteit .
-        ?agenda besluitvorming:isAgendaVoor ${sparqlEscapeUri(meetingURI)} ;
-          a besluitvorming:Agenda ;
-          besluitvorming:volgnummer ?serialnumber .
-      }
+      ${sparqlEscapeUri(meetingURI)} a besluit:Vergaderactiviteit .
+      ?agenda besluitvorming:isAgendaVoor ${sparqlEscapeUri(meetingURI)} ;
+        a besluitvorming:Agenda ;
+        besluitvorming:volgnummer ?serialnumber .
     } ORDER BY DESC(?serialnumber) LIMIT 1`);
 
   if (latestAgendaQuery.results.bindings.length) {
@@ -266,17 +287,15 @@ async function getAgendaInformation(latestAgendaURI) {
     PREFIX generiek:  <https://data.vlaanderen.be/ns/generiek#>
 
     SELECT DISTINCT ?meetingDate ?documentPublicationDate ?kind WHERE {
-      GRAPH <${targetGraph}> {
-        ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda ;
-          besluitvorming:isAgendaVoor ?meeting .
-        ?meeting besluit:geplandeStart ?meetingDate .
-        OPTIONAL { ?meeting dct:type ?kind . }
-        OPTIONAL {
-          ?themisPublicationActivity a ext:ThemisPublicationActivity ;
-            prov:used ?meeting ;
-            ext:scope 'documents' ;
-            generiek:geplandeStart ?documentPublicationDate .
-        }
+      ${sparqlEscapeUri(latestAgendaURI)} a besluitvorming:Agenda ;
+        besluitvorming:isAgendaVoor ?meeting .
+      ?meeting besluit:geplandeStart ?meetingDate .
+      OPTIONAL { ?meeting dct:type ?kind . }
+      OPTIONAL {
+        ?themisPublicationActivity a ext:ThemisPublicationActivity ;
+          prov:used ?meeting ;
+          ext:scope 'documents' ;
+          generiek:geplandeStart ?documentPublicationDate .
       }
     } ORDER BY ?documentPublicationDate ?meetingDate LIMIT 1`);
 

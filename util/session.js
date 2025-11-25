@@ -1,11 +1,5 @@
 import { query, sparqlEscapeUri } from 'mu';
-
-const ROLES = {
-  ADMIN: 'http://themis.vlaanderen.be/id/gebruikersrol/9a969b13-e80b-424f-8a82-a402bcb42bc5',
-  KANSELARIJ: 'http://themis.vlaanderen.be/id/gebruikersrol/ab39b02a-14a5-4aa9-90bd-e0fa268b0f3d',
-  SECRETARIE: 'http://themis.vlaanderen.be/id/gebruikersrol/c2ef1785-bf28-458f-952d-aa40989347d2',
-  KORT_BESTEK: 'http://themis.vlaanderen.be/id/gebruikersrol/ca20a872-7743-4998-b479-06b003f49daf',
-}
+import { ROLES } from '../config';
 
 async function sessionIsAuthorized(sessionUri) {
   const roleUris = [
