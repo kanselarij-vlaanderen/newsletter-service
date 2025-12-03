@@ -34,8 +34,9 @@ const getNewsItem = ({title, proposalText, richtext, newsletter}, segmentConstra
 
 /**
  * This function generates a html table for announcements to add to the newsletter for publication.
+ * Subtext can be added by setting the ENV property ANNOUNCEMENT_HEADER_SUBTEXT
  */
-const getAnnouncementHeader = () => {
+const getAnnouncementHeader = (subText) => {
   console.log(`CREATING ANNOUNCEMENT HEADER`);
   return `
     <table mc:repeatable="content" mc:variant="Tekstblok met introtekst" width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -46,6 +47,11 @@ const getAnnouncementHeader = () => {
       <tr>
         <td style="padding:5px 0 15px 0;">
           <font style="color:#333332;font-family:Calibri, Arial, sans-serif;font-size:26px;font-weight:600;line-height:26px;">Mededelingen</font>
+					${subText ?
+						`<p class="intro-text" style="color:#666666;font-family:Calibri, Arial, sans-serif;font-size:15px;line-height:20px;margin-top:5px;margin-bottom:0;">
+							${subText}
+						</p>`
+						: ''}
         </td>
       </tr>
     </table>

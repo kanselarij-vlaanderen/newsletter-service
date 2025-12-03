@@ -10,7 +10,7 @@ import {
   update,
   uuid,
 } from 'mu';
-import { AGENDA_ITEM_TYPES, MEETING_KIND_TYPES } from '../config';
+import { AGENDA_ITEM_TYPES, MEETING_KIND_TYPES, ANNOUNCEMENT_HEADER_SUBTEXT } from '../config';
 
 moment.locale('nl');
 moment.tz('Europe/Berlin').format('DD MMMM  YYYY');
@@ -101,6 +101,7 @@ export async function getNewsItemInfo(agendaURI) {
           end: createEndSegment()
         };
       }
+      // SILENT BEHAVIOUR: Any nota newsitems WITHOUT THEMES (or no ext:mailchimpId) will be added as plain content (no contraints) to ALL sent mails.
       console.log('PRIORITY:', item.groupPriority);
       return getNewsItem(item, segmentConstraint);
     });
@@ -108,7 +109,7 @@ export async function getNewsItemInfo(agendaURI) {
 
   if (announcementsData && announcementsData[0]) {
     const reducedAnnouncements = reduceNewslettersToMandateesByPriority(announcementsData, true);
-    const announcementHeader = getAnnouncementHeader();
+    const announcementHeader = getAnnouncementHeader(ANNOUNCEMENT_HEADER_SUBTEXT);
     const announcement_news_items_HTML = reducedAnnouncements.map((item) => {
       let segmentConstraint = {begin: '', end: ''};
       if (item && item.themes) {
@@ -119,6 +120,10 @@ export async function getNewsItemInfo(agendaURI) {
           begin: createBeginSegment(uniqueThemes.join(',')),
           end: createEndSegment()
         };
+      } else {
+        // announcements without themes will NOT be added as plain content to all sent mails.
+        console.log(`IGNORED: Announcement number ${item.agendaitemPrio} does not have a theme`);
+        return '';
       }
       console.log('PRIORITY:', item.groupPriority, 'POSITION', item.agendaitemPrio);
       return getNewsItem(item, segmentConstraint);
