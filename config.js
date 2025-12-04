@@ -45,6 +45,7 @@ const MEETING_KIND_TYPES = {
   PVV: 'http://themis.vlaanderen.be/id/concept/vergaderactiviteit-type/9b4701f8-a136-4009-94c6-d64fdc96b9a2',
 }
 
+const ANNOUNCEMENT_HEADER_SUBTEXT = process.env.ANNOUNCEMENT_HEADER_SUBTEXT || '';
 
 export {
   BELGA,
@@ -52,4 +53,5 @@ export {
   AGENDA_ITEM_TYPES,
   ROLES,
   MEETING_KIND_TYPES,
+  ANNOUNCEMENT_HEADER_SUBTEXT,
 }
